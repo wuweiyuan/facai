@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
+import io
 import json
 import sys
 from datetime import date, datetime
@@ -37,17 +39,118 @@ def _print_recommendation(rec, output: str) -> None:
 
 
 def _print_backtest(summary: dict, output: str) -> None:
+    percent_keys = {
+        "win_rate_gross_1d",
+        "win_rate_gross_3d",
+        "win_rate_net_1d",
+        "win_rate_net_3d",
+        "avg_return_1d_gross",
+        "avg_return_3d_gross",
+        "avg_return_5d_gross",
+        "avg_return_1d_net",
+        "avg_return_3d_net",
+        "avg_return_5d_net",
+        "max_drawdown_proxy",
+    }
+    rec_percent_keys = {
+        "ret_1d_gross",
+        "ret_3d_gross",
+        "ret_5d_gross",
+        "ret_1d_net",
+        "ret_3d_net",
+        "ret_5d_net",
+    }
     if output == "json":
-        print(json.dumps(summary, ensure_ascii=False, indent=2, default=str))
+        payload: dict = {}
+        for k, v in summary.items():
+            if k == "records" and isinstance(v, list):
+                records_en = []
+                for row in v:
+                    row_en = {}
+                    for rk, rv in row.items():
+                        val = rv
+                        if rk in rec_percent_keys and isinstance(rv, (int, float)):
+                            val = f"{rv:.2%}"
+                        row_en[rk] = val
+                    records_en.append(row_en)
+                payload[k] = records_en
+                continue
+            val = v
+            if k in percent_keys and isinstance(v, (int, float)):
+                val = f"{v:.2%}"
+            payload[k] = val
+        print(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
+        return
+    if output == "json-cn":
+        key_map = {
+            "period": "回测区间",
+            "attempted_days": "尝试交易日",
+            "total_trades": "交易次数",
+            "skipped_days": "跳过交易日",
+            "win_rate_gross_1d": "1日胜率_毛",
+            "win_rate_gross_3d": "3日胜率_毛",
+            "win_rate_net_1d": "1日胜率_净",
+            "win_rate_net_3d": "3日胜率_净",
+            "avg_return_1d_gross": "平均1日收益_毛",
+            "avg_return_3d_gross": "平均3日收益_毛",
+            "avg_return_5d_gross": "平均5日收益_毛",
+            "avg_return_1d_net": "平均1日收益_净",
+            "avg_return_3d_net": "平均3日收益_净",
+            "avg_return_5d_net": "平均5日收益_净",
+            "max_drawdown_proxy": "最大回撤代理",
+            "threshold_mode_counts": "模式分布",
+            "error_counts": "错误统计",
+            "error_examples": "错误示例",
+            "records": "明细记录",
+        }
+        rec_key_map = {
+            "trade_date": "交易日",
+            "symbol": "代码",
+            "name": "名称",
+            "threshold_mode": "阈值模式",
+            "ret_1d_gross": "1日收益_毛",
+            "ret_3d_gross": "3日收益_毛",
+            "ret_5d_gross": "5日收益_毛",
+            "ret_1d_net": "1日收益_净",
+            "ret_3d_net": "3日收益_净",
+            "ret_5d_net": "5日收益_净",
+        }
+        err_key_map = {"trade_date": "交易日", "error_type": "错误类型", "message": "错误信息"}
+        payload: dict = {}
+        for k, v in summary.items():
+            out_key = key_map.get(k, k)
+            if k == "records" and isinstance(v, list):
+                records_cn = []
+                for row in v:
+                    row_cn = {}
+                    for rk, rv in row.items():
+                        val = rv
+                        if rk in rec_percent_keys and isinstance(rv, (int, float)):
+                            val = f"{rv:.2%}"
+                        row_cn[rec_key_map.get(rk, rk)] = val
+                    records_cn.append(row_cn)
+                payload[out_key] = records_cn
+            elif k == "error_examples" and isinstance(v, list):
+                payload[out_key] = [{err_key_map.get(ek, ek): ev for ek, ev in row.items()} for row in v]
+            else:
+                val = v
+                if k in percent_keys and isinstance(v, (int, float)):
+                    val = f"{v:.2%}"
+                payload[out_key] = val
+        print(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
         return
     print(f"回测区间: {summary['period']}")
     print(f"尝试交易日: {summary.get('attempted_days', 0)}")
     print(f"跳过交易日: {summary.get('skipped_days', 0)}")
     print(f"交易次数: {summary['total_trades']}")
     print(f"1日胜率(毛): {summary['win_rate_gross_1d']:.2%}")
+    print(f"3日胜率(毛): {summary.get('win_rate_gross_3d', 0.0):.2%}")
     print(f"1日胜率(净): {summary['win_rate_net_1d']:.2%}")
+    print(f"3日胜率(净): {summary.get('win_rate_net_3d', 0.0):.2%}")
     print(f"平均1日收益(毛): {summary['avg_return_1d_gross']:.4%}")
+    print(f"平均3日收益(毛): {summary.get('avg_return_3d_gross', 0.0):.4%}")
     print(f"平均1日收益(净): {summary['avg_return_1d_net']:.4%}")
+    print(f"平均3日收益(净): {summary.get('avg_return_3d_net', 0.0):.4%}")
     print(f"平均5日收益(毛): {summary['avg_return_5d_gross']:.4%}")
     print(f"平均5日收益(净): {summary['avg_return_5d_net']:.4%}")
     print(f"最大回撤代理: {summary['max_drawdown_proxy']:.2%}")
@@ -82,7 +185,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_bt = sub.add_parser("backtest", help="Backtest over period")
     p_bt.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
     p_bt.add_argument("--end", required=True, help="End date YYYY-MM-DD")
-    p_bt.add_argument("--output", choices=["table", "json"], default="table")
+    p_bt.add_argument("--output", choices=["table", "json", "json-cn"], default="json-cn")
 
     p_doc = sub.add_parser("doctor", help="Run connectivity diagnostics for data sources")
     p_doc.add_argument("--output", choices=["table", "json"], default="table")
@@ -157,7 +260,12 @@ def main() -> None:
 
     if args.cmd == "backtest":
         runner = BacktestRunner(rec_engine)
-        summary = runner.run(_parse_date(args.start), _parse_date(args.end))
+        # When emitting JSON, suppress verbose runtime logs and keep only final payload.
+        if args.output in {"json", "json-cn"}:
+            with contextlib.redirect_stdout(io.StringIO()):
+                summary = runner.run(_parse_date(args.start), _parse_date(args.end))
+        else:
+            summary = runner.run(_parse_date(args.start), _parse_date(args.end))
         _print_backtest(summary, args.output)
         return
 
