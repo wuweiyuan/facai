@@ -1,0 +1,2 @@
+"""Stock scoring strategy."""
+

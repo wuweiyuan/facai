@@ -1,0 +1,92 @@
+timezone: Asia/Shanghai
+
+network:
+  disable_env_proxy: true
+  force_no_proxy_all: true
+
+data_source:
+  use_spot_name_merge: false
+  request_timeout_sec: 3
+  hist_retries: 1
+  cache_enabled: true
+  cache_dir: .cache/akshare
+
+data_freshness:
+  enabled: true
+  probe_symbol: "000001"
+  probe_lookback_days: 10
+  stop_on_stale: true
+
+universe:
+  name: all_a_share
+  limit: 0
+
+filters:
+  exclude_st: true
+  exclude_star_board: true
+  exclude_bj_board: true
+  exclude_gem_board: true
+
+market_filter:
+  enabled: true
+  index_symbol: "000300" # CSI 300
+  lookback_days: 120
+  block_on_bear: true
+
+risk_filter:
+  enabled: true
+  min_price: 2.0
+  max_price: 200.0
+  max_vol20_std: 0.07
+  rsi_upper: 90.0
+  min_vol_ratio_5_20: 0.45
+  require_turnover_data: false
+  min_turnover_rate: 0.0
+  weak_market:
+    enabled: true
+    max_vol20_std: 0.065
+    require_mom20_positive: false
+
+execution_cost:
+  enabled: true
+  commission_rate: 0.0002
+  stamp_duty_sell_rate: 0.0005
+  slippage_bps: 5.0
+  min_commission_per_side: 0.0
+
+risk_targets:
+  method: atr # atr | percent
+  stop_loss_atr_mult: 1.5
+  take_profit_atr_mult: 3.0
+  stop_loss_pct: 0.03
+  take_profit_pct: 0.06
+  price_round_tick: 0.01
+
+strategy:
+  name: trend_momentum_v1
+  lookback_days: 120
+  enabled_modes: [normal]
+  max_symbols_per_run: 0
+  progress_every: 10
+  failed_symbol_examples: 20
+  weights:
+    trend: 0.35
+    momentum: 0.35
+    stability: 0.15
+    volume: 0.15
+
+fallback:
+  mode: relaxed
+
+io:
+  default_output: table
+
+backtest:
+  verbose_errors: true
+  max_error_examples: 20
+
+reporting:
+  enabled: true
+  recommendation_csv: reports/recommendations.csv
+  recommendation_md: reports/recommendations.md
+  recommendation_txt: reports/recommendations.txt
