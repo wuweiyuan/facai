@@ -13,6 +13,8 @@ from app.strategy.risk_targets import compute_stop_take_prices
 from app.strategy.scoring import build_reason, compute_score, passes_threshold
 from app.universe.filtering import filter_universe
 
+MODE_ZH = {"normal": "常规", "relaxed": "放宽", "force": "强制"}
+
 
 class Recommender:
     def __init__(self, data_source: MarketDataSource, cfg: dict):
@@ -38,7 +40,7 @@ class Recommender:
         signal_date = self.resolve_signal_date(target_date)
         fresh_ok, freshness_msg = self._check_signal_data_freshness(signal_date)
         if not fresh_ok:
-            print(f"[warning] {freshness_msg}", flush=True)
+            print(f"[警告] {freshness_msg}", flush=True)
             if bool(self.cfg.get("data_freshness", {}).get("stop_on_stale", True)):
                 raise RuntimeError(f"数据未更新，已停止执行: {freshness_msg}")
         market_state, market_reason = self._resolve_market_state(signal_date)
@@ -49,10 +51,13 @@ class Recommender:
         max_symbols = int(self.cfg.get("strategy", {}).get("max_symbols_per_run", 0))
         if max_symbols > 0:
             universe = universe[:max_symbols]
+        market_label_zh = {"bull": "牛市", "bear": "熊市", "neutral": "震荡", "unknown": "未知"}.get(
+            market_state.label, market_state.label
+        )
         print(
-            f"[recommend] signal_date={signal_date} stocks_total={stocks_total} "
-            f"filtered={filtered_total} universe={len(universe)} "
-            f"market={market_state.label}(mom20={market_state.mom20:.2%}) reason={market_reason}",
+            f"[推荐] 信号日={signal_date} 股票总数={stocks_total} "
+            f"过滤后={filtered_total} 实际扫描={len(universe)} "
+            f"市场={market_label_zh}(mom20={market_state.mom20:.2%}) 原因={market_reason}",
             flush=True,
         )
         enabled_modes = self._resolve_enabled_modes()
@@ -82,7 +87,10 @@ class Recommender:
             "relaxed_scored": int(stats_by_mode.get("relaxed", {}).get("scored", 0)) if "relaxed" in enabled_modes else None,
             "force_scored": int(stats_by_mode.get("force", {}).get("scored", 0)) if "force" in enabled_modes else None,
         }
-        print(f"[recommend] done in {time.time() - t0:.1f}s, candidates={len(candidates)}, mode={mode}", flush=True)
+        print(
+            f"[推荐] 完成，用时 {time.time() - t0:.1f}s，候选数={len(candidates)}，最终模式={MODE_ZH.get(mode, mode)}",
+            flush=True,
+        )
         return RecommendationResult(
             trade_date=target_date,
             symbol=top.symbol,
@@ -197,33 +205,33 @@ class Recommender:
                         {"symbol": stock.symbol, "reason": friendly_error_message(exc)}
                     )
                 if progress_every > 0 and (idx % progress_every == 0 or idx == total_symbols):
-                    print(f"[{mode}] scanned {idx}/{total_symbols}, candidates={len(out)}", flush=True)
+                    print(f"[{MODE_ZH.get(mode, mode)}] 已扫描 {idx}/{total_symbols}，候选={len(out)}", flush=True)
                 continue
             if not bars:
                 stats["no_bars"] += 1
                 if len(stats["no_bars_symbols"]) < int(self.cfg.get("strategy", {}).get("failed_symbol_examples", 20)):
                     stats["no_bars_symbols"].append(stock.symbol)
                 if progress_every > 0 and (idx % progress_every == 0 or idx == total_symbols):
-                    print(f"[{mode}] scanned {idx}/{total_symbols}, candidates={len(out)}", flush=True)
+                    print(f"[{MODE_ZH.get(mode, mode)}] 已扫描 {idx}/{total_symbols}，候选={len(out)}", flush=True)
                 continue
             stats["kline_success"] += 1
             min_bars = 70 if mode != "force" else 30
             if len(bars) < min_bars:
                 stats["insufficient_bars"] += 1
                 if progress_every > 0 and (idx % progress_every == 0 or idx == total_symbols):
-                    print(f"[{mode}] scanned {idx}/{total_symbols}, candidates={len(out)}", flush=True)
+                    print(f"[{MODE_ZH.get(mode, mode)}] 已扫描 {idx}/{total_symbols}，候选={len(out)}", flush=True)
                 continue
             df = add_indicators(bars_to_df(bars))
             if df.empty:
                 stats["df_empty"] += 1
                 if progress_every > 0 and (idx % progress_every == 0 or idx == total_symbols):
-                    print(f"[{mode}] scanned {idx}/{total_symbols}, candidates={len(out)}", flush=True)
+                    print(f"[{MODE_ZH.get(mode, mode)}] 已扫描 {idx}/{total_symbols}，候选={len(out)}", flush=True)
                 continue
             latest = df.iloc[-1]
             if mode != "force" and not passes_threshold(latest, mode):
                 stats["threshold_reject"] += 1
                 if progress_every > 0 and (idx % progress_every == 0 or idx == total_symbols):
-                    print(f"[{mode}] scanned {idx}/{total_symbols}, candidates={len(out)}", flush=True)
+                    print(f"[{MODE_ZH.get(mode, mode)}] 已扫描 {idx}/{total_symbols}，候选={len(out)}", flush=True)
                 continue
             if not passes_risk_filter(latest, market_state, mode, self.cfg):
                 market_enabled = bool(self.cfg.get("market_filter", {}).get("enabled", True))
@@ -232,7 +240,7 @@ class Recommender:
                 else:
                     stats["risk_reject"] += 1
                 if progress_every > 0 and (idx % progress_every == 0 or idx == total_symbols):
-                    print(f"[{mode}] scanned {idx}/{total_symbols}, candidates={len(out)}", flush=True)
+                    print(f"[{MODE_ZH.get(mode, mode)}] 已扫描 {idx}/{total_symbols}，候选={len(out)}", flush=True)
                 continue
             score_total, breakdown = compute_score(latest, self.cfg)
             out.append(
@@ -247,29 +255,29 @@ class Recommender:
             )
             stats["scored"] += 1
             if progress_every > 0 and (idx % progress_every == 0 or idx == total_symbols):
-                print(f"[{mode}] scanned {idx}/{total_symbols}, candidates={len(out)}", flush=True)
+                print(f"[{MODE_ZH.get(mode, mode)}] 已扫描 {idx}/{total_symbols}，候选={len(out)}", flush=True)
         out.sort(key=lambda x: x.score_total, reverse=True)
         return out, stats
 
     @staticmethod
     def _print_mode_stats(mode: str, stats: dict) -> None:
         print(
-            f"[{mode}][stats] scanned={stats['scanned']} "
-            f"kline_success={stats['kline_success']} kline_failed={stats['kline_failed']} "
-            f"no_bars={stats['no_bars']} insufficient_bars={stats['insufficient_bars']} "
-            f"df_empty={stats['df_empty']} threshold_reject={stats['threshold_reject']} "
-            f"risk_reject={stats['risk_reject']} market_reject={stats['market_reject']} "
-            f"scored={stats['scored']}",
+            f"[{MODE_ZH.get(mode, mode)}][统计] 总扫描={stats['scanned']} "
+            f"K线成功={stats['kline_success']} K线失败={stats['kline_failed']} "
+            f"无K线={stats['no_bars']} 历史不足={stats['insufficient_bars']} "
+            f"指标空表={stats['df_empty']} 阈值淘汰={stats['threshold_reject']} "
+            f"风控淘汰={stats['risk_reject']} 市场淘汰={stats['market_reject']} "
+            f"入选={stats['scored']}",
             flush=True,
         )
         failed_examples = stats.get("kline_failed_examples", [])
         if failed_examples:
             preview = "; ".join([f"{x['symbol']}: {x['reason']}" for x in failed_examples[:5]])
-            print(f"[{mode}][kline_failed_symbols] {preview}", flush=True)
+            print(f"[{MODE_ZH.get(mode, mode)}][K线失败示例] {preview}", flush=True)
         no_bars_symbols = stats.get("no_bars_symbols", [])
         if no_bars_symbols:
             preview = ", ".join(no_bars_symbols[:10])
-            print(f"[{mode}][no_bars_symbols] {preview}", flush=True)
+            print(f"[{MODE_ZH.get(mode, mode)}][无K线代码] {preview}", flush=True)
 
     def _resolve_market_state(self, signal_date: date) -> tuple[MarketState, str]:
         mcfg = self.cfg.get("market_filter", {})

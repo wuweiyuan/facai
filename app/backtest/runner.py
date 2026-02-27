@@ -9,6 +9,8 @@ from app.engine.recommender import Recommender
 from app.error_messages import friendly_error_message
 from app.models import BacktestRecord
 
+MODE_ZH = {"normal": "常规", "relaxed": "放宽", "force": "强制"}
+
 
 class BacktestRunner:
     def __init__(self, recommender: Recommender):
@@ -41,7 +43,7 @@ class BacktestRunner:
                 if len(error_examples) < self.max_error_examples:
                     error_examples.append({"trade_date": dt.isoformat(), "error_type": key, "message": zh_msg})
                 if self.backtest_verbose_errors:
-                    print(f"[backtest][skip] {dt.isoformat()} {key}: {zh_msg}", flush=True)
+                    print(f"[回测][跳过] {dt.isoformat()} {key}: {zh_msg}", flush=True)
                 continue
             run_meta = self.recommender.get_last_run_meta() or {}
             if self.backtest_verbose_errors:
@@ -51,18 +53,20 @@ class BacktestRunner:
                 force_scored = run_meta.get("force_scored", "n/a")
                 final_mode = run_meta.get("final_mode", rec.threshold_mode)
                 print(
-                    "[backtest][day] "
-                    f"target={dt.isoformat()} signal={signal_date} "
-                    f"normal_scored={normal_scored} relaxed_scored={relaxed_scored} "
-                    f"force_scored={force_scored} final_mode={final_mode}",
+                    "[回测][日度] "
+                    f"目标日={dt.isoformat()} 信号日={signal_date} "
+                    f"常规模式入选={normal_scored} 放宽模式入选={relaxed_scored} "
+                    f"强制模式入选={force_scored} 最终模式={MODE_ZH.get(final_mode, final_mode)}",
                     flush=True,
                 )
             mode_counts[rec.threshold_mode] += 1
             bars = self.ds.get_daily_bars(rec.symbol, dt, trade_dates[-1])
             close_map = {b.trade_date: b.close for b in bars}
             ret_1d_gross = self._calc_forward_return(close_map, dt, trade_dates, 1)
+            ret_3d_gross = self._calc_forward_return(close_map, dt, trade_dates, 3)
             ret_5d_gross = self._calc_forward_return(close_map, dt, trade_dates, 5)
             ret_1d_net = self._apply_round_trip_cost(ret_1d_gross)
+            ret_3d_net = self._apply_round_trip_cost(ret_3d_gross)
             ret_5d_net = self._apply_round_trip_cost(ret_5d_gross)
             records.append(
                 BacktestRecord(
@@ -71,8 +75,10 @@ class BacktestRunner:
                     name=rec.name,
                     threshold_mode=rec.threshold_mode,
                     ret_1d_gross=ret_1d_gross,
+                    ret_3d_gross=ret_3d_gross,
                     ret_5d_gross=ret_5d_gross,
                     ret_1d_net=ret_1d_net,
+                    ret_3d_net=ret_3d_net,
                     ret_5d_net=ret_5d_net,
                 )
             )
@@ -124,11 +130,15 @@ class BacktestRunner:
         mode_counts: dict[str, int],
     ) -> dict:
         one_gross = [r.ret_1d_gross for r in records if r.ret_1d_gross is not None]
+        three_gross = [r.ret_3d_gross for r in records if r.ret_3d_gross is not None]
         five_gross = [r.ret_5d_gross for r in records if r.ret_5d_gross is not None]
         one_net = [r.ret_1d_net for r in records if r.ret_1d_net is not None]
+        three_net = [r.ret_3d_net for r in records if r.ret_3d_net is not None]
         five_net = [r.ret_5d_net for r in records if r.ret_5d_net is not None]
-        win_rate_gross = sum(1 for x in one_gross if x > 0) / len(one_gross) if one_gross else 0.0
-        win_rate_net = sum(1 for x in one_net if x > 0) / len(one_net) if one_net else 0.0
+        win_rate_gross_1d = sum(1 for x in one_gross if x > 0) / len(one_gross) if one_gross else 0.0
+        win_rate_gross_3d = sum(1 for x in three_gross if x > 0) / len(three_gross) if three_gross else 0.0
+        win_rate_net_1d = sum(1 for x in one_net if x > 0) / len(one_net) if one_net else 0.0
+        win_rate_net_3d = sum(1 for x in three_net if x > 0) / len(three_net) if three_net else 0.0
         equity = 1.0
         curve = []
         for v in one_net:
@@ -146,11 +156,15 @@ class BacktestRunner:
             "attempted_days": attempted_days,
             "total_trades": len(records),
             "skipped_days": max(attempted_days - len(records), 0),
-            "win_rate_gross_1d": win_rate_gross,
-            "win_rate_net_1d": win_rate_net,
+            "win_rate_gross_1d": win_rate_gross_1d,
+            "win_rate_gross_3d": win_rate_gross_3d,
+            "win_rate_net_1d": win_rate_net_1d,
+            "win_rate_net_3d": win_rate_net_3d,
             "avg_return_1d_gross": mean(one_gross) if one_gross else 0.0,
+            "avg_return_3d_gross": mean(three_gross) if three_gross else 0.0,
             "avg_return_5d_gross": mean(five_gross) if five_gross else 0.0,
             "avg_return_1d_net": mean(one_net) if one_net else 0.0,
+            "avg_return_3d_net": mean(three_net) if three_net else 0.0,
             "avg_return_5d_net": mean(five_net) if five_net else 0.0,
             "max_drawdown_proxy": max_dd,
             "threshold_mode_counts": mode_counts,

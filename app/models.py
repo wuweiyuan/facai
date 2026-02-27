@@ -67,6 +67,8 @@ class BacktestRecord:
     name: str
     threshold_mode: str
     ret_1d_gross: float | None
+    ret_3d_gross: float | None
     ret_5d_gross: float | None
     ret_1d_net: float | None
+    ret_3d_net: float | None
     ret_5d_net: float | None
