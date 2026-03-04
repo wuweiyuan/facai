@@ -57,3 +57,12 @@ class TestRecommender(TestCase):
         self.assertIn(rec.symbol, {"000001", "000002"})
         self.assertGreater(rec.score_total, 0.0)
 
+    def test_recommend_many_honors_count(self):
+        cfg = {
+            "universe": {"limit": 100},
+            "filters": {"exclude_st": True, "exclude_star_board": True, "exclude_bj_board": True},
+            "strategy": {"pick_count": 3, "weights": {"trend": 0.4, "momentum": 0.4, "stability": 0.2}},
+        }
+        recs = Recommender(FakeDataSource(), cfg).recommend_many(date(2025, 3, 20))
+        self.assertEqual(len(recs), 2)
+        self.assertTrue(all(r.score_total > 0.0 for r in recs))

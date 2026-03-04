@@ -6,11 +6,12 @@ from app.models import StockInfo
 
 
 def _excluded_board(symbol: str, exclude_star: bool, exclude_bj: bool, exclude_gem: bool) -> bool:
-    if exclude_star and symbol.startswith("688"):
+    if exclude_star and symbol.startswith(("688", "689")):
         return True
     if bool(exclude_gem) and symbol.startswith("300"):
         return True
-    if exclude_bj and symbol.startswith(("4", "8")):
+    # Beijing exchange / related prefixes may appear as 4*/8*/9* (including 92*).
+    if exclude_bj and symbol.startswith(("4", "8", "9")):
         return True
     return False
 

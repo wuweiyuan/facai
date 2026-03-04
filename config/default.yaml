@@ -6,8 +6,8 @@ network:
 
 data_source:
   use_spot_name_merge: false
-  request_timeout_sec: 3
-  hist_retries: 1
+  request_timeout_sec: 6
+  hist_retries: 2
   cache_enabled: true
   cache_dir: .cache/akshare
 
@@ -65,6 +65,7 @@ risk_targets:
 strategy:
   name: trend_momentum_v1
   lookback_days: 120
+  pick_count: 3
   enabled_modes: [normal]
   max_symbols_per_run: 0
   progress_every: 10

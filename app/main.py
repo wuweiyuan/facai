@@ -17,25 +17,49 @@ from app.network import clear_proxy_env, disable_requests_env_proxy, force_no_pr
 from app.reporting import append_recommendation_csv, append_recommendation_md, append_recommendation_txt
 
 
+METRIC_LABELS_ZH = {
+    "close": "收盘价",
+    "ma20": "20日均线",
+    "ma60": "60日均线",
+    "mom5": "5日动量",
+    "mom20": "20日动量",
+    "rsi14": "RSI14",
+    "atr14": "ATR14",
+    "stop_loss_price": "止损价",
+    "take_profit_price": "止盈价",
+    "suggested_holding_days": "建议持股天数",
+    "vol_ratio_5_20": "量比(5/20)",
+    "volume_zscore20": "成交量Z分数(20)",
+    "turnover_rate": "换手率",
+    "vol20_std": "20日波动率",
+}
+
+
 def _parse_date(v: str | None) -> date:
     if not v:
         return date.today()
     return datetime.strptime(v, "%Y-%m-%d").date()
 
 
-def _print_recommendation(rec, output: str) -> None:
+def _print_recommendations(recs, output: str) -> None:
+    if not recs:
+        raise RuntimeError("No recommendations")
+    rec = recs[0]
     if output == "json":
-        print(json.dumps(rec.as_dict(), ensure_ascii=False, indent=2))
+        payload = [item.as_dict() for item in recs]
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
         return
-    print(f"交易日: {rec.trade_date.isoformat()}  阈值模式: {rec.threshold_mode}")
-    print(f"推荐: {rec.symbol} {rec.name}")
-    print(f"总分: {rec.score_total:.2f}")
-    print("关键指标:")
-    for k, v in rec.key_metrics.items():
-        print(f"  - {k}: {v:.4f}")
-    print("推荐理由:")
-    for idx, r in enumerate(rec.reason, start=1):
-        print(f"  {idx}. {r}")
+    print(f"交易日: {rec.trade_date.isoformat()}  阈值模式: {rec.threshold_mode}  推荐数量: {len(recs)}")
+    for idx, item in enumerate(recs, start=1):
+        print(f"\n[{idx}] {item.symbol} {item.name}")
+        print(f"总分: {item.score_total:.2f}")
+        print("关键指标:")
+        for k, v in item.key_metrics.items():
+            label = METRIC_LABELS_ZH.get(k, k)
+            print(f"  - {label}: {v:.4f}")
+        print("推荐理由:")
+        for ridx, r in enumerate(item.reason, start=1):
+            print(f"  {ridx}. {r}")
 
 
 def _print_backtest(summary: dict, output: str) -> None:
@@ -172,8 +196,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--config", default="config/default.yaml", help="Path to YAML config")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    p_rec = sub.add_parser("recommend", help="Recommend one stock for target trading day")
+    p_rec = sub.add_parser("recommend", help="Recommend top stocks for target trading day")
     p_rec.add_argument("--date", default=None, help="Target date YYYY-MM-DD")
+    p_rec.add_argument("--count", type=int, default=None, help="How many stocks to pick; defaults to strategy.pick_count")
     p_rec.add_argument("--output", choices=["table", "json"], default="table")
 
     p_exp = sub.add_parser("explain", help="Explain one stock score on target date")
@@ -185,6 +210,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_bt = sub.add_parser("backtest", help="Backtest over period")
     p_bt.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
     p_bt.add_argument("--end", required=True, help="End date YYYY-MM-DD")
+    p_bt.add_argument("--count", type=int, default=None, help="How many stocks per day; defaults to strategy.pick_count")
     p_bt.add_argument("--output", choices=["table", "json", "json-cn"], default="json-cn")
 
     p_doc = sub.add_parser("doctor", help="Run connectivity diagnostics for data sources")
@@ -218,13 +244,20 @@ def main() -> None:
     rec_engine = Recommender(ds, cfg)
 
     if args.cmd == "recommend":
-        rec = rec_engine.recommend(_parse_date(args.date))
-        _print_recommendation(rec, args.output)
+        recs = rec_engine.recommend_many(_parse_date(args.date), count=args.count)
+        _print_recommendations(recs, args.output)
         report_cfg = cfg.get("reporting", {})
         if bool(report_cfg.get("enabled", True)):
-            saved = append_recommendation_csv(rec, str(report_cfg.get("recommendation_csv", "reports/recommendations.csv")))
-            saved_md = append_recommendation_md(rec, str(report_cfg.get("recommendation_md", "reports/recommendations.md")))
-            saved_txt = append_recommendation_txt(rec, str(report_cfg.get("recommendation_txt", "reports/recommendations.txt")))
+            for rec in recs:
+                saved = append_recommendation_csv(
+                    rec, str(report_cfg.get("recommendation_csv", "reports/recommendations.csv"))
+                )
+                saved_md = append_recommendation_md(
+                    rec, str(report_cfg.get("recommendation_md", "reports/recommendations.md"))
+                )
+                saved_txt = append_recommendation_txt(
+                    rec, str(report_cfg.get("recommendation_txt", "reports/recommendations.txt"))
+                )
             print(f"已写入文档: {saved}")
             print(f"已写入文档: {saved_md}")
             print(f"已写入文档: {saved_txt}")
@@ -263,9 +296,9 @@ def main() -> None:
         # When emitting JSON, suppress verbose runtime logs and keep only final payload.
         if args.output in {"json", "json-cn"}:
             with contextlib.redirect_stdout(io.StringIO()):
-                summary = runner.run(_parse_date(args.start), _parse_date(args.end))
+                summary = runner.run(_parse_date(args.start), _parse_date(args.end), count=args.count)
         else:
-            summary = runner.run(_parse_date(args.start), _parse_date(args.end))
+            summary = runner.run(_parse_date(args.start), _parse_date(args.end), count=args.count)
         _print_backtest(summary, args.output)
         return
 
