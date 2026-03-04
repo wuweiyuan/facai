@@ -454,10 +454,20 @@ class AkshareDataSource:
                 "turnover_rate": [b.turnover_rate for b in fetched],
             }
         )
-        frames = [frame for frame in (df_local, fetched_df) if not frame.empty]
+        bar_columns = ["trade_date", "open", "high", "low", "close", "volume", "turnover_rate"]
+        frames = []
+        for frame in (df_local, fetched_df):
+            if frame.empty:
+                continue
+            # Drop all-NA columns before concat to avoid pandas future dtype inference warning.
+            frames.append(frame.dropna(axis=1, how="all"))
         if not frames:
             return None
         merged = frames[0].copy() if len(frames) == 1 else pd.concat(frames, ignore_index=True)
+        for col in bar_columns:
+            if col not in merged.columns:
+                merged[col] = pd.NA
+        merged = merged[bar_columns]
         merged["trade_date"] = pd.to_datetime(merged["trade_date"], errors="coerce").dt.strftime("%Y-%m-%d")
         merged = merged.dropna(subset=["trade_date"])
         merged = merged.drop_duplicates(subset=["trade_date"], keep="last").sort_values("trade_date").reset_index(drop=True)

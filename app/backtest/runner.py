@@ -25,7 +25,7 @@ class BacktestRunner:
         self.backtest_verbose_errors = bool(recommender.cfg.get("backtest", {}).get("verbose_errors", True))
         self.max_error_examples = int(recommender.cfg.get("backtest", {}).get("max_error_examples", 20))
 
-    def run(self, start_date: date, end_date: date) -> dict:
+    def run(self, start_date: date, end_date: date, count: int | None = None) -> dict:
         trade_dates = self.ds.get_trade_dates(start_date, end_date)
         if len(trade_dates) < 8:
             raise RuntimeError("Not enough trade dates for backtest")
@@ -35,7 +35,7 @@ class BacktestRunner:
         mode_counts: Counter[str] = Counter()
         for dt in trade_dates[:-5]:
             try:
-                rec = self.recommender.recommend(dt)
+                recs = self.recommender.recommend_many(dt, count=count)
             except Exception as exc:
                 key = type(exc).__name__
                 error_counts[key] += 1
@@ -51,29 +51,36 @@ class BacktestRunner:
                 normal_scored = run_meta.get("normal_scored", "n/a")
                 relaxed_scored = run_meta.get("relaxed_scored", "n/a")
                 force_scored = run_meta.get("force_scored", "n/a")
-                final_mode = run_meta.get("final_mode", rec.threshold_mode)
+                selected_count = run_meta.get("selected_count", len(recs))
+                final_mode = run_meta.get("final_mode", recs[0].threshold_mode)
                 print(
                     "[回测][日度] "
                     f"目标日={dt.isoformat()} 信号日={signal_date} "
                     f"常规模式入选={normal_scored} 放宽模式入选={relaxed_scored} "
-                    f"强制模式入选={force_scored} 最终模式={MODE_ZH.get(final_mode, final_mode)}",
+                    f"强制模式入选={force_scored} 最终入选={selected_count} "
+                    f"最终模式={MODE_ZH.get(final_mode, final_mode)}",
                     flush=True,
                 )
-            mode_counts[rec.threshold_mode] += 1
-            bars = self.ds.get_daily_bars(rec.symbol, dt, trade_dates[-1])
-            close_map = {b.trade_date: b.close for b in bars}
-            ret_1d_gross = self._calc_forward_return(close_map, dt, trade_dates, 1)
-            ret_3d_gross = self._calc_forward_return(close_map, dt, trade_dates, 3)
-            ret_5d_gross = self._calc_forward_return(close_map, dt, trade_dates, 5)
+            mode_counts[recs[0].threshold_mode] += 1
+            symbol_name_pairs = [(r.symbol, r.name) for r in recs]
+            close_maps: dict[str, dict] = {}
+            for symbol, _name in symbol_name_pairs:
+                bars = self.ds.get_daily_bars(symbol, dt, trade_dates[-1])
+                close_maps[symbol] = {b.trade_date: b.close for b in bars}
+            ret_1d_gross = self._calc_basket_forward_return(close_maps, dt, trade_dates, 1)
+            ret_3d_gross = self._calc_basket_forward_return(close_maps, dt, trade_dates, 3)
+            ret_5d_gross = self._calc_basket_forward_return(close_maps, dt, trade_dates, 5)
             ret_1d_net = self._apply_round_trip_cost(ret_1d_gross)
             ret_3d_net = self._apply_round_trip_cost(ret_3d_gross)
             ret_5d_net = self._apply_round_trip_cost(ret_5d_gross)
+            symbols = "+".join(s for s, _ in symbol_name_pairs)
+            names = "+".join(n for _, n in symbol_name_pairs)
             records.append(
                 BacktestRecord(
                     trade_date=dt,
-                    symbol=rec.symbol,
-                    name=rec.name,
-                    threshold_mode=rec.threshold_mode,
+                    symbol=symbols,
+                    name=names,
+                    threshold_mode=recs[0].threshold_mode,
                     ret_1d_gross=ret_1d_gross,
                     ret_3d_gross=ret_3d_gross,
                     ret_5d_gross=ret_5d_gross,
@@ -118,6 +125,19 @@ class BacktestRunner:
         if c1 is None or c2 is None or c1 <= 0:
             return None
         return c2 / c1 - 1.0
+
+    @classmethod
+    def _calc_basket_forward_return(
+        cls, close_maps: dict[str, dict], dt: date, trade_dates: list[date], step: int
+    ) -> float | None:
+        rets = []
+        for close_map in close_maps.values():
+            r = cls._calc_forward_return(close_map, dt, trade_dates, step)
+            if r is not None:
+                rets.append(r)
+        if not rets:
+            return None
+        return mean(rets)
 
     @staticmethod
     def _summary(

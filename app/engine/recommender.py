@@ -36,6 +36,9 @@ class Recommender:
         return dates[-1]
 
     def recommend(self, target_date: date) -> RecommendationResult:
+        return self.recommend_many(target_date, count=1)[0]
+
+    def recommend_many(self, target_date: date, count: int | None = None) -> list[RecommendationResult]:
         t0 = time.time()
         signal_date = self.resolve_signal_date(target_date)
         fresh_ok, freshness_msg = self._check_signal_data_freshness(signal_date)
@@ -77,30 +80,41 @@ class Recommender:
             if mode_stats is None:
                 continue
             self._print_mode_stats(m, mode_stats)
-        top = candidates[0]
+        pick_count = self._resolve_pick_count(count)
+        selected = candidates[:pick_count]
         self._last_run_meta = {
             "target_date": target_date.isoformat(),
             "signal_date": signal_date.isoformat(),
             "final_mode": mode,
             "enabled_modes": enabled_modes,
+            "selected_count": len(selected),
+            "available_candidates": len(candidates),
             "normal_scored": int(stats_by_mode.get("normal", {}).get("scored", 0)) if "normal" in enabled_modes else None,
             "relaxed_scored": int(stats_by_mode.get("relaxed", {}).get("scored", 0)) if "relaxed" in enabled_modes else None,
             "force_scored": int(stats_by_mode.get("force", {}).get("scored", 0)) if "force" in enabled_modes else None,
         }
         print(
-            f"[推荐] 完成，用时 {time.time() - t0:.1f}s，候选数={len(candidates)}，最终模式={MODE_ZH.get(mode, mode)}",
+            f"[推荐] 完成，用时 {time.time() - t0:.1f}s，候选数={len(candidates)}，选中={len(selected)}，最终模式={MODE_ZH.get(mode, mode)}",
             flush=True,
         )
-        return RecommendationResult(
-            trade_date=target_date,
-            symbol=top.symbol,
-            name=top.name,
-            score_total=top.score_total,
-            score_breakdown=top.score_breakdown,
-            key_metrics=top.key_metrics,
-            reason=top.reason,
-            threshold_mode=mode,
-        )
+        return [
+            RecommendationResult(
+                trade_date=target_date,
+                symbol=item.symbol,
+                name=item.name,
+                score_total=item.score_total,
+                score_breakdown=item.score_breakdown,
+                key_metrics=item.key_metrics,
+                reason=item.reason,
+                threshold_mode=mode,
+            )
+            for item in selected
+        ]
+
+    def _resolve_pick_count(self, count: int | None) -> int:
+        if count is not None:
+            return max(int(count), 1)
+        return max(int(self.cfg.get("strategy", {}).get("pick_count", 1)), 1)
 
     def _resolve_enabled_modes(self) -> list[str]:
         cfg_modes = self.cfg.get("strategy", {}).get("enabled_modes", ["normal", "relaxed", "force"])
