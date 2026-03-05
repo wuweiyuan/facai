@@ -66,7 +66,9 @@ strategy:
   name: trend_momentum_v1
   lookback_days: 120
   pick_count: 3
-  enabled_modes: [normal]
+  # enabled_modes: [force]
+  # enabled_modes: [relaxed]
+   enabled_modes: [normal]
   max_symbols_per_run: 0
   progress_every: 10
   failed_symbol_examples: 20

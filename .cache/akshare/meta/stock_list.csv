@@ -279,7 +279,7 @@ symbol,name,is_st,is_paused,market
 000790,华神科技,False,False,SZ
 000791,甘肃能源,False,False,SZ
 000792,盐湖股份,False,False,SZ
-000793,ST华闻,True,False,SZ
+000793,*ST华闻,True,False,SZ
 000795,英洛华,False,False,SZ
 000796,凯撒旅业,False,False,SZ
 000797,中国武夷,False,False,SZ
@@ -1001,7 +1001,7 @@ symbol,name,is_st,is_paused,market
 002508,老板电器,False,False,SZ
 002510,天汽模,False,False,SZ
 002511,中顺洁柔,False,False,SZ
-002512,达华智能,False,False,SZ
+002512,ST达华,True,False,SZ
 002513,蓝丰生化,False,False,SZ
 002514,宝馨科技,False,False,SZ
 002515,金字火腿,False,False,SZ
@@ -5036,7 +5036,7 @@ symbol,name,is_st,is_paused,market
 688576,西山科技,False,False,STAR
 688577,浙海德曼,False,False,STAR
 688578,艾力斯,False,False,STAR
-688579,山大地纬,False,False,STAR
+688579,地纬智能,False,False,STAR
 688580,伟思医疗,False,False,STAR
 688581,安杰思,False,False,STAR
 688582,芯动联科,False,False,STAR
@@ -5184,7 +5184,7 @@ symbol,name,is_st,is_paused,market
 688805,健信超导,False,False,STAR
 688807,优迅股份,False,False,STAR
 688809,强一股份,False,False,STAR
-688816,C易思,False,False,STAR
+688816,易思维,False,False,STAR
 688818,电科蓝天,False,False,STAR
 688819,天能股份,False,False,STAR
 688981,中芯国际,False,False,STAR
@@ -5271,12 +5271,14 @@ symbol,name,is_st,is_paused,market
 920163,方大新材,False,False,OTHER
 920166,海圣医疗,False,False,OTHER
 920167,同享科技,False,False,OTHER
+920168,通宝光电,False,False,OTHER
 920169,七丰精工,False,False,OTHER
 920171,志晟信息,False,False,OTHER
 920174,五新隧装,False,False,OTHER
 920175,东方碳素,False,False,OTHER
 920179,凯德石英,False,False,OTHER
 920180,爱得科技,False,False,OTHER
+920183,N海菲曼,False,False,OTHER
 920184,国源科技,False,False,OTHER
 920185,贝特瑞,False,False,OTHER
 920190,雷神科技,False,False,OTHER
