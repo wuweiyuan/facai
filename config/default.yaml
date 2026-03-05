@@ -31,6 +31,8 @@ market_filter:
   enabled: true
   index_symbol: "000300" # CSI 300
   lookback_days: 120
+  fail_on_error: true
+  # block_on_bear: false
   block_on_bear: true
 
 risk_filter:
@@ -68,7 +70,7 @@ strategy:
   pick_count: 3
   # enabled_modes: [force]
   # enabled_modes: [relaxed]
-   enabled_modes: [normal]
+  enabled_modes: [normal]
   max_symbols_per_run: 0
   progress_every: 10
   failed_symbol_examples: 20

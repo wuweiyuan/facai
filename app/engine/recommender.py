@@ -297,16 +297,25 @@ class Recommender:
         mcfg = self.cfg.get("market_filter", {})
         if not bool(mcfg.get("enabled", True)):
             return MarketState(label="unknown", close=0.0, ma20=0.0, ma60=0.0, mom20=0.0), "market_filter_disabled"
+        fail_on_error = bool(mcfg.get("fail_on_error", False))
         index_symbol = str(mcfg.get("index_symbol", "000300"))
         lookback = int(mcfg.get("lookback_days", 120))
         start = signal_date - timedelta(days=max(lookback * 2, 180))
         try:
             closes = self.data_source.get_index_closes(index_symbol, start, signal_date)
             if not closes:
+                if fail_on_error:
+                    raise RuntimeError(
+                        f"Market index data unavailable: symbol={index_symbol}, range={start}->{signal_date}, reason=index_closes_empty"
+                    )
                 return MarketState(label="unknown", close=0.0, ma20=0.0, ma60=0.0, mom20=0.0), "index_closes_empty"
             st = detect_market_state(closes, signal_date, self.cfg)
             return st, "ok"
         except Exception as exc:
+            if fail_on_error:
+                raise RuntimeError(
+                    f"Market index data unavailable: symbol={index_symbol}, range={start}->{signal_date}, reason={type(exc).__name__}"
+                ) from exc
             return MarketState(label="unknown", close=0.0, ma20=0.0, ma60=0.0, mom20=0.0), f"index_error:{type(exc).__name__}"
 
     def _fetch_recent_bars(self, symbol: str, signal_date: date):
