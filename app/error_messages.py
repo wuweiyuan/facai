@@ -40,6 +40,8 @@ def friendly_error_message(exc_or_msg: Exception | str) -> str:
         if m:
             return f"获取股票 {m.group(1)} 日线失败（TX 数据源不可用）。"
         return "获取股票日线失败（TX 数据源不可用）。"
+    if "Market index data unavailable:" in msg:
+        return "市场指数数据不可用（market_filter.fail_on_error=true），已停止执行推荐。请检查网络、DNS 或指数缓存。"
     if "Unsupported command:" in msg:
         return "命令不受支持，请检查子命令名称（recommend/explain/backtest/doctor/check-kline）。"
     if "Config not found:" in msg:
