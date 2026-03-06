@@ -1,103 +1,478 @@
+# 项目默认配置文件
+#
+# 作用：
+# - 控制数据拉取、缓存、选股范围、风险过滤、市场过滤、回测与报表输出等行为。
+# - 该文件会被命令行入口（如 recommend / explain / backtest / doctor）读取。
+# - 一般情况下建议先理解注释，再逐项微调，不建议一次性大改很多参数。
+#
+# 使用建议：
+# - 想先跑通：尽量保留默认值。
+# - 想提高通过率：通常从 strategy.enabled_modes、filters、risk_filter 开始调整。
+# - 想提高稳定性：优先关注 data_freshness、market_filter、risk_filter。
+# - 想减少网络请求与重复下载：优先关注 data_source.cache_enabled 与 cache_dir。
+
+# 时区设置。
+# 主要用于：
+# - 解释“今天”“信号日”等日期语义；
+# - 生成报告文件时间；
+# - 在交易日前后运行时，避免跨时区导致日期判断错误。
+# 对中国 A 股场景，通常固定为 Asia/Shanghai。
 timezone: Asia/Shanghai
 
+# 网络相关配置。
+# 主要影响所有需要访问远程数据源的命令：
+# - python3 -m app.main recommend
+# - python3 -m app.main explain
+# - python3 -m app.main backtest
+# - python3 -m app.main doctor
+# - python3 -m app.main check-kline
 network:
+  # 是否忽略系统环境变量中的代理配置（如 HTTP_PROXY、HTTPS_PROXY）。
+  # 设为 true：程序尽量不使用 shell / 系统里遗留的代理环境变量，避免请求被错误转发。
+  # 适合：本机代理配置混乱、终端里有历史代理变量、访问数据源经常异常时。
+  # 设为 false：如果你明确需要走代理访问外部接口，再关闭此项。
   disable_env_proxy: true
+
+  # 是否强制把所有请求视为 no_proxy（不走代理）。
+  # 设为 true：即使系统层面还有代理设置，也尽量直接连接数据源。
+  # 常用于 macOS 或桌面代理工具仍在生效、导致请求不稳定的情况。
+  # 如果你确实需要通过代理联网，可考虑改为 false。
   force_no_proxy_all: true
 
+# 数据源行为配置。
+# 主要决定：请求超时、重试次数、是否启用本地缓存、缓存目录位置等。
+# 这些配置会影响 recommend / explain / backtest / check-kline 等命令的速度与稳定性。
 data_source:
+  # 是否在名称处理时启用“实时名称合并”逻辑。
+  # 一般保持 false 即可，避免名称来源混杂导致结果不一致。
+  # 若未来项目引入更多现货名称修正逻辑，可按实现需要再开启。
   use_spot_name_merge: false
+
+  # 单次网络请求超时时间，单位：秒。
+  # 设得太小：容易因为网络抖动导致超时失败。
+  # 设得太大：单只股票卡住时，会拖慢整次扫描。
+  # 默认 6 秒属于“偏稳妥”的设置；网络差时可适度调大。
   request_timeout_sec: 6
+
+  # 历史行情请求失败后的重试次数。
+  # 例如某只股票 K 线抓取失败时，程序会再尝试若干次。
+  # 数值越大：容错更强，但整体运行更慢。
   hist_retries: 2
+
+  # 是否启用本地缓存。
+  # 设为 true：已拉取过的数据会缓存在本地，下次运行更快，也能减少对数据源的重复请求。
+  # 设为 false：每次尽量重新请求远程数据，适合排查缓存是否过期，但速度会明显下降。
   cache_enabled: true
+
+  # 本地缓存目录。
+  # 当前缓存写入到 .cache/akshare。
+  # 这是典型的“运行产物”目录，通常不建议提交到 Git 仓库。
   cache_dir: .cache/akshare
 
+# 数据新鲜度检查。
+# 目的是避免“明明以为拿到今天数据，实际还是昨天甚至更早的数据”这种情况。
+# 主要在 recommend 命令里最重要，因为开盘前选股对日期非常敏感。
 data_freshness:
+  # 是否启用数据新鲜度检查。
+  # 设为 true：程序会先检查探针股票/数据日期是否已更新，再继续后续逻辑。
+  # 设为 false：跳过这层保护，更宽松，但有可能基于旧数据得出结果。
   enabled: true
+
+  # 用哪只股票作为“探针股票”检查数据是否更新。
+  # 默认 000001（平安银行）通常流动性高、数据稳定，适合作为观测样本。
   probe_symbol: "000001"
+
+  # 回看最近多少天内的数据，用于判断探针股票是否足够新。
+  # 值越大：容错更强，但检查时参考窗口更长。
+  # 一般 10 天足够覆盖常见节假日与非交易日情况。
   probe_lookback_days: 10
+
+  # 当发现数据未更新时，是否直接停止整个流程。
+  # true：宁可不出结果，也不要基于旧数据继续推荐。
+  # false：只报警告，流程继续执行。
   stop_on_stale: true
-  # Skip per-stock stale bars (often due to停牌); set true to fail fast.
+
+  # 当单只股票数据过旧时，是否立即报错并终止。
+  # 常见场景：个股停牌，导致该股票最新 bar 不更新。
+  # false：对单只股票更宽容，允许跳过继续扫别的股票。
+  # true：只要某只股票过旧就快速失败，适合非常严格的数据校验场景。
   stop_on_stale_stock: false
-  # If a stock is stale for >= N days, treat it as停牌 and skip. Set 0 to disable.
+
+  # 若某只股票数据滞后达到 N 天，则视为“可能停牌”，直接跳过。
+  # 设为 0 表示关闭该判断。
+  # 该参数能减少停牌股票干扰，提高批量扫描效率。
   stock_stale_suspend_days: 5
 
+# 股票池（Universe）配置。
+# 先决定“从哪些股票里挑”，后面的 filters / risk_filter / strategy 再在这个范围内层层筛选。
 universe:
+  # 股票池名称。
+  # 当前 all_a_share 表示全 A 股范围（后续仍会叠加板块过滤与 ST 过滤等规则）。
   name: all_a_share
+
+  # 限制本次运行最多扫描多少只股票。
+  # 0 表示不限制，尽量按完整股票池扫描。
+  # 调试时可设成较小数值（如 50 / 100）以加快运行速度。
   limit: 0
 
+# 基础过滤器。
+# 这些规则通常在策略评分前先执行，用于快速排除不想参与的股票类型。
 filters:
+  # 是否排除 ST / *ST 股票。
+  # 一般建议保持 true，因为这类股票风险、波动和基本面不确定性通常更高。
   exclude_st: true
+
+  # 是否排除科创板股票。
+  # 科创板代码通常以 688 / 689 开头，交易特征与主板存在差异。
   exclude_star_board: true
+
+  # 是否排除北交所及相关代码段股票。
+  # 若你的策略只研究沪深主板，这项通常建议开启。
   exclude_bj_board: true
+
+  # 是否排除创业板股票。
+  # 创业板波动一般更高；若你追求更稳的风格，建议保持 true。
+  # 若想扩大机会集，可考虑改为 false，但需同步评估风险过滤参数。
   exclude_gem_board: true
 
+# 大盘环境过滤。
+# 目的：先判断市场大环境是否适合做当前策略，再决定是否放行个股筛选。
+# 对趋势/动量类策略非常重要。
 market_filter:
+  # 是否启用市场环境过滤。
   enabled: true
-  index_symbol: "000300" # CSI 300
+
+  # 用哪个指数作为市场代表。
+  # 000300 对应沪深 300（CSI 300），常被用作大盘风格和中大盘趋势的代表。
+  index_symbol: "000300" # CSI 300 / 沪深300指数
+
+  # 计算市场状态时回看多少天。
+  # 数值越大：更平滑、更偏中期趋势。
+  # 数值越小：更灵敏，但也更容易受短期波动干扰。
   lookback_days: 120
+
+  # 若市场过滤在计算中发生错误，是否直接视为失败。
+  # true：宁可终止，也不要在市场状态不明时继续运行。
+  # false：计算失败时忽略市场过滤，继续往下执行。
   fail_on_error: true
+
+  # 若指数数据本身过旧，是否停止流程。
+  # true：避免基于旧指数环境做当日推荐。
   stop_on_stale: true
+
+  # 遇到熊市状态时，是否直接阻断选股。
+  # false：即便市场偏弱，也允许后续个股过滤和评分继续进行。
+  # true：一旦判定为熊市，直接不给推荐结果。
   block_on_bear: false
+
+  # 如果你的风格非常保守，可取消下面这行注释，直接在熊市阻断策略。
   # block_on_bear: true
 
+# 个股风险过滤。
+# 作用是在评分前先把“价格不合适、波动太大、量能异常、指标过热”的股票剔除掉。
 risk_filter:
+  # 是否启用个股风险过滤。
   enabled: true
+
+  # 允许的最低股价。
+  # 太低的价格常意味着波动更大、流动性或风险特征不同。
   min_price: 2.0
+
+  # 允许的最高股价。
+  # 过高股价可能带来样本风格偏差，也可能影响组合分散度。
   max_price: 200.0
+
+  # 20 日波动率（标准差）的上限。
+  # 数值越小：越偏向稳定型股票。
+  # 数值越大：越允许高弹性、高波动个股进入候选池。
   max_vol20_std: 0.07
+
+  # RSI 的上限。
+  # 用来避免过热股票在短期极端强势位置被追高。
+  # 上限设得越低，策略越保守。
   rsi_upper: 90.0
+
+  # 最近 5 日成交量 / 20 日成交量 的最低比值。
+  # 用于过滤掉近期量能过度萎缩的股票。
+  # 数值越高：越要求近期仍有一定活跃度。
   min_vol_ratio_5_20: 0.45
+
+  # 是否强制要求换手率数据可用。
+  # false：即使部分数据源没有换手率字段，也允许继续。
+  # true：缺少换手率就直接过滤掉该股票。
   require_turnover_data: false
+
+  # 最低换手率要求。
+  # 设为 0.0 等于不做硬性下限限制。
+  # 若你希望只关注更活跃的股票，可提高该值。
   min_turnover_rate: 0.0
+
+  # 弱市环境下的附加风险控制。
+  # 当市场偏弱时，可以对个股波动或动量提出更严格要求。
   weak_market:
+    # 是否启用弱市专用限制。
     enabled: true
+
+    # 弱市下允许的最大 20 日波动率。
+    # 默认比常规 max_vol20_std 更严格（0.065 < 0.07）。
     max_vol20_std: 0.065
+
+    # 弱市下是否强制要求 20 日动量为正。
+    # false：允许没有明显正动量的股票继续参与。
+    # true：只有中期动量仍为正的股票才保留，更保守。
     require_mom20_positive: false
 
+# 回测/收益计算中的交易成本模型。
+# 主要影响 backtest 的净收益计算；recommend 本身不一定直接使用，但会影响你对策略真实可执行性的评估。
 execution_cost:
+  # 是否启用交易成本模型。
   enabled: true
+
+  # 单边佣金费率。
+  # 例如 0.0002 表示万 2。
   commission_rate: 0.0002
+
+  # 卖出时印花税费率。
+  # A 股卖出通常会计入印花税，因此单独配置。
   stamp_duty_sell_rate: 0.0005
+
+  # 滑点，单位为基点（bps）。
+  # 1 bps = 0.01%，5 bps = 0.05%。
+  # 用来模拟实际成交价与理论价格之间的偏差。
   slippage_bps: 5.0
+
+  # 单边最低佣金。
+  # 某些券商存在“每笔最低佣金”规则，可在此模拟。
+  # 0.0 表示不启用最低佣金限制。
   min_commission_per_side: 0.0
 
+# 推荐结果里的止损 / 止盈目标生成规则。
+# 主要影响 recommend 输出中的建议价格，不直接决定是否选中股票。
 risk_targets:
+  # 风险目标计算方式。
+  # 可选：
+  # - atr：基于 ATR（真实波动幅度均值）动态计算，更贴近个股波动特征。
+  # - percent：按固定百分比计算，简单直观。
   method: atr # atr | percent
+
+  # 当 method=atr 时，止损价 = 基准价 - ATR * stop_loss_atr_mult
+  # 倍数越大：止损更宽，容忍波动更强。
   stop_loss_atr_mult: 1.5
+
+  # 当 method=atr 时，止盈价 = 基准价 + ATR * take_profit_atr_mult
+  # 倍数越大：目标更远，更偏趋势持有。
   take_profit_atr_mult: 3.0
+
+  # 当 method=percent 时使用的止损百分比。
+  # 例如 0.03 表示 3%。
   stop_loss_pct: 0.03
+
+  # 当 method=percent 时使用的止盈百分比。
+  # 例如 0.06 表示 6%。
   take_profit_pct: 0.06
+
+  # 价格四舍五入到的最小跳动单位。
+  # A 股通常是 0.01 元。
   price_round_tick: 0.01
 
+# 核心策略参数。
+# 这是最直接影响选股结果的部分，决定评分逻辑、扫描范围与输出数量。
 strategy:
+  # 策略名称，仅作为标识用途。
+  # 方便后续扩展多个策略版本时区分。
   name: trend_momentum_v1
+
+  # 计算趋势、动量、稳定性等特征时的历史回看天数。
+  # 越大越偏中期；越小越偏短线。
   lookback_days: 120
+
+  # 默认推荐几只股票。
+  # 对 recommend 命令最直接。
+  # 例如这里设为 3，则默认输出 3 只；也可通过命令行 --count 临时覆盖。
   pick_count: 3
+
+  # 策略启用的筛选模式链。
+  # 一般有三类：
+  # - normal：正常/严格模式，优先使用。
+  # - relaxed：放宽条件模式，当 normal 候选太少时可作为次级方案。
+  # - force：强制模式，尽量给出结果，但策略约束最弱。
+  # 下面两行是示例，默认未启用：
   # enabled_modes: [force]
   # enabled_modes: [relaxed]
+  # 当前只启用 normal，表示先坚持严格标准。
   enabled_modes: [normal]
+
+  # 单次运行最多处理多少只股票。
+  # 0 表示不限制。
+  # 若你只是调试逻辑、看输出格式、验证网络，可临时设成较小值。
   max_symbols_per_run: 0
+
+  # 每扫描多少只股票打印一次进度。
+  # 值越小：日志更详细；值越大：终端更清爽。
   progress_every: 10
+
+  # 当股票被过滤或失败时，最多在日志里展示多少个示例。
+  # 主要用于排查“为什么候选这么少”。
   failed_symbol_examples: 20
+
+  # 评分权重。
+  # 最终总分通常由多个子模块加权组成；总和通常建议接近 1。
   weights:
+    # 趋势权重：更看重中期方向是否向上、均线结构是否健康。
     trend: 0.35
+
+    # 动量权重：更看重近期强弱、涨势延续性、速度特征。
     momentum: 0.35
+
+    # 稳定性权重：更看重波动是否可控、走势是否平滑。
     stability: 0.15
+
+    # 成交量权重：更看重量价配合、量能支持是否充分。
     volume: 0.15
 
+# 兜底策略。
+# 当主策略模式没有产生足够候选时，可切换到这里指定的模式继续尝试。
 fallback:
+  # 兜底使用的模式。
+  # 当前为 relaxed，表示严格模式无结果时，先尝试放宽条件，而不是直接 force。
   mode: relaxed
 
+# 输入输出相关配置。
 io:
+  # 默认输出格式。
+  # 常见可选值通常包括 table 等。
+  # table 适合人直接在终端查看。
   default_output: table
 
+# 回测输出与错误展示控制。
 backtest:
+  # 是否在回测时输出详细错误。
+  # true：更利于排障，尤其是历史数据缺失、个股异常时。
+  # false：日志更干净，但排查问题会更困难。
   verbose_errors: true
+
+  # 最多展示多少条错误样例。
+  # 防止回测长区间时错误刷屏。
   max_error_examples: 20
 
+# 报表与日志输出。
+# 这些路径主要影响 recommend 运行后保存哪些文件、保存到哪里。
 reporting:
+  # 是否启用报表输出。
+  # 设为 false：只在终端显示结果，不写入文件。
   enabled: true
+
+  # 推荐结果的 CSV 输出路径。
+  # 适合后续做表格分析、导入 Excel、二次统计。
   recommendation_csv: reports/recommendations.csv
+
+  # 推荐结果的 Markdown 输出路径。
+  # 适合直接在 README、笔记系统、Git 平台中查看。
   recommendation_md: reports/recommendations.md
+
+  # 推荐结果的纯文本输出路径。
+  # 适合简单归档、脚本读取或终端快速查看。
   recommendation_txt: reports/recommendations.txt
+
+  # 每次 recommend 运行的实时日志输出路径。
+  # {signal_date} 会在运行时替换为信号日，例如 reports/20260303.log。
+  # 这类 .log 文件通常属于本地运行产物，不建议提交到代码仓库。
   recommendation_log: reports/{signal_date}.log
+
+# ------------------------------------------------------------
+# 调参参考模板（以下内容全部为注释，不会参与实际配置）
+# ------------------------------------------------------------
+# 使用方法：
+# 1. 先保留当前默认值跑通。
+# 2. 再根据你的风格，从下面模板里挑参数手动替换到正式配置项。
+# 3. 建议一次只改 1~3 个关键参数，然后用 recommend/backtest 对比结果。
+#
+# 一、新手稳妥版（目标：先跑通、少报错、结果尽量稳定）
+# - network.disable_env_proxy: true
+# - network.force_no_proxy_all: true
+# - data_source.request_timeout_sec: 6 ~ 10
+# - data_source.hist_retries: 2 ~ 3
+# - data_freshness.stop_on_stale: true
+# - market_filter.enabled: true
+# - market_filter.block_on_bear: false
+# - filters.exclude_st: true
+# - filters.exclude_star_board: true
+# - filters.exclude_bj_board: true
+# - filters.exclude_gem_board: true
+# - risk_filter.max_vol20_std: 0.06 ~ 0.07
+# - risk_filter.rsi_upper: 85 ~ 90
+# - strategy.enabled_modes: [normal]
+# - strategy.pick_count: 3
+# 适合：
+# - 刚开始使用本项目
+# - 希望结果少一点，但更稳一些
+# - 更关注可解释性与规则一致性
+#
+# 二、保守防守版（目标：更严格过滤，宁缺毋滥）
+# - market_filter.block_on_bear: true
+# - risk_filter.max_vol20_std: 0.05 ~ 0.06
+# - risk_filter.weak_market.enabled: true
+# - risk_filter.weak_market.require_mom20_positive: true
+# - risk_filter.min_vol_ratio_5_20: 0.6 ~ 0.8
+# - risk_filter.rsi_upper: 80 ~ 85
+# - strategy.enabled_modes: [normal]
+# - fallback.mode: relaxed
+# - strategy.pick_count: 1 ~ 3
+# 适合：
+# - 更在意回撤控制
+# - 不介意有些交易日没有候选
+# - 希望在弱市里明显收缩出手频率
+#
+# 三、激进扩展版（目标：增加候选数量，提高覆盖面）
+# - filters.exclude_gem_board: false
+# - market_filter.block_on_bear: false
+# - risk_filter.max_vol20_std: 0.07 ~ 0.10
+# - risk_filter.rsi_upper: 90 ~ 95
+# - risk_filter.min_vol_ratio_5_20: 0.3 ~ 0.45
+# - strategy.enabled_modes: [normal, relaxed]
+# - fallback.mode: force 或 relaxed
+# - strategy.pick_count: 5 ~ 10
+# 适合：
+# - 想扩大候选池
+# - 想提高每日出结果概率
+# - 愿意接受更高波动与更高噪音
+#
+# 四、调试排障版（目标：快速定位问题，不追求最终策略表现）
+# - universe.limit: 50 ~ 200
+# - strategy.max_symbols_per_run: 50 ~ 200
+# - strategy.progress_every: 5
+# - backtest.verbose_errors: true
+# - backtest.max_error_examples: 50
+# - data_source.cache_enabled: true 或 false（两种都可以试）
+# - reporting.enabled: true
+# 适合：
+# - 想确认到底是网络问题、缓存问题还是策略条件太严
+# - 想用较小样本快速验证改动是否生效
+#
+# 五、常见调参方向
+# 1) 候选太少：
+#    - 放宽 strategy.enabled_modes，例如改为 [normal, relaxed]
+#    - 降低 filters 的排除力度，例如允许创业板
+#    - 放宽 risk_filter.max_vol20_std
+#    - 降低 risk_filter.min_vol_ratio_5_20
+#
+# 2) 候选太多、太杂：
+#    - 只保留 strategy.enabled_modes: [normal]
+#    - 提高 risk_filter.min_vol_ratio_5_20
+#    - 降低 risk_filter.rsi_upper
+#    - 开启 market_filter.block_on_bear
+#
+# 3) 运行太慢：
+#    - 打开 data_source.cache_enabled
+#    - 缩小 universe.limit 或 strategy.max_symbols_per_run
+#    - 适当降低 progress_every 的日志频率影响不大，但能让终端更清爽
+#
+# 4) 经常报“数据未更新”：
+#    - 先运行 doctor 与 freshness 脚本确认数据源状态
+#    - 检查是否在非交易时段/刚收盘后太早运行
+#    - 确认本机代理、DNS、网络环境是否异常
+#
+# 5) 回测结果看起来过于理想：
+#    - 检查 execution_cost 是否开启
+#    - 适当提高 slippage_bps
+#    - 增加 commission_rate / min_commission_per_side 模拟真实成交成本

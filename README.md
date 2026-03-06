@@ -4,82 +4,327 @@ Command-line tool to recommend top A-share stocks before open using T-1 close da
 
 中文说明：一个基于 T-1 收盘数据、用于开盘前选股的 A 股命令行研究工具。
 
+## Quick Start
+
+- 默认配置文件：`config/default.yaml`
+- 通用入口：`python3 -m app.main <command> [options]`
+- 如需切换配置文件：`python3 -m app.main --config config/default.yaml <command> ...`
+
 ## Commands
 
-- `python3 -m app.main recommend --date YYYY-MM-DD [--count N]`
-- `python3 -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal` normal relaxed force
-- `python3 -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N]`
-- `python3 -m app.main doctor`
-- `python3 -m app.main check-kline --symbol 000001 --start YYYY-MM-DD --end YYYY-MM-DD`
+- `python3 -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json]`
+- `python3 -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]`
+- `python3 -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
+- `python3 -m app.main doctor [--output table|json]`
+- `python3 -m app.main check-kline --symbol 000001 --start YYYY-MM-DD --end YYYY-MM-DD [--output table|json]`
 - `bash scripts/check_today_update.sh`
 - `bash scripts/check_today_update_json.sh`
 - `bash scripts/check_today_update_multi.sh`
 
-## 中文命令说明
+## 中文命令详解
 
-- `python3 -m app.main recommend --date YYYY-MM-DD [--count N]`：按指定日期推荐多只股票（默认 3 只，可通过 `--count` 覆盖）。
-- `python3 -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal`：解释单只股票评分，`mode` 可选 `normal/relaxed/force`。
-- `python3 -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N]`：按历史区间回测策略表现（可指定每日选股数）。
-- `python3 -m app.main doctor`：检查数据源连通性、DNS、HTTP 请求是否可用。
-- `python3 -m app.main check-kline --symbol 000001 --start YYYY-MM-DD --end YYYY-MM-DD`：检查某只股票在区间内的 K 线拉取结果。
-- `bash scripts/check_today_update.sh`：检查“今天交易日”数据是否已更新（表格输出）。
-- `bash scripts/check_today_update_json.sh`：同上，JSON 输出（便于脚本集成）。
-- `bash scripts/check_today_update_multi.sh`：使用多个探针股票联合检查（默认 `any` 规则）。
+### 全局参数
+
+- `--config`：指定 YAML 配置文件路径；默认是 `config/default.yaml`
+- 适用范围：所有子命令
+- 常见用途：
+  - 保留一份默认配置做日常使用
+  - 复制一份保守版/激进版配置做对比测试
+  - 回测时临时切换到另一套参数
+
+示例：
+
+```bash
+python3 -m app.main --config config/default.yaml recommend --date 2026-03-06
+```
+
+### 1) `recommend`
+
+用途：
+
+- 按指定交易日选出推荐股票
+- 适合开盘前、盘前研究或每日复盘后生成次日观察名单
+- 会根据配置里的过滤器、风险规则、市场环境和评分权重筛选股票
+
+命令：
+
+```bash
+python3 -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json]
+```
+
+参数说明：
+
+- `--date YYYY-MM-DD`
+  - 目标日期
+  - 不传时，程序会按当前日期处理
+  - 注意：程序内部会结合交易日逻辑解析“信号日”，并不是简单按自然日生搬硬套
+- `--count N`
+  - 本次输出推荐数量
+  - 不传时，默认使用 `config/default.yaml` 里的 `strategy.pick_count`
+- `--output table|json`
+  - `table`：适合终端阅读
+  - `json`：适合脚本集成、自动化处理或接口对接
+
+输出特点：
+
+- 终端会输出推荐股票、总分、关键指标、推荐理由
+- 若 `reporting.enabled: true`，还会额外写入：
+  - `reports/recommendations.csv`
+  - `reports/recommendations.md`
+  - `reports/recommendations.txt`
+  - `reports/{signal_date}.log`
+
+常见场景：
+
+- 每天开盘前跑一次，生成候选名单
+- 调整 `strategy.enabled_modes` 后观察候选数量变化
+- 配合 `explain` 深挖某只股票为何入选
+
+示例：
+
+```bash
+python3 -m app.main recommend --date 2026-03-06
+python3 -m app.main recommend --date 2026-03-06 --count 5
+python3 -m app.main recommend --date 2026-03-06 --output json
+```
+
+### 2) `explain`
+
+用途：
+
+- 解释某只股票在指定日期的评分结果
+- 适合回答“为什么这只股票被选中/没被选中”
+- 常用于调参数、排查过滤条件过严、查看分项得分结构
+
+命令：
+
+```bash
+python3 -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]
+```
+
+参数说明：
+
+- `--symbol 000001`
+  - 必填，股票代码
+- `--date YYYY-MM-DD`
+  - 目标日期，不传时默认今天
+- `--mode normal|relaxed|force`
+  - `normal`：正常/严格模式
+  - `relaxed`：放宽筛选条件
+  - `force`：尽量给结果的兜底模式
+- `--output table|json`
+  - `table`：人读更直观
+  - `json`：便于对接脚本或保存结构化结果
+
+输出内容：
+
+- 总分 `score_total`
+- 各分项得分 `score_breakdown`
+- 关键指标 `key_metrics`
+- 推荐/解释理由 `reason`
+
+常见场景：
+
+- 想知道推荐股票是靠趋势分高，还是靠动量分高
+- 想排查某只股票在 `normal` 模式下为何被过滤
+- 对比 `normal` 与 `relaxed` 模式下的差异
+
+示例：
+
+```bash
+python3 -m app.main explain --symbol 000001 --date 2026-03-06 --mode normal
+python3 -m app.main explain --symbol 600519 --date 2026-03-06 --mode relaxed --output json
+```
+
+### 3) `backtest`
+
+用途：
+
+- 按历史区间回测策略表现
+- 检查策略在过去一段时间内的胜率、平均收益、最大回撤代理等指标
+- 适合用来比较不同配置参数的效果
+
+命令：
+
+```bash
+python3 -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]
+```
+
+参数说明：
+
+- `--start YYYY-MM-DD`
+  - 必填，回测起始日期
+- `--end YYYY-MM-DD`
+  - 必填，回测结束日期
+- `--count N`
+  - 每个交易日选几只股票
+  - 不传时，默认使用 `strategy.pick_count`
+- `--output table|json|json-cn`
+  - `table`：终端表格式阅读
+  - `json`：英文 key 的 JSON
+  - `json-cn`：中文 key 的 JSON，适合直接给中文环境脚本/报表消费
+
+输出指标示例：
+
+- 回测区间
+- 尝试交易日 / 跳过交易日
+- 交易次数
+- 1 日 / 3 日胜率（毛、净）
+- 1 日 / 3 日 / 5 日平均收益（毛、净）
+- 最大回撤代理
+- 模式分布、错误统计、错误示例
+
+说明：
+
+- 回测净收益会考虑 `execution_cost` 里的佣金、印花税、滑点等参数
+- 如果区间太短，可能出现“交易日不足”类报错
+- 如果某些日期没有足够候选，会记录跳过原因或降级模式结果
+
+示例：
+
+```bash
+python3 -m app.main backtest --start 2026-02-01 --end 2026-03-01
+python3 -m app.main backtest --start 2026-02-01 --end 2026-03-01 --count 5
+python3 -m app.main backtest --start 2026-02-01 --end 2026-03-01 --output json-cn
+```
+
+### 4) `doctor`
+
+用途：
+
+- 诊断数据源连通性与基础网络问题
+- 适合在“突然跑不动”“拉不到数据”“怀疑被代理污染”时先做自检
+
+命令：
+
+```bash
+python3 -m app.main doctor [--output table|json]
+```
+
+参数说明：
+
+- `--output table|json`
+  - `table`：终端查看
+  - `json`：便于自动采集结果
+
+会检查的方向通常包括：
+
+- DNS 是否可解析
+- HTTP 请求是否可访问
+- 数据源是否能正常连通
+- 当前网络环境是否存在明显异常
+
+示例：
+
+```bash
+python3 -m app.main doctor
+python3 -m app.main doctor --output json
+```
+
+### 5) `check-kline`
+
+用途：
+
+- 检查某只股票在指定区间内的日线数据是否能正常抓取
+- 适合单点排查：到底是全局网络问题，还是个股/日期区间问题
+
+命令：
+
+```bash
+python3 -m app.main check-kline --symbol 000001 --start YYYY-MM-DD --end YYYY-MM-DD [--output table|json]
+```
+
+参数说明：
+
+- `--symbol`
+  - 必填，股票代码
+- `--start`
+  - 必填，起始日期
+- `--end`
+  - 必填，结束日期
+- `--output table|json`
+  - `table`：显示抓到多少条数据、首尾日期
+  - `json`：结构化输出，便于调试脚本
+
+输出内容：
+
+- 股票代码
+- 查询区间
+- 返回行数
+- 首条日期
+- 末条日期
+
+示例：
+
+```bash
+python3 -m app.main check-kline --symbol 000001 --start 2026-02-01 --end 2026-03-01
+python3 -m app.main check-kline --symbol 600519 --start 2026-02-01 --end 2026-03-01 --output json
+```
 
 ## Freshness Scripts
 
-- `scripts/check_data_freshness.py`：通用检查脚本。参数：`--date YYYY-MM-DD`（默认今天），`--probe-symbol 000001`（可重复传参），`--require any|all`（多探针通过规则），`--output table|json`。
-- 退出码：`0` 数据已更新；`2` 数据未更新；`1` 脚本执行异常。
+### `scripts/check_today_update.sh`
 
-## Notes
+用途：
 
-- This is a research tool, not investment advice.
-- Default config: `config/default.yaml`.
-- If your network has broken proxy variables, keep `network.disable_env_proxy: true` (default) to force direct requests.
-- If macOS system proxy still interferes, keep `network.force_no_proxy_all: true` (default).
-- `recommend` prints progress logs while scanning symbols; tune speed with `strategy.max_symbols_per_run` and `data_source.request_timeout_sec` (`0` means no limit).
-- Default pick count is `strategy.pick_count` (currently `3`), and can be overridden by `recommend --count`.
-- Mode chain is configurable via `strategy.enabled_modes`, e.g. `[normal]` or `[normal, relaxed, force]`.
-- If no stock passes normal/relaxed rules, the engine auto-falls back to `force` mode. If `force` still has no candidate, the run stops with an error instead of returning a fallback pick.
-- Runtime log shows `stocks_total / filtered / universe` to help verify whether you are scanning full market.
-- Local cache is enabled by default at `.cache/akshare` to speed up repeated recommend/backtest runs.
-- Scoring now includes a volume module (`vol_ratio_5_20`, `volume_zscore20`) in addition to trend/momentum/stability.
-- Added market regime filter (CSI300 bull/neutral/bear) and stock-level risk filter (price/volatility/RSI/volume constraints).
-- Backtest now reports gross/net returns with execution cost model (commission, stamp duty, slippage).
-- Backtest uses an equal-weight basket based on `strategy.pick_count`, and supports temporary override via `backtest --count`.
-- Recommend output includes suggested `stop_loss_price` and `take_profit_price` (ATR-based by default, configurable in `risk_targets`).
-- Recommend output includes `suggested_holding_days` (rule-based from momentum/volatility/RSI + market regime).
-- Each `recommend` run appends a row to `reports/recommendations.csv` (time, symbol, name, stop-loss, take-profit, etc.).
-- Each `recommend` run also appends a Markdown table row to `reports/recommendations.md`.
-- Each `recommend` run streams raw console output to signal-date log file in real time, default `reports/{signal_date}.log` (for example `reports/20260303.log`).
-- Universe filter now supports excluding GEM board (`300*`) via `filters.exclude_gem_board`.
-- Universe board filter excludes STAR (`688*`,`689*`) and BJ-related (`4*`,`8*`,`9*`, including `92*`) when enabled.
-- Recommend prints a warning when `signal_date` bars are likely not updated yet (data freshness check).
-- `market_filter.stop_on_stale: true` (default) stops `recommend` when index data date is older than `signal_date`.
+- 用表格方式检查“今天交易日”的数据是否已更新
+- 适合手动在终端快速确认
+
+### `scripts/check_today_update_json.sh`
+
+用途：
+
+- 与上面相同，但输出 JSON
+- 适合脚本、定时任务、CI 或自动监控接入
+
+### `scripts/check_today_update_multi.sh`
+
+用途：
+
+- 用多只探针股票联合检查数据是否更新
+- 适合对单一探针不放心时使用
+
+### `scripts/check_data_freshness.py`
+
+用途：
+
+- 通用数据新鲜度检查脚本
+- 可手动指定日期、探针股票、通过规则和输出格式
+
+常用参数：
+
+- `--date YYYY-MM-DD`：检查指定日期，默认今天
+- `--probe-symbol 000001`：指定探针股票，可重复传参
+- `--require any|all`：多个探针采用任一通过或全部通过规则
+- `--output table|json`：输出格式
+
+退出码：
+
+- `0`：数据已更新
+- `2`：数据未更新
+- `1`：脚本执行异常
+
+## 配置与运行建议
+
+- 默认配置文件：`config/default.yaml`
+- 本地缓存默认开启，缓存目录为 `.cache/akshare`
+- 每次 `recommend` 会把结构化结果写入 `reports/` 目录
+- `reports/*.log` 属于运行日志，通常不建议提交到代码仓库
+- 如果你网络环境里代理比较乱，建议保留：
+  - `network.disable_env_proxy: true`
+  - `network.force_no_proxy_all: true`
 
 ## 中文注意事项
 
 - 本项目用于策略研究，不构成投资建议。
-- 默认配置文件：`config/default.yaml`。
-- 若本机代理环境变量异常，保持 `network.disable_env_proxy: true`（默认）可强制直连。
-- 若 macOS 系统代理仍干扰请求，保持 `network.force_no_proxy_all: true`（默认）。
-- `recommend` 会输出扫描进度日志；可通过 `strategy.max_symbols_per_run` 和 `data_source.request_timeout_sec` 调整速度。
-- 默认选股数量由 `strategy.pick_count` 控制（当前为 `3`），可通过 `recommend --count` 临时覆盖。
-- 可通过 `strategy.enabled_modes` 配置启用模式链，例如 `[normal]` 或 `[normal, relaxed, force]`。
-- 若 `normal/relaxed` 都无候选，程序会自动降级到 `force`；若 `force` 仍无候选则报错结束，不再返回兜底股票。
-- 运行日志里的 `stocks_total / filtered / universe` 可帮助确认是否在全市场扫描。
-- 默认启用本地缓存目录 `.cache/akshare`，重复运行 `recommend/backtest` 会更快。
-- 回测输出包含毛收益/净收益，净收益已计入手续费、印花税、滑点等执行成本。
-- 回测会按 `strategy.pick_count` 进行等权组合收益计算，也可通过 `backtest --count` 临时指定每日选股数。
-- `recommend` 输出包含止损/止盈价（默认 ATR 方式，可在 `risk_targets` 配置）。
-- 每次 `recommend` 会追加写入：`reports/recommendations.csv` 与 `reports/recommendations.md`。
-- 每次 `recommend` 会实时把终端输出原样追加到信号日日志，默认 `reports/{signal_date}.log`（例如 `reports/20260303.log`）。
-- 开启相关过滤时，板块过滤会排除科创 (`688*`,`689*`) 与北交相关 (`4*`,`8*`,`9*`，含 `92*`) 代码。
-- 当 `signal_date` 数据可能未更新时，会给出数据新鲜度告警。
-- `market_filter.stop_on_stale: true`（默认）会在指数数据日期落后于 `signal_date` 时直接停止推荐，避免用旧指数继续计算。
+- `recommend` 输出的是“候选/研究结果”，不是保证收益的交易信号。
+- 若 `signal_date` 对应数据尚未更新，程序可能会告警或直接停止，取决于 `data_freshness.stop_on_stale` 与 `market_filter.stop_on_stale` 设置。
+- 默认启用本地缓存，重复运行会更快；若怀疑缓存有问题，可临时关闭 `data_source.cache_enabled` 排查。
+- 若 `normal` 模式候选为 0，可考虑查看 `strategy.enabled_modes`、`fallback.mode`、`risk_filter` 和 `market_filter`。
 
 ## 中文常见问题
 
-- 回测报错“交易日不足”：`backtest` 至少需要 8 个交易日，需扩大 `--start/--end` 区间。
-- 回测里 `normal candidates=0`：常见于熊市拦截、阈值过严或历史数据不完整；程序会尝试 `relaxed/force`，若仍无候选则跳过当日并记录原因。
-- 终端出现 `NotOpenSSLWarning`：这是 Python/urllib3 环境告警，不是本项目逻辑错误。
+- 回测报错“交易日不足”：`backtest` 至少需要足够交易日样本，需扩大 `--start/--end` 区间。
+- 回测里 `normal candidates=0`：常见于熊市拦截、阈值过严、板块过滤过多或历史数据不完整。
+- 终端出现 `NotOpenSSLWarning`：这是 Python/urllib3 环境告警，不是本项目核心逻辑错误。
+- 运行后生成很多日志：这是 `reporting.recommendation_log` 在工作，默认写到 `reports/{signal_date}.log`。
