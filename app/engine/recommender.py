@@ -193,6 +193,10 @@ class Recommender:
         out: list[CandidateScore] = []
         total_symbols = len(universe)
         progress_every = int(self.cfg.get("strategy", {}).get("progress_every", 10))
+        data_fresh_cfg = self.cfg.get("data_freshness", {}) if isinstance(self.cfg.get("data_freshness", {}), dict) else {}
+        # Per-stock staleness often means suspension/停牌; don't abort unless explicitly configured.
+        stock_stop_on_stale = bool(data_fresh_cfg.get("stop_on_stale_stock", False))
+        suspend_days = int(data_fresh_cfg.get("stock_stale_suspend_days", 5))
         stats = {
             "scanned": total_symbols,
             "kline_success": 0,
@@ -225,6 +229,22 @@ class Recommender:
                 stats["no_bars"] += 1
                 if len(stats["no_bars_symbols"]) < int(self.cfg.get("strategy", {}).get("failed_symbol_examples", 20)):
                     stats["no_bars_symbols"].append(stock.symbol)
+                if progress_every > 0 and (idx % progress_every == 0 or idx == total_symbols):
+                    print(f"[{MODE_ZH.get(mode, mode)}] 已扫描 {idx}/{total_symbols}，候选={len(out)}", flush=True)
+                continue
+            latest_stock_date = max(b.trade_date for b in bars)
+            if latest_stock_date < signal_date:
+                stale_msg = (
+                    f"Stock data stale: symbol={stock.symbol}, signal_date={signal_date}, latest={latest_stock_date}"
+                )
+                stale_days = (signal_date - latest_stock_date).days
+                treat_as_suspended = suspend_days > 0 and stale_days >= suspend_days
+                if stock_stop_on_stale and not treat_as_suspended:
+                    raise RuntimeError(stale_msg)
+                if treat_as_suspended:
+                    print(f"[警告] {stale_msg}（可能停牌，已跳过）", flush=True)
+                else:
+                    print(f"[警告] {stale_msg}（数据滞后，已跳过）", flush=True)
                 if progress_every > 0 and (idx % progress_every == 0 or idx == total_symbols):
                     print(f"[{MODE_ZH.get(mode, mode)}] 已扫描 {idx}/{total_symbols}，候选={len(out)}", flush=True)
                 continue
@@ -298,6 +318,7 @@ class Recommender:
         if not bool(mcfg.get("enabled", True)):
             return MarketState(label="unknown", close=0.0, ma20=0.0, ma60=0.0, mom20=0.0), "market_filter_disabled"
         fail_on_error = bool(mcfg.get("fail_on_error", False))
+        stop_on_stale = bool(mcfg.get("stop_on_stale", True))
         index_symbol = str(mcfg.get("index_symbol", "000300"))
         lookback = int(mcfg.get("lookback_days", 120))
         start = signal_date - timedelta(days=max(lookback * 2, 180))
@@ -309,9 +330,21 @@ class Recommender:
                         f"Market index data unavailable: symbol={index_symbol}, range={start}->{signal_date}, reason=index_closes_empty"
                     )
                 return MarketState(label="unknown", close=0.0, ma20=0.0, ma60=0.0, mom20=0.0), "index_closes_empty"
+            latest_index_date = max(closes.keys())
+            if latest_index_date < signal_date:
+                stale_msg = (
+                    f"Market index stale: symbol={index_symbol}, signal_date={signal_date}, latest={latest_index_date}"
+                )
+                if stop_on_stale:
+                    raise RuntimeError(stale_msg)
+                print(f"[警告] {stale_msg}", flush=True)
             st = detect_market_state(closes, signal_date, self.cfg)
             return st, "ok"
         except Exception as exc:
+            if str(exc).startswith("Market index stale:"):
+                if fail_on_error:
+                    raise RuntimeError(str(exc)) from exc
+                return MarketState(label="unknown", close=0.0, ma20=0.0, ma60=0.0, mom20=0.0), "index_stale"
             if fail_on_error:
                 raise RuntimeError(
                     f"Market index data unavailable: symbol={index_symbol}, range={start}->{signal_date}, reason={type(exc).__name__}"

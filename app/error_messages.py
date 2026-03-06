@@ -40,6 +40,22 @@ def friendly_error_message(exc_or_msg: Exception | str) -> str:
         if m:
             return f"获取股票 {m.group(1)} 日线失败（TX 数据源不可用）。"
         return "获取股票日线失败（TX 数据源不可用）。"
+    if "Market index stale:" in msg:
+        m = re.search(r"symbol=([0-9A-Za-z]+),\s*signal_date=([0-9]{4}-[0-9]{2}-[0-9]{2}),\s*latest=([0-9]{4}-[0-9]{2}-[0-9]{2})", msg)
+        if m:
+            return (
+                f"市场指数未更新到信号日，已停止执行推荐：指数 {m.group(1)} "
+                f"信号日 {m.group(2)}，最新仅到 {m.group(3)}。"
+            )
+        return "市场指数未更新到信号日，已停止执行推荐。"
+    if "Stock data stale:" in msg:
+        m = re.search(r"symbol=([0-9A-Za-z]+),\s*signal_date=([0-9]{4}-[0-9]{2}-[0-9]{2}),\s*latest=([0-9]{4}-[0-9]{2}-[0-9]{2})", msg)
+        if m:
+            return (
+                f"个股数据未更新到信号日，已停止执行推荐：股票 {m.group(1)} "
+                f"信号日 {m.group(2)}，最新仅到 {m.group(3)}。"
+            )
+        return "个股数据未更新到信号日，已停止执行推荐。"
     if "Market index data unavailable:" in msg:
         return "市场指数数据不可用（market_filter.fail_on_error=true），已停止执行推荐。请检查网络、DNS 或指数缓存。"
     if "Unsupported command:" in msg:

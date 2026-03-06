@@ -14,7 +14,12 @@ from app.doctor import print_doctor_report, run_doctor
 from app.engine.recommender import Recommender
 from app.error_messages import friendly_error_message
 from app.network import clear_proxy_env, disable_requests_env_proxy, force_no_proxy_all
-from app.reporting import append_recommendation_csv, append_recommendation_md, append_recommendation_txt
+from app.reporting import (
+    append_recommendation_csv,
+    append_recommendation_md,
+    append_recommendation_txt,
+    resolve_recommendation_output_log_path,
+)
 
 
 METRIC_LABELS_ZH = {
@@ -33,6 +38,20 @@ METRIC_LABELS_ZH = {
     "turnover_rate": "换手率",
     "vol20_std": "20日波动率",
 }
+
+
+class _TeeStdout:
+    def __init__(self, *streams):
+        self._streams = streams
+
+    def write(self, data: str) -> int:
+        for s in self._streams:
+            s.write(data)
+        return len(data)
+
+    def flush(self) -> None:
+        for s in self._streams:
+            s.flush()
 
 
 def _parse_date(v: str | None) -> date:
@@ -244,23 +263,37 @@ def main() -> None:
     rec_engine = Recommender(ds, cfg)
 
     if args.cmd == "recommend":
-        recs = rec_engine.recommend_many(_parse_date(args.date), count=args.count)
-        _print_recommendations(recs, args.output)
         report_cfg = cfg.get("reporting", {})
         if bool(report_cfg.get("enabled", True)):
-            for rec in recs:
-                saved = append_recommendation_csv(
-                    rec, str(report_cfg.get("recommendation_csv", "reports/recommendations.csv"))
-                )
-                saved_md = append_recommendation_md(
-                    rec, str(report_cfg.get("recommendation_md", "reports/recommendations.md"))
-                )
-                saved_txt = append_recommendation_txt(
-                    rec, str(report_cfg.get("recommendation_txt", "reports/recommendations.txt"))
-                )
-            print(f"已写入文档: {saved}")
-            print(f"已写入文档: {saved_md}")
-            print(f"已写入文档: {saved_txt}")
+            target_date = _parse_date(args.date)
+            signal_date = rec_engine.resolve_signal_date(target_date)
+            log_path = resolve_recommendation_output_log_path(
+                signal_date,
+                str(report_cfg.get("recommendation_log", "reports/{signal_date}.log")),
+            )
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            with log_path.open("a", encoding="utf-8") as log_file:
+                tee_stdout = _TeeStdout(sys.stdout, log_file)
+                with contextlib.redirect_stdout(tee_stdout):
+                    recs = rec_engine.recommend_many(target_date, count=args.count)
+                    _print_recommendations(recs, args.output)
+                    for rec in recs:
+                        saved = append_recommendation_csv(
+                            rec, str(report_cfg.get("recommendation_csv", "reports/recommendations.csv"))
+                        )
+                        saved_md = append_recommendation_md(
+                            rec, str(report_cfg.get("recommendation_md", "reports/recommendations.md"))
+                        )
+                        saved_txt = append_recommendation_txt(
+                            rec, str(report_cfg.get("recommendation_txt", "reports/recommendations.txt"))
+                        )
+                    print(f"已写入文档: {saved}")
+                    print(f"已写入文档: {saved_md}")
+                    print(f"已写入文档: {saved_txt}")
+            print(f"已写入文档: {log_path}")
+        else:
+            recs = rec_engine.recommend_many(_parse_date(args.date), count=args.count)
+            _print_recommendations(recs, args.output)
         return
 
     if args.cmd == "explain":

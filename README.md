@@ -11,6 +11,9 @@ Command-line tool to recommend top A-share stocks before open using T-1 close da
 - `python3 -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N]`
 - `python3 -m app.main doctor`
 - `python3 -m app.main check-kline --symbol 000001 --start YYYY-MM-DD --end YYYY-MM-DD`
+- `bash scripts/check_today_update.sh`
+- `bash scripts/check_today_update_json.sh`
+- `bash scripts/check_today_update_multi.sh`
 
 ## 中文命令说明
 
@@ -19,6 +22,14 @@ Command-line tool to recommend top A-share stocks before open using T-1 close da
 - `python3 -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N]`：按历史区间回测策略表现（可指定每日选股数）。
 - `python3 -m app.main doctor`：检查数据源连通性、DNS、HTTP 请求是否可用。
 - `python3 -m app.main check-kline --symbol 000001 --start YYYY-MM-DD --end YYYY-MM-DD`：检查某只股票在区间内的 K 线拉取结果。
+- `bash scripts/check_today_update.sh`：检查“今天交易日”数据是否已更新（表格输出）。
+- `bash scripts/check_today_update_json.sh`：同上，JSON 输出（便于脚本集成）。
+- `bash scripts/check_today_update_multi.sh`：使用多个探针股票联合检查（默认 `any` 规则）。
+
+## Freshness Scripts
+
+- `scripts/check_data_freshness.py`：通用检查脚本。参数：`--date YYYY-MM-DD`（默认今天），`--probe-symbol 000001`（可重复传参），`--require any|all`（多探针通过规则），`--output table|json`。
+- 退出码：`0` 数据已更新；`2` 数据未更新；`1` 脚本执行异常。
 
 ## Notes
 
@@ -40,9 +51,11 @@ Command-line tool to recommend top A-share stocks before open using T-1 close da
 - Recommend output includes `suggested_holding_days` (rule-based from momentum/volatility/RSI + market regime).
 - Each `recommend` run appends a row to `reports/recommendations.csv` (time, symbol, name, stop-loss, take-profit, etc.).
 - Each `recommend` run also appends a Markdown table row to `reports/recommendations.md`.
+- Each `recommend` run streams raw console output to signal-date log file in real time, default `reports/{signal_date}.log` (for example `reports/20260303.log`).
 - Universe filter now supports excluding GEM board (`300*`) via `filters.exclude_gem_board`.
 - Universe board filter excludes STAR (`688*`,`689*`) and BJ-related (`4*`,`8*`,`9*`, including `92*`) when enabled.
 - Recommend prints a warning when `signal_date` bars are likely not updated yet (data freshness check).
+- `market_filter.stop_on_stale: true` (default) stops `recommend` when index data date is older than `signal_date`.
 
 ## 中文注意事项
 
@@ -60,8 +73,10 @@ Command-line tool to recommend top A-share stocks before open using T-1 close da
 - 回测会按 `strategy.pick_count` 进行等权组合收益计算，也可通过 `backtest --count` 临时指定每日选股数。
 - `recommend` 输出包含止损/止盈价（默认 ATR 方式，可在 `risk_targets` 配置）。
 - 每次 `recommend` 会追加写入：`reports/recommendations.csv` 与 `reports/recommendations.md`。
+- 每次 `recommend` 会实时把终端输出原样追加到信号日日志，默认 `reports/{signal_date}.log`（例如 `reports/20260303.log`）。
 - 开启相关过滤时，板块过滤会排除科创 (`688*`,`689*`) 与北交相关 (`4*`,`8*`,`9*`，含 `92*`) 代码。
 - 当 `signal_date` 数据可能未更新时，会给出数据新鲜度告警。
+- `market_filter.stop_on_stale: true`（默认）会在指数数据日期落后于 `signal_date` 时直接停止推荐，避免用旧指数继续计算。
 
 ## 中文常见问题
 
