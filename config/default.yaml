@@ -16,6 +16,10 @@ data_freshness:
   probe_symbol: "000001"
   probe_lookback_days: 10
   stop_on_stale: true
+  # Skip per-stock stale bars (often due to停牌); set true to fail fast.
+  stop_on_stale_stock: false
+  # If a stock is stale for >= N days, treat it as停牌 and skip. Set 0 to disable.
+  stock_stale_suspend_days: 5
 
 universe:
   name: all_a_share
@@ -32,8 +36,9 @@ market_filter:
   index_symbol: "000300" # CSI 300
   lookback_days: 120
   fail_on_error: true
-  # block_on_bear: false
-  block_on_bear: true
+  stop_on_stale: true
+  block_on_bear: false
+  # block_on_bear: true
 
 risk_filter:
   enabled: true
@@ -95,3 +100,4 @@ reporting:
   recommendation_csv: reports/recommendations.csv
   recommendation_md: reports/recommendations.md
   recommendation_txt: reports/recommendations.txt
+  recommendation_log: reports/{signal_date}.log

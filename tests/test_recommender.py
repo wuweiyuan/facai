@@ -46,6 +46,18 @@ class FakeDataSource:
         return {d: 1000 + i for i, d in enumerate(dates)}
 
 
+class FakeStaleIndexDataSource(FakeDataSource):
+    def get_index_closes(self, symbol, start_date, end_date):
+        stale_end = end_date - timedelta(days=1)
+        dates = [d for d in self.trade_dates if start_date <= d <= stale_end]
+        return {d: 1000 + i for i, d in enumerate(dates)}
+
+
+class FakeStaleStockDataSource(FakeDataSource):
+    def get_daily_bars(self, symbol, start_date, end_date):
+        return super().get_daily_bars(symbol, start_date, end_date - timedelta(days=1))
+
+
 class TestRecommender(TestCase):
     def test_recommend_returns_one_stock(self):
         cfg = {
@@ -66,3 +78,23 @@ class TestRecommender(TestCase):
         recs = Recommender(FakeDataSource(), cfg).recommend_many(date(2025, 3, 20))
         self.assertEqual(len(recs), 2)
         self.assertTrue(all(r.score_total > 0.0 for r in recs))
+
+    def test_recommend_stops_when_index_is_stale(self):
+        cfg = {
+            "universe": {"limit": 100},
+            "filters": {"exclude_st": True, "exclude_star_board": True, "exclude_bj_board": True},
+            "strategy": {"weights": {"trend": 0.4, "momentum": 0.4, "stability": 0.2}},
+            "market_filter": {"enabled": True, "fail_on_error": True, "stop_on_stale": True},
+        }
+        with self.assertRaisesRegex(RuntimeError, "Market index stale"):
+            Recommender(FakeStaleIndexDataSource(), cfg).recommend_many(date(2025, 3, 20))
+
+    def test_recommend_stops_when_stock_is_stale(self):
+        cfg = {
+            "universe": {"limit": 100},
+            "filters": {"exclude_st": True, "exclude_star_board": True, "exclude_bj_board": True},
+            "strategy": {"weights": {"trend": 0.4, "momentum": 0.4, "stability": 0.2}},
+            "data_freshness": {"enabled": False, "stop_on_stale_stock": True},
+        }
+        with self.assertRaisesRegex(RuntimeError, "Stock data stale"):
+            Recommender(FakeStaleStockDataSource(), cfg).recommend_many(date(2025, 3, 20))

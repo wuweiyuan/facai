@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, date
 from pathlib import Path
 import unicodedata
 
@@ -189,6 +189,22 @@ def append_recommendation_txt(rec: RecommendationResult, path: str) -> Path:
     )
     out_path.write_text(content, encoding="utf-8")
     return out_path
+
+
+def append_recommendation_output_log(content: str, signal_date: date, path_template: str) -> Path:
+    out_path = resolve_recommendation_output_log_path(signal_date, path_template)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with out_path.open("a", encoding="utf-8") as f:
+        f.write(content)
+        if not content.endswith("\n"):
+            f.write("\n")
+    return out_path
+
+
+def resolve_recommendation_output_log_path(signal_date: date, path_template: str) -> Path:
+    signal_date_compact = signal_date.strftime("%Y%m%d")
+    resolved_path = path_template.format(signal_date=signal_date_compact, signal_date_iso=signal_date.isoformat())
+    return Path(resolved_path)
 
 
 def _display_width(s: str) -> int:
