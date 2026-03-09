@@ -31,3 +31,7 @@ reports/*.log
 .env
 .env.*
 
+# Packaging/build artifacts
+*.egg-info/
+build/
+dist/
