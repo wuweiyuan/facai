@@ -8,7 +8,8 @@ from app.models import StockInfo
 def _excluded_board(symbol: str, exclude_star: bool, exclude_bj: bool, exclude_gem: bool) -> bool:
     if exclude_star and symbol.startswith(("688", "689")):
         return True
-    if bool(exclude_gem) and symbol.startswith("300"):
+    # ChiNext listings currently use both 300* and 301* prefixes.
+    if bool(exclude_gem) and symbol.startswith(("300", "301")):
         return True
     # Beijing exchange / related prefixes may appear as 4*/8*/9* (including 92*).
     if exclude_bj and symbol.startswith(("4", "8", "9")):
