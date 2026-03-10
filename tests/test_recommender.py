@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import date, timedelta
+import threading
+import time
 from unittest import TestCase
 
 from app.engine.recommender import Recommender
@@ -58,6 +60,31 @@ class FakeStaleStockDataSource(FakeDataSource):
         return super().get_daily_bars(symbol, start_date, end_date - timedelta(days=1))
 
 
+class FakeConcurrentDataSource(FakeDataSource):
+    def __init__(self):
+        super().__init__()
+        self.stocks = [
+            StockInfo(symbol="000001", name="Alpha"),
+            StockInfo(symbol="000002", name="Beta"),
+            StockInfo(symbol="000003", name="Gamma"),
+            StockInfo(symbol="000004", name="Delta"),
+        ]
+        self._lock = threading.Lock()
+        self._inflight = 0
+        self.max_inflight = 0
+
+    def get_daily_bars(self, symbol, start_date, end_date):
+        with self._lock:
+            self._inflight += 1
+            self.max_inflight = max(self.max_inflight, self._inflight)
+        time.sleep(0.03)
+        try:
+            return super().get_daily_bars(symbol, start_date, end_date)
+        finally:
+            with self._lock:
+                self._inflight -= 1
+
+
 class TestRecommender(TestCase):
     def test_recommend_returns_one_stock(self):
         cfg = {
@@ -98,3 +125,20 @@ class TestRecommender(TestCase):
         }
         with self.assertRaisesRegex(RuntimeError, "Stock data stale"):
             Recommender(FakeStaleStockDataSource(), cfg).recommend_many(date(2025, 3, 20))
+
+    def test_recommend_scans_symbols_concurrently_when_enabled(self):
+        cfg = {
+            "universe": {"limit": 100},
+            "filters": {"exclude_st": True, "exclude_star_board": True, "exclude_bj_board": True},
+            "strategy": {
+                "scan_workers": 4,
+                "weights": {"trend": 0.4, "momentum": 0.4, "stability": 0.2},
+            },
+            "data_freshness": {"enabled": False},
+        }
+        ds = FakeConcurrentDataSource()
+
+        recs = Recommender(ds, cfg).recommend_many(date(2025, 3, 20))
+
+        self.assertTrue(recs)
+        self.assertGreaterEqual(ds.max_inflight, 2)

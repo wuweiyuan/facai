@@ -78,6 +78,7 @@ python3 -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json
 
 - 每天开盘前跑一次，生成候选名单
 - 调整 `strategy.enabled_modes` 后观察候选数量变化
+- 如果 `recommend` 太慢，可提高 `strategy.scan_workers` 做并发扫描
 - 配合 `explain` 深挖某只股票为何入选
 
 示例：
