@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
 from datetime import date, timedelta
 import time
 
 from app.data_source.base import MarketDataSource
 from app.error_messages import friendly_error_message
 from app.features.indicators import add_indicators, bars_to_df
-from app.models import CandidateScore, RecommendationResult
+from app.models import CandidateScore, RecommendationResult, StockInfo
 from app.strategy.holding_period import suggest_holding_days
 from app.strategy.regime_risk import MarketState, detect_market_state, passes_risk_filter
 from app.strategy.risk_targets import compute_stop_take_prices
@@ -14,6 +16,17 @@ from app.strategy.scoring import build_reason, compute_score, passes_threshold
 from app.universe.filtering import filter_universe
 
 MODE_ZH = {"normal": "常规", "relaxed": "放宽", "force": "强制"}
+
+
+@dataclass
+class StockScanOutcome:
+    index: int
+    symbol: str
+    status: str
+    kline_success: bool = False
+    candidate: CandidateScore | None = None
+    error_message: str | None = None
+    warning_message: str | None = None
 
 
 class Recommender:
@@ -54,13 +67,15 @@ class Recommender:
         max_symbols = int(self.cfg.get("strategy", {}).get("max_symbols_per_run", 0))
         if max_symbols > 0:
             universe = universe[:max_symbols]
+        scan_workers = self._resolve_scan_workers()
         market_label_zh = {"bull": "牛市", "bear": "熊市", "neutral": "震荡", "unknown": "未知"}.get(
             market_state.label, market_state.label
         )
         print(
             f"[推荐] 信号日={signal_date} 股票总数={stocks_total} "
             f"过滤后={filtered_total} 实际扫描={len(universe)} "
-            f"市场={market_label_zh}(mom20={market_state.mom20:.2%}) 原因={market_reason}",
+            f"市场={market_label_zh}(mom20={market_state.mom20:.2%}) 原因={market_reason} "
+            f"并发={scan_workers}",
             flush=True,
         )
         enabled_modes = self._resolve_enabled_modes()
@@ -89,6 +104,7 @@ class Recommender:
             "enabled_modes": enabled_modes,
             "selected_count": len(selected),
             "available_candidates": len(candidates),
+            "scan_workers": scan_workers,
             "normal_scored": int(stats_by_mode.get("normal", {}).get("scored", 0)) if "normal" in enabled_modes else None,
             "relaxed_scored": int(stats_by_mode.get("relaxed", {}).get("scored", 0)) if "relaxed" in enabled_modes else None,
             "force_scored": int(stats_by_mode.get("force", {}).get("scored", 0)) if "force" in enabled_modes else None,
@@ -127,6 +143,13 @@ class Recommender:
             if mode in allowed and mode not in out:
                 out.append(mode)
         return out or ["normal", "relaxed", "force"]
+
+    def _resolve_scan_workers(self) -> int:
+        raw = self.cfg.get("strategy", {}).get("scan_workers", 1)
+        try:
+            return max(int(raw), 1)
+        except (TypeError, ValueError):
+            return 1
 
     def _check_signal_data_freshness(self, signal_date: date) -> tuple[bool, str]:
         cfg = self.cfg.get("data_freshness", {})
@@ -190,9 +213,10 @@ class Recommender:
         mode: str,
         market_state: MarketState,
     ) -> tuple[list[CandidateScore], dict]:
-        out: list[CandidateScore] = []
+        ranked: list[tuple[int, CandidateScore]] = []
         total_symbols = len(universe)
         progress_every = int(self.cfg.get("strategy", {}).get("progress_every", 10))
+        scan_workers = min(self._resolve_scan_workers(), max(total_symbols, 1))
         data_fresh_cfg = self.cfg.get("data_freshness", {}) if isinstance(self.cfg.get("data_freshness", {}), dict) else {}
         # Per-stock staleness often means suspension/停牌; don't abort unless explicitly configured.
         stock_stop_on_stale = bool(data_fresh_cfg.get("stop_on_stale_stock", False))
@@ -211,87 +235,155 @@ class Recommender:
             "market_reject": 0,
             "scored": 0,
         }
-        for idx, stock in enumerate(universe, start=1):
-            try:
-                bars = self._fetch_recent_bars(stock.symbol, signal_date)
-            except Exception as exc:
-                stats["kline_failed"] += 1
-                if len(stats["kline_failed_examples"]) < int(
-                    self.cfg.get("strategy", {}).get("failed_symbol_examples", 20)
-                ):
-                    stats["kline_failed_examples"].append(
-                        {"symbol": stock.symbol, "reason": friendly_error_message(exc)}
-                    )
-                if progress_every > 0 and (idx % progress_every == 0 or idx == total_symbols):
-                    print(f"[{MODE_ZH.get(mode, mode)}] 已扫描 {idx}/{total_symbols}，候选={len(out)}", flush=True)
-                continue
-            if not bars:
-                stats["no_bars"] += 1
-                if len(stats["no_bars_symbols"]) < int(self.cfg.get("strategy", {}).get("failed_symbol_examples", 20)):
-                    stats["no_bars_symbols"].append(stock.symbol)
-                if progress_every > 0 and (idx % progress_every == 0 or idx == total_symbols):
-                    print(f"[{MODE_ZH.get(mode, mode)}] 已扫描 {idx}/{total_symbols}，候选={len(out)}", flush=True)
-                continue
-            latest_stock_date = max(b.trade_date for b in bars)
-            if latest_stock_date < signal_date:
-                stale_msg = (
-                    f"Stock data stale: symbol={stock.symbol}, signal_date={signal_date}, latest={latest_stock_date}"
+        completed = 0
+        if scan_workers <= 1 or total_symbols <= 1:
+            for idx, stock in enumerate(universe, start=1):
+                outcome = self._scan_stock(
+                    stock=stock,
+                    index=idx,
+                    signal_date=signal_date,
+                    mode=mode,
+                    market_state=market_state,
+                    stock_stop_on_stale=stock_stop_on_stale,
+                    suspend_days=suspend_days,
                 )
-                stale_days = (signal_date - latest_stock_date).days
-                treat_as_suspended = suspend_days > 0 and stale_days >= suspend_days
-                if stock_stop_on_stale and not treat_as_suspended:
-                    raise RuntimeError(stale_msg)
-                if treat_as_suspended:
-                    print(f"[警告] {stale_msg}（可能停牌，已跳过）", flush=True)
-                else:
-                    print(f"[警告] {stale_msg}（数据滞后，已跳过）", flush=True)
-                if progress_every > 0 and (idx % progress_every == 0 or idx == total_symbols):
-                    print(f"[{MODE_ZH.get(mode, mode)}] 已扫描 {idx}/{total_symbols}，候选={len(out)}", flush=True)
-                continue
-            stats["kline_success"] += 1
-            min_bars = 70 if mode != "force" else 30
-            if len(bars) < min_bars:
-                stats["insufficient_bars"] += 1
-                if progress_every > 0 and (idx % progress_every == 0 or idx == total_symbols):
-                    print(f"[{MODE_ZH.get(mode, mode)}] 已扫描 {idx}/{total_symbols}，候选={len(out)}", flush=True)
-                continue
-            df = add_indicators(bars_to_df(bars))
-            if df.empty:
-                stats["df_empty"] += 1
-                if progress_every > 0 and (idx % progress_every == 0 or idx == total_symbols):
-                    print(f"[{MODE_ZH.get(mode, mode)}] 已扫描 {idx}/{total_symbols}，候选={len(out)}", flush=True)
-                continue
-            latest = df.iloc[-1]
-            if mode != "force" and not passes_threshold(latest, mode):
-                stats["threshold_reject"] += 1
-                if progress_every > 0 and (idx % progress_every == 0 or idx == total_symbols):
-                    print(f"[{MODE_ZH.get(mode, mode)}] 已扫描 {idx}/{total_symbols}，候选={len(out)}", flush=True)
-                continue
-            if not passes_risk_filter(latest, market_state, mode, self.cfg):
-                market_enabled = bool(self.cfg.get("market_filter", {}).get("enabled", True))
-                if mode != "force" and market_enabled and market_state.label == "bear":
-                    stats["market_reject"] += 1
-                else:
-                    stats["risk_reject"] += 1
-                if progress_every > 0 and (idx % progress_every == 0 or idx == total_symbols):
-                    print(f"[{MODE_ZH.get(mode, mode)}] 已扫描 {idx}/{total_symbols}，候选={len(out)}", flush=True)
-                continue
-            score_total, breakdown = compute_score(latest, self.cfg)
-            out.append(
-                CandidateScore(
-                    symbol=stock.symbol,
-                    name=stock.name,
-                    score_total=score_total,
-                    score_breakdown=breakdown,
-                    key_metrics=self._build_metrics(latest, market_state),
-                    reason=build_reason(latest, breakdown, mode),
-                )
+                self._apply_scan_outcome(outcome, stats, ranked)
+                completed += 1
+                self._print_scan_progress(mode, completed, total_symbols, len(ranked), progress_every)
+        else:
+            with ThreadPoolExecutor(max_workers=scan_workers, thread_name_prefix="recommend-scan") as executor:
+                futures = {
+                    executor.submit(
+                        self._scan_stock,
+                        stock=stock,
+                        index=idx,
+                        signal_date=signal_date,
+                        mode=mode,
+                        market_state=market_state,
+                        stock_stop_on_stale=stock_stop_on_stale,
+                        suspend_days=suspend_days,
+                    ): idx
+                    for idx, stock in enumerate(universe, start=1)
+                }
+                for future in as_completed(futures):
+                    outcome = future.result()
+                    self._apply_scan_outcome(outcome, stats, ranked)
+                    completed += 1
+                    self._print_scan_progress(mode, completed, total_symbols, len(ranked), progress_every)
+        ranked.sort(key=lambda item: (-item[1].score_total, item[0]))
+        return [item[1] for item in ranked], stats
+
+    def _scan_stock(
+        self,
+        *,
+        stock: StockInfo,
+        index: int,
+        signal_date: date,
+        mode: str,
+        market_state: MarketState,
+        stock_stop_on_stale: bool,
+        suspend_days: int,
+    ) -> StockScanOutcome:
+        try:
+            bars = self._fetch_recent_bars(stock.symbol, signal_date)
+        except Exception as exc:
+            return StockScanOutcome(
+                index=index,
+                symbol=stock.symbol,
+                status="kline_failed",
+                error_message=friendly_error_message(exc),
             )
+        if not bars:
+            return StockScanOutcome(index=index, symbol=stock.symbol, status="no_bars")
+        latest_stock_date = max(b.trade_date for b in bars)
+        if latest_stock_date < signal_date:
+            stale_msg = f"Stock data stale: symbol={stock.symbol}, signal_date={signal_date}, latest={latest_stock_date}"
+            stale_days = (signal_date - latest_stock_date).days
+            treat_as_suspended = suspend_days > 0 and stale_days >= suspend_days
+            if stock_stop_on_stale and not treat_as_suspended:
+                return StockScanOutcome(index=index, symbol=stock.symbol, status="fatal_error", error_message=stale_msg)
+            warning = (
+                f"[警告] {stale_msg}（可能停牌，已跳过）"
+                if treat_as_suspended
+                else f"[警告] {stale_msg}（数据滞后，已跳过）"
+            )
+            return StockScanOutcome(index=index, symbol=stock.symbol, status="stale_skip", warning_message=warning)
+        min_bars = 70 if mode != "force" else 30
+        if len(bars) < min_bars:
+            return StockScanOutcome(index=index, symbol=stock.symbol, status="insufficient_bars", kline_success=True)
+        df = add_indicators(bars_to_df(bars))
+        if df.empty:
+            return StockScanOutcome(index=index, symbol=stock.symbol, status="df_empty", kline_success=True)
+        latest = df.iloc[-1]
+        if mode != "force" and not passes_threshold(latest, mode):
+            return StockScanOutcome(index=index, symbol=stock.symbol, status="threshold_reject", kline_success=True)
+        if not passes_risk_filter(latest, market_state, mode, self.cfg):
+            market_enabled = bool(self.cfg.get("market_filter", {}).get("enabled", True))
+            status = "market_reject" if mode != "force" and market_enabled and market_state.label == "bear" else "risk_reject"
+            return StockScanOutcome(index=index, symbol=stock.symbol, status=status, kline_success=True)
+        score_total, breakdown = compute_score(latest, self.cfg)
+        return StockScanOutcome(
+            index=index,
+            symbol=stock.symbol,
+            status="candidate",
+            kline_success=True,
+            candidate=CandidateScore(
+                symbol=stock.symbol,
+                name=stock.name,
+                score_total=score_total,
+                score_breakdown=breakdown,
+                key_metrics=self._build_metrics(latest, market_state),
+                reason=build_reason(latest, breakdown, mode),
+            ),
+        )
+
+    def _apply_scan_outcome(
+        self,
+        outcome: StockScanOutcome,
+        stats: dict,
+        ranked: list[tuple[int, CandidateScore]],
+    ) -> None:
+        if outcome.warning_message:
+            print(outcome.warning_message, flush=True)
+        if outcome.status == "fatal_error":
+            raise RuntimeError(outcome.error_message or f"Stock scan failed: {outcome.symbol}")
+        if outcome.kline_success:
+            stats["kline_success"] += 1
+        if outcome.status == "kline_failed":
+            stats["kline_failed"] += 1
+            if len(stats["kline_failed_examples"]) < int(self.cfg.get("strategy", {}).get("failed_symbol_examples", 20)):
+                stats["kline_failed_examples"].append(
+                    {"symbol": outcome.symbol, "reason": outcome.error_message or "unknown"}
+                )
+            return
+        if outcome.status == "no_bars":
+            stats["no_bars"] += 1
+            if len(stats["no_bars_symbols"]) < int(self.cfg.get("strategy", {}).get("failed_symbol_examples", 20)):
+                stats["no_bars_symbols"].append(outcome.symbol)
+            return
+        if outcome.status == "insufficient_bars":
+            stats["insufficient_bars"] += 1
+            return
+        if outcome.status == "df_empty":
+            stats["df_empty"] += 1
+            return
+        if outcome.status == "threshold_reject":
+            stats["threshold_reject"] += 1
+            return
+        if outcome.status == "risk_reject":
+            stats["risk_reject"] += 1
+            return
+        if outcome.status == "market_reject":
+            stats["market_reject"] += 1
+            return
+        if outcome.status == "candidate" and outcome.candidate is not None:
             stats["scored"] += 1
-            if progress_every > 0 and (idx % progress_every == 0 or idx == total_symbols):
-                print(f"[{MODE_ZH.get(mode, mode)}] 已扫描 {idx}/{total_symbols}，候选={len(out)}", flush=True)
-        out.sort(key=lambda x: x.score_total, reverse=True)
-        return out, stats
+            ranked.append((outcome.index, outcome.candidate))
+
+    @staticmethod
+    def _print_scan_progress(mode: str, completed: int, total_symbols: int, candidate_count: int, progress_every: int) -> None:
+        if progress_every > 0 and (completed % progress_every == 0 or completed == total_symbols):
+            print(f"[{MODE_ZH.get(mode, mode)}] 已扫描 {completed}/{total_symbols}，候选={candidate_count}", flush=True)
 
     @staticmethod
     def _print_mode_stats(mode: str, stats: dict) -> None:
