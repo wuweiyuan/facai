@@ -5,7 +5,9 @@ import threading
 import time
 from unittest import TestCase
 
+from app.config import apply_strategy_profile
 from app.engine.recommender import Recommender
+from app.main import build_parser
 from app.models import DailyBar, StockInfo
 
 
@@ -85,6 +87,118 @@ class FakeConcurrentDataSource(FakeDataSource):
                 self._inflight -= 1
 
 
+class FakePullbackDataSource(FakeDataSource):
+    def __init__(self):
+        super().__init__()
+        self.trade_dates = [date(2025, 1, 1) + timedelta(days=i) for i in range(140)]
+        self.stocks = [
+            StockInfo(symbol="000001", name="HotTrend"),
+            StockInfo(symbol="000002", name="Pullback"),
+        ]
+        self._bars = {
+            "000001": self._build_bars("000001", self._hot_returns()),
+            "000002": self._build_bars("000002", self._pullback_returns()),
+        }
+
+    def _hot_returns(self):
+        base = [0.003 if i % 6 else -0.002 for i in range(110)]
+        tail = [
+            0.012,
+            0.010,
+            0.009,
+            -0.001,
+            0.011,
+            0.010,
+            0.009,
+            -0.002,
+            0.010,
+            0.009,
+            0.008,
+            0.007,
+            0.009,
+            0.008,
+            0.010,
+            -0.005,
+            0.011,
+            0.009,
+            -0.006,
+            0.010,
+            0.008,
+            -0.004,
+            0.009,
+            0.008,
+            -0.003,
+            0.009,
+            0.008,
+            0.009,
+            0.007,
+            0.008,
+        ]
+        return base + tail
+
+    def _pullback_returns(self):
+        base = [0.0032 if i % 7 else -0.0015 for i in range(110)]
+        tail = [
+            0.004,
+            0.003,
+            -0.004,
+            -0.003,
+            0.002,
+            0.001,
+            -0.002,
+            0.003,
+            0.002,
+            -0.001,
+            0.002,
+            0.001,
+            -0.002,
+            0.003,
+            0.002,
+            -0.001,
+            0.002,
+            0.001,
+            -0.001,
+            0.002,
+            0.002,
+            -0.001,
+            0.001,
+            0.002,
+            -0.001,
+            0.001,
+            0.002,
+            -0.001,
+            0.001,
+            0.002,
+        ]
+        return base + tail
+
+    def _build_bars(self, symbol, returns):
+        bars = []
+        close = 10.0 if symbol == "000001" else 9.5
+        if len(self.trade_dates) != len(returns):
+            raise ValueError("trade_dates and returns length must match")
+        for idx, (trade_date, ret) in enumerate(zip(self.trade_dates, returns)):
+            close *= 1.0 + ret
+            volume = 1_000_000 + (idx % 9) * 25_000
+            if symbol == "000001":
+                volume += 80_000 + (idx % 5) * 20_000
+            bars.append(
+                DailyBar(
+                    trade_date=trade_date,
+                    open=close * 0.995,
+                    high=close * 1.01,
+                    low=close * 0.99,
+                    close=close,
+                    volume=volume,
+                    turnover_rate=2.0,
+                )
+            )
+        return bars
+
+    def get_daily_bars(self, symbol, start_date, end_date):
+        return [b for b in self._bars[symbol] if start_date <= b.trade_date <= end_date]
+
+
 class TestRecommender(TestCase):
     def test_recommend_returns_one_stock(self):
         cfg = {
@@ -142,3 +256,67 @@ class TestRecommender(TestCase):
 
         self.assertTrue(recs)
         self.assertGreaterEqual(ds.max_inflight, 2)
+
+    def test_pullback_profile_prefers_near_ma20_stock(self):
+        cfg = {
+            "universe": {"limit": 100},
+            "filters": {"exclude_st": True, "exclude_star_board": True, "exclude_bj_board": True},
+            "strategy": {
+                "enabled_modes": ["force"],
+                "pick_count": 1,
+                "weights": {"trend": 0.35, "momentum": 0.35, "stability": 0.15, "volume": 0.15},
+            },
+            "data_freshness": {"enabled": False},
+            "strategy_profiles": {
+                "pullback_confirm": {
+                    "strategy": {
+                        "enabled_modes": ["normal"],
+                        "weights": {
+                            "trend": 0.20,
+                            "momentum": 0.15,
+                            "stability": 0.20,
+                            "volume": 0.10,
+                            "pullback": 0.35,
+                        },
+                    },
+                    "risk_filter": {
+                        "pullback": {
+                            "enabled": True,
+                            "min_close_above_ma20_pct": 0.0,
+                            "max_close_above_ma20_pct": 0.035,
+                            "min_mom20": 0.01,
+                            "max_mom20": 0.18,
+                            "min_mom5": -0.03,
+                            "max_mom5": 0.04,
+                            "min_rsi14": 42.0,
+                            "max_rsi14": 75.0,
+                            "max_volume_zscore20": 1.8,
+                        }
+                    },
+                }
+            },
+        }
+        ds = FakePullbackDataSource()
+
+        default_rec = Recommender(ds, cfg).recommend(date(2025, 5, 20))
+        pullback_cfg = apply_strategy_profile(cfg, "pullback_confirm")
+        pullback_rec = Recommender(ds, pullback_cfg).recommend(date(2025, 5, 20))
+
+        self.assertEqual(default_rec.symbol, "000001")
+        self.assertEqual(pullback_rec.symbol, "000002")
+
+    def test_apply_strategy_profile_does_not_mutate_base_config(self):
+        cfg = {
+            "strategy": {"weights": {"trend": 0.35, "momentum": 0.35}},
+            "strategy_profiles": {"pullback_confirm": {"strategy": {"weights": {"pullback": 0.35}}}},
+        }
+
+        merged = apply_strategy_profile(cfg, "pullback_confirm")
+
+        self.assertNotIn("pullback", cfg["strategy"]["weights"])
+        self.assertEqual(merged["strategy"]["weights"]["pullback"], 0.35)
+
+    def test_parser_accepts_recommend_pullback(self):
+        args = build_parser().parse_args(["recommend-pullback", "--date", "2025-03-20"])
+
+        self.assertEqual(args.cmd, "recommend-pullback")

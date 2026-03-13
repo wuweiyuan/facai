@@ -51,13 +51,25 @@ def passes_risk_filter(latest: pd.Series, market: MarketState, mode: str, cfg: d
         return False
 
     close = _to_float(latest.get("close", np.nan), np.nan)
+    ma20 = _to_float(latest.get("ma20", np.nan), np.nan)
     rsi14 = _to_float(latest.get("rsi14", np.nan), np.nan)
     vol20_std = _to_float(latest.get("vol20_std", np.nan), np.nan)
     vol_ratio = _to_float(latest.get("vol_ratio_5_20", np.nan), np.nan)
+    mom5 = _to_float(latest.get("mom5", np.nan), np.nan)
     mom20 = _to_float(latest.get("mom20", np.nan), np.nan)
+    volume_zscore20 = _to_float(latest.get("volume_zscore20", np.nan), np.nan)
     turnover = _to_float(latest.get("turnover_rate", 0.0), 0.0)
 
-    if np.isnan(close) or np.isnan(rsi14) or np.isnan(vol20_std) or np.isnan(vol_ratio) or np.isnan(mom20):
+    if (
+        np.isnan(close)
+        or np.isnan(ma20)
+        or np.isnan(rsi14)
+        or np.isnan(vol20_std)
+        or np.isnan(vol_ratio)
+        or np.isnan(mom5)
+        or np.isnan(mom20)
+        or np.isnan(volume_zscore20)
+    ):
         return False
     if close < float(rcfg.get("min_price", 2.0)):
         return False
@@ -78,6 +90,42 @@ def passes_risk_filter(latest: pd.Series, market: MarketState, mode: str, cfg: d
         if vol20_std > float(weak_cfg.get("max_vol20_std", 0.05)):
             return False
         if bool(weak_cfg.get("require_mom20_positive", False)) and mom20 <= 0:
+            return False
+
+    pullback_cfg = rcfg.get("pullback", {})
+    if bool(pullback_cfg.get("enabled", False)):
+        distance_above_ma20 = close / ma20 - 1.0 if ma20 > 0 else np.nan
+        if np.isnan(distance_above_ma20):
+            return False
+        min_dist = pullback_cfg.get("min_close_above_ma20_pct")
+        if min_dist is not None and distance_above_ma20 < float(min_dist):
+            return False
+        max_dist = pullback_cfg.get("max_close_above_ma20_pct")
+        if max_dist is not None and distance_above_ma20 > float(max_dist):
+            return False
+        min_mom20 = pullback_cfg.get("min_mom20")
+        if min_mom20 is not None and mom20 < float(min_mom20):
+            return False
+        max_mom20 = pullback_cfg.get("max_mom20")
+        if max_mom20 is not None and mom20 > float(max_mom20):
+            return False
+        min_mom5 = pullback_cfg.get("min_mom5")
+        if min_mom5 is not None and mom5 < float(min_mom5):
+            return False
+        max_mom5 = pullback_cfg.get("max_mom5")
+        if max_mom5 is not None and mom5 > float(max_mom5):
+            return False
+        max_rsi14 = pullback_cfg.get("max_rsi14")
+        if max_rsi14 is not None and rsi14 > float(max_rsi14):
+            return False
+        min_rsi14 = pullback_cfg.get("min_rsi14")
+        if min_rsi14 is not None and rsi14 < float(min_rsi14):
+            return False
+        max_volume_zscore20 = pullback_cfg.get("max_volume_zscore20")
+        if max_volume_zscore20 is not None and volume_zscore20 > float(max_volume_zscore20):
+            return False
+        min_volume_zscore20 = pullback_cfg.get("min_volume_zscore20")
+        if min_volume_zscore20 is not None and volume_zscore20 < float(min_volume_zscore20):
             return False
     return True
 

@@ -8,7 +8,7 @@ import sys
 from datetime import date, datetime
 
 from app.backtest.runner import BacktestRunner
-from app.config import load_config
+from app.config import apply_strategy_profile, load_config
 from app.data_source.akshare_client import AkshareDataSource
 from app.doctor import print_doctor_report, run_doctor
 from app.engine.recommender import Recommender
@@ -220,6 +220,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_rec.add_argument("--count", type=int, default=None, help="How many stocks to pick; defaults to strategy.pick_count")
     p_rec.add_argument("--output", choices=["table", "json"], default="table")
 
+    p_rec_pb = sub.add_parser("recommend-pullback", help="Recommend pullback-confirmation stocks for target trading day")
+    p_rec_pb.add_argument("--date", default=None, help="Target date YYYY-MM-DD")
+    p_rec_pb.add_argument(
+        "--count",
+        type=int,
+        default=None,
+        help="How many stocks to pick; defaults to strategy.pick_count in pullback profile",
+    )
+    p_rec_pb.add_argument("--output", choices=["table", "json"], default="table")
+
     p_exp = sub.add_parser("explain", help="Explain one stock score on target date")
     p_exp.add_argument("--symbol", required=True, help="Stock code like 000001")
     p_exp.add_argument("--date", default=None, help="Target date YYYY-MM-DD")
@@ -247,6 +257,8 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
     cfg = load_config(args.config)
+    strategy_profile = "pullback_confirm" if args.cmd == "recommend-pullback" else None
+    cfg = apply_strategy_profile(cfg, strategy_profile)
     if cfg.get("network", {}).get("disable_env_proxy", True):
         clear_proxy_env()
     if cfg.get("network", {}).get("force_no_proxy_all", True):
@@ -262,7 +274,7 @@ def main() -> None:
     )
     rec_engine = Recommender(ds, cfg)
 
-    if args.cmd == "recommend":
+    if args.cmd in {"recommend", "recommend-pullback"}:
         report_cfg = cfg.get("reporting", {})
         if bool(report_cfg.get("enabled", True)):
             target_date = _parse_date(args.date)
