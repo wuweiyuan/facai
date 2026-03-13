@@ -45,14 +45,24 @@ def _clip01(v: float, lo: float, hi: float) -> float:
     return float(np.clip((v - lo) / (hi - lo), 0.0, 1.0))
 
 
+def _centered_score(v: float, center: float, half_width: float) -> float:
+    if half_width <= 0:
+        return 0.0
+    return float(np.clip(1.0 - abs(v - center) / half_width, 0.0, 1.0))
+
+
 def compute_score(latest: pd.Series, cfg: dict) -> tuple[float, dict[str, float]]:
     strategy = cfg.get("strategy", {})
-    w = strategy.get("weights", {"trend": 0.35, "momentum": 0.35, "stability": 0.15, "volume": 0.15})
+    w = strategy.get(
+        "weights",
+        {"trend": 0.35, "momentum": 0.35, "stability": 0.15, "volume": 0.15},
+    )
     close = float(latest.get("close", 0.0))
     ma20 = float(latest.get("ma20", close))
     ma60 = float(latest.get("ma60", ma20))
     mom5 = float(latest.get("mom5", 0.0))
     mom20 = float(latest.get("mom20", 0.0))
+    rsi14 = float(latest.get("rsi14", 50.0))
     vol20_std = float(latest.get("vol20_std", 0.03))
     ma20_slope5 = float(latest.get("ma20_slope5", 0.0))
     vol_ratio_5_20 = float(latest.get("vol_ratio_5_20", 1.0))
@@ -66,6 +76,8 @@ def compute_score(latest: pd.Series, cfg: dict) -> tuple[float, dict[str, float]
         mom5 = 0.0
     if np.isnan(mom20):
         mom20 = 0.0
+    if np.isnan(rsi14):
+        rsi14 = 50.0
     if np.isnan(vol20_std):
         vol20_std = 0.03
     if np.isnan(ma20_slope5):
@@ -83,6 +95,12 @@ def compute_score(latest: pd.Series, cfg: dict) -> tuple[float, dict[str, float]
     momentum = (_clip01(mom5, -0.08, 0.12) * 0.5 + _clip01(mom20, -0.15, 0.25) * 0.5) * 100
     stability = (1.0 - _clip01(vol20_std, 0.01, 0.08)) * 100
     volume = (_clip01(vol_ratio_5_20, 0.8, 2.0) * 0.6 + _clip01(volume_zscore20, -0.5, 2.5) * 0.4) * 100
+    distance_above_ma20 = close / ma20 - 1.0 if ma20 > 0 else 0.0
+    pullback = (
+        _centered_score(distance_above_ma20, 0.01, 0.03) * 0.5
+        + _centered_score(mom5, 0.0, 0.05) * 0.3
+        + _centered_score(rsi14, 55.0, 18.0) * 0.2
+    ) * 100
 
     score_breakdown = {
         "trend": trend,
@@ -90,11 +108,14 @@ def compute_score(latest: pd.Series, cfg: dict) -> tuple[float, dict[str, float]
         "stability": stability,
         "volume": volume,
     }
+    if float(w.get("pullback", 0.0)) > 0:
+        score_breakdown["pullback"] = pullback
     weights = {
         "trend": float(w.get("trend", 0.35)),
         "momentum": float(w.get("momentum", 0.35)),
         "stability": float(w.get("stability", 0.15)),
         "volume": float(w.get("volume", 0.15)),
+        "pullback": float(w.get("pullback", 0.0)),
     }
     weight_sum = sum(max(v, 0.0) for v in weights.values()) or 1.0
     total = (
@@ -102,6 +123,7 @@ def compute_score(latest: pd.Series, cfg: dict) -> tuple[float, dict[str, float]
         + momentum * max(weights["momentum"], 0.0)
         + stability * max(weights["stability"], 0.0)
         + volume * max(weights["volume"], 0.0)
+        + pullback * max(weights["pullback"], 0.0)
     ) / weight_sum
     return float(total), score_breakdown
 
@@ -113,6 +135,8 @@ def build_reason(latest: pd.Series, score_breakdown: dict[str, float], mode: str
         f"波动稳定分 {score_breakdown['stability']:.1f}，近20日波动处于可接受范围。",
         f"量能分 {score_breakdown['volume']:.1f}，成交量相对均量结构较健康。",
     ]
+    if "pullback" in score_breakdown:
+        reasons.append(f"回踩确认分 {score_breakdown['pullback']:.1f}，股价更接近均线而非追高位置。")
     if mode == "relaxed":
         reasons.append("今日候选较少，已启用放宽阈值模式。")
     if mode == "force":

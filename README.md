@@ -13,6 +13,7 @@ Command-line tool to recommend top A-share stocks before open using T-1 close da
 ## Commands
 
 - `python3 -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json]`
+- `python3 -m app.main recommend-pullback --date YYYY-MM-DD [--count N] [--output table|json]`
 - `python3 -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]`
 - `python3 -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
 - `python3 -m app.main doctor [--output table|json]`
@@ -136,6 +137,34 @@ python3 -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--o
 python3 -m app.main explain --symbol 000001 --date 2026-03-06 --mode normal
 python3 -m app.main explain --symbol 600519 --date 2026-03-06 --mode relaxed --output json
 ```
+
+### 2.5) `recommend-pullback`
+
+用途：
+
+- 运行一套独立的“回踩确认 / 不追高”策略
+- 保留原 `recommend` 默认策略不变
+- 更偏好贴近 `MA20`、短期不过热、仍保持中期上升结构的股票
+
+命令：
+
+```bash
+python3 -m app.main recommend-pullback --date YYYY-MM-DD [--count N] [--output table|json]
+```
+
+特点：
+
+- 使用配置里的 `strategy_profiles.pullback_confirm`
+- 会输出到独立报表文件：
+  - `reports/pullback_recommendations.csv`
+  - `reports/pullback_recommendations.md`
+  - `reports/pullback_recommendations.txt`
+  - `reports/pullback/{signal_date}.log`
+
+适合场景：
+
+- 你觉得默认策略更像右侧追强，想减少“追高接盘”感
+- 想优先看“趋势还在，但位置更克制”的票
 
 ### 3) `backtest`
 

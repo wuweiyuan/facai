@@ -341,6 +341,38 @@ fallback:
   # 当前为 relaxed，表示严格模式无结果时，先尝试放宽条件，而不是直接 force。
   mode: relaxed
 
+# 独立策略配置覆盖层。
+# 用于在不改动默认 recommend 行为的前提下，给某些命令挂一套单独参数。
+# 例如 recommend-pullback 会套用 pullback_confirm 这组覆盖配置。
+strategy_profiles:
+  pullback_confirm:
+    strategy:
+      name: pullback_confirm_v1
+      enabled_modes: [normal]
+      weights:
+        trend: 0.20
+        momentum: 0.15
+        stability: 0.20
+        volume: 0.10
+        pullback: 0.35
+    risk_filter:
+      pullback:
+        enabled: true
+        min_close_above_ma20_pct: 0.0
+        max_close_above_ma20_pct: 0.035
+        min_mom20: 0.01
+        max_mom20: 0.18
+        min_mom5: -0.03
+        max_mom5: 0.04
+        min_rsi14: 42.0
+        max_rsi14: 75.0
+        max_volume_zscore20: 1.8
+    reporting:
+      recommendation_csv: reports/pullback_recommendations.csv
+      recommendation_md: reports/pullback_recommendations.md
+      recommendation_txt: reports/pullback_recommendations.txt
+      recommendation_log: reports/pullback/{signal_date}.log
+
 # 输入输出相关配置。
 io:
   # 默认输出格式。
