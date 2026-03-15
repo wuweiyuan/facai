@@ -454,9 +454,23 @@ class AkshareDataSource:
                 "turnover_rate": [b.turnover_rate for b in fetched],
             }
         )
-        merged = self._merge_bar_frames(df_local, fetched_df)
-        if merged.empty:
+        bar_columns = ["trade_date", "open", "high", "low", "close", "volume", "turnover_rate"]
+        frames = []
+        for frame in (df_local, fetched_df):
+            if frame.empty:
+                continue
+            # Drop all-NA columns before concat to avoid pandas future dtype inference warning.
+            frames.append(frame.dropna(axis=1, how="all"))
+        if not frames:
             return None
+        merged = frames[0].copy() if len(frames) == 1 else pd.concat(frames, ignore_index=True)
+        for col in bar_columns:
+            if col not in merged.columns:
+                merged[col] = pd.NA
+        merged = merged[bar_columns]
+        merged["trade_date"] = pd.to_datetime(merged["trade_date"], errors="coerce").dt.strftime("%Y-%m-%d")
+        merged = merged.dropna(subset=["trade_date"])
+        merged = merged.drop_duplicates(subset=["trade_date"], keep="last").sort_values("trade_date").reset_index(drop=True)
         self._save_bars_df(symbol, merged)
         merged["trade_date"] = pd.to_datetime(merged["trade_date"], errors="coerce").dt.date
         merged = merged.dropna(subset=["trade_date"]).reset_index(drop=True)
@@ -478,49 +492,20 @@ class AkshareDataSource:
         if path.exists():
             try:
                 old = pd.read_csv(path)
+                old["trade_date"] = pd.to_datetime(old["trade_date"], errors="coerce").dt.strftime("%Y-%m-%d")
+                frames = [frame for frame in (old, new_df) if not frame.empty]
+                if not frames:
+                    out = new_df
+                else:
+                    out = frames[0].copy() if len(frames) == 1 else pd.concat(frames, ignore_index=True)
             except Exception:
-                old = pd.DataFrame()
+                out = new_df
         else:
-            old = pd.DataFrame()
-        out = self._merge_bar_frames(old, new_df)
-        if out.empty:
-            return
-        self._save_bars_df(symbol, out)
-
-    @staticmethod
-    def _merge_bar_frames(*frames: pd.DataFrame) -> pd.DataFrame:
-        bar_columns = ["trade_date", "open", "high", "low", "close", "volume", "turnover_rate"]
-        normalized: list[pd.DataFrame] = []
-        for frame in frames:
-            if frame.empty:
-                continue
-            current = frame.copy()
-            for col in bar_columns:
-                if col not in current.columns:
-                    current[col] = pd.NA
-            current = current[bar_columns]
-            current["trade_date"] = pd.to_datetime(current["trade_date"], errors="coerce").dt.strftime("%Y-%m-%d")
-            current = current.dropna(subset=["trade_date"]).reset_index(drop=True)
-            if current.empty:
-                continue
-            normalized.append(current)
-        if not normalized:
-            return pd.DataFrame(columns=bar_columns)
-        merged = pd.concat(normalized, ignore_index=True)
-        merged["_order"] = range(len(merged))
-        merged = merged.sort_values(["trade_date", "_order"]).reset_index(drop=True)
-        agg_map = {col: AkshareDataSource._last_non_null for col in bar_columns if col != "trade_date"}
-        out = merged.groupby("trade_date", as_index=False, sort=True).agg(agg_map)
+            out = new_df
         out["trade_date"] = pd.to_datetime(out["trade_date"], errors="coerce").dt.strftime("%Y-%m-%d")
         out = out.dropna(subset=["trade_date"])
-        return out.sort_values("trade_date").reset_index(drop=True)
-
-    @staticmethod
-    def _last_non_null(series: pd.Series):
-        non_null = series.dropna()
-        if non_null.empty:
-            return pd.NA
-        return non_null.iloc[-1]
+        out = out.drop_duplicates(subset=["trade_date"], keep="last").sort_values("trade_date").reset_index(drop=True)
+        self._save_bars_df(symbol, out)
 
     def _save_bars_df(self, symbol: str, df: pd.DataFrame) -> None:
         path = self._bars_cache_path(symbol)

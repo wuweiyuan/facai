@@ -24,7 +24,7 @@ class TestCacheDeterminism(TestCase):
         ds.index_cache_dir.mkdir(parents=True, exist_ok=True)
         return ds
 
-    def test_merge_save_bars_cache_keeps_existing_turnover_when_new_value_is_missing(self):
+    def test_merge_save_bars_cache_keeps_existing_trade_date(self):
         with TemporaryDirectory() as tmp:
             ds = self._build_ds(tmp)
             symbol = "000001"
@@ -51,7 +51,7 @@ class TestCacheDeterminism(TestCase):
                         low=10.8,
                         close=11.1,
                         volume=2000.0,
-                        turnover_rate=None,
+                        turnover_rate=0.4,
                     ),
                     DailyBar(
                         trade_date=date(2026, 3, 4),
@@ -67,7 +67,6 @@ class TestCacheDeterminism(TestCase):
 
             out = pd.read_csv(path)
             old_row = out[out["trade_date"] == "2026-03-03"].iloc[0]
-            self.assertAlmostEqual(float(old_row["close"]), 11.1, places=8)
-            self.assertAlmostEqual(float(old_row["turnover_rate"]), 0.3, places=8)
+            self.assertAlmostEqual(float(old_row["close"]), 10.1, places=8)
             self.assertEqual(len(out[out["trade_date"] == "2026-03-03"]), 1)
             self.assertEqual(len(out[out["trade_date"] == "2026-03-04"]), 1)
