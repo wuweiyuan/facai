@@ -4,7 +4,9 @@ from datetime import date
 from unittest import TestCase
 
 from app.backtest.runner import BacktestRunner
+from app.config import apply_strategy_profile
 from app.engine.recommender import Recommender
+from app.main import build_parser
 from tests.test_recommender import FakeDataSource
 
 
@@ -51,3 +53,27 @@ class TestBacktest(TestCase):
         summary = runner.run(date(2025, 1, 10), date(2025, 3, 10), count=2)
         self.assertGreaterEqual(summary["total_trades"], 1)
         self.assertTrue(any("+" in row["symbol"] for row in summary["records"]))
+
+    def test_backtest_pullback_profile_runs(self):
+        cfg = {
+            "universe": {"limit": 100},
+            "filters": {"exclude_st": True, "exclude_star_board": True, "exclude_bj_board": True},
+            "strategy": {"pick_count": 1, "weights": {"trend": 0.4, "momentum": 0.4, "stability": 0.2}},
+            "strategy_profiles": {
+                "pullback_confirm": {
+                    "strategy": {"weights": {"trend": 0.2, "momentum": 0.2, "stability": 0.2, "volume": 0.1, "pullback": 0.3}}
+                }
+            },
+        }
+        profiled_cfg = apply_strategy_profile(cfg, "pullback_confirm")
+
+        runner = BacktestRunner(Recommender(FakeDataSource(), profiled_cfg))
+        summary = runner.run(date(2025, 1, 10), date(2025, 3, 10))
+
+        self.assertGreaterEqual(summary["total_trades"], 1)
+        self.assertIn("threshold_mode_counts", summary)
+
+    def test_parser_accepts_backtest_pullback(self):
+        args = build_parser().parse_args(["backtest-pullback", "--start", "2025-01-10", "--end", "2025-03-10"])
+
+        self.assertEqual(args.cmd, "backtest-pullback")

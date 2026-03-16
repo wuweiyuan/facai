@@ -4,6 +4,7 @@ from dataclasses import asdict
 from datetime import date
 from statistics import mean
 from collections import Counter
+import sys
 
 from app.engine.recommender import Recommender
 from app.error_messages import friendly_error_message
@@ -22,18 +23,29 @@ class BacktestRunner:
         self.slippage_bps = float(cfg.get("slippage_bps", 5.0))
         self.min_commission_per_side = float(cfg.get("min_commission_per_side", 0.0))
         self.enable_cost = bool(cfg.get("enabled", True))
-        self.backtest_verbose_errors = bool(recommender.cfg.get("backtest", {}).get("verbose_errors", True))
-        self.max_error_examples = int(recommender.cfg.get("backtest", {}).get("max_error_examples", 20))
+        backtest_cfg = recommender.cfg.get("backtest", {})
+        self.backtest_verbose_errors = bool(backtest_cfg.get("verbose_errors", True))
+        self.max_error_examples = int(backtest_cfg.get("max_error_examples", 20))
+        self.progress_to_stderr = bool(backtest_cfg.get("progress_to_stderr", True))
+        self.progress_every_days = max(int(backtest_cfg.get("progress_every_days", 5)), 1)
 
     def run(self, start_date: date, end_date: date, count: int | None = None) -> dict:
         trade_dates = self.ds.get_trade_dates(start_date, end_date)
         if len(trade_dates) < 8:
             raise RuntimeError("Not enough trade dates for backtest")
+        attempted_dates = trade_dates[:-5]
         records: list[BacktestRecord] = []
         error_counts: Counter[str] = Counter()
         error_examples: list[dict] = []
         mode_counts: Counter[str] = Counter()
-        for dt in trade_dates[:-5]:
+        if self.progress_to_stderr:
+            print(
+                f"[回测] 开始: {start_date.isoformat()} -> {end_date.isoformat()} "
+                f"计划交易日={len(attempted_dates)}",
+                file=sys.stderr,
+                flush=True,
+            )
+        for idx, dt in enumerate(attempted_dates, start=1):
             try:
                 recs = self.recommender.recommend_many(dt, count=count)
             except Exception as exc:
@@ -44,6 +56,7 @@ class BacktestRunner:
                     error_examples.append({"trade_date": dt.isoformat(), "error_type": key, "message": zh_msg})
                 if self.backtest_verbose_errors:
                     print(f"[回测][跳过] {dt.isoformat()} {key}: {zh_msg}", flush=True)
+                self._print_progress(idx, len(attempted_dates), len(records), error_counts)
                 continue
             run_meta = self.recommender.get_last_run_meta() or {}
             if self.backtest_verbose_errors:
@@ -89,7 +102,28 @@ class BacktestRunner:
                     ret_5d_net=ret_5d_net,
                 )
             )
-        return self._summary(records, start_date, end_date, len(trade_dates[:-5]), dict(error_counts), error_examples, dict(mode_counts))
+            self._print_progress(idx, len(attempted_dates), len(records), error_counts)
+        if self.progress_to_stderr:
+            print(
+                f"[回测] 完成: 已处理={len(attempted_dates)} 成交={len(records)} "
+                f"跳过={max(len(attempted_dates) - len(records), 0)}",
+                file=sys.stderr,
+                flush=True,
+            )
+        return self._summary(records, start_date, end_date, len(attempted_dates), dict(error_counts), error_examples, dict(mode_counts))
+
+    def _print_progress(self, completed: int, total: int, trades: int, error_counts: Counter[str]) -> None:
+        if not self.progress_to_stderr:
+            return
+        if completed % self.progress_every_days != 0 and completed != total:
+            return
+        skipped = max(completed - trades, 0)
+        errors = sum(error_counts.values())
+        print(
+            f"[回测] 进度 {completed}/{total} 成交={trades} 跳过={skipped} 错误={errors}",
+            file=sys.stderr,
+            flush=True,
+        )
 
     def _apply_round_trip_cost(self, gross_ret: float | None) -> float | None:
         if gross_ret is None:
