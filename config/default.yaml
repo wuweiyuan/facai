@@ -387,6 +387,14 @@ backtest:
   # false：日志更干净，但排查问题会更困难。
   verbose_errors: true
 
+  # 是否把回测进度打印到 stderr。
+  # 这样即使输出格式是 json/json-cn，终端里也能看到进度，不会像“卡住”。
+  progress_to_stderr: true
+
+  # 每处理多少个交易日打印一次进度。
+  # 值越小：更容易看到心跳；值越大：日志更简洁。
+  progress_every_days: 5
+
   # 最多展示多少条错误样例。
   # 防止回测长区间时错误刷屏。
   max_error_examples: 20

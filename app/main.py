@@ -242,6 +242,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_bt.add_argument("--count", type=int, default=None, help="How many stocks per day; defaults to strategy.pick_count")
     p_bt.add_argument("--output", choices=["table", "json", "json-cn"], default="json-cn")
 
+    p_bt_pb = sub.add_parser("backtest-pullback", help="Backtest the pullback-confirmation strategy over period")
+    p_bt_pb.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
+    p_bt_pb.add_argument("--end", required=True, help="End date YYYY-MM-DD")
+    p_bt_pb.add_argument(
+        "--count",
+        type=int,
+        default=None,
+        help="How many stocks per day; defaults to strategy.pick_count in pullback profile",
+    )
+    p_bt_pb.add_argument("--output", choices=["table", "json", "json-cn"], default="json-cn")
+
     p_doc = sub.add_parser("doctor", help="Run connectivity diagnostics for data sources")
     p_doc.add_argument("--output", choices=["table", "json"], default="table")
 
@@ -257,7 +268,7 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
     cfg = load_config(args.config)
-    strategy_profile = "pullback_confirm" if args.cmd == "recommend-pullback" else None
+    strategy_profile = "pullback_confirm" if args.cmd in {"recommend-pullback", "backtest-pullback"} else None
     cfg = apply_strategy_profile(cfg, strategy_profile)
     if cfg.get("network", {}).get("disable_env_proxy", True):
         clear_proxy_env()
@@ -336,7 +347,7 @@ def main() -> None:
             print(f"  {idx}. {r}")
         return
 
-    if args.cmd == "backtest":
+    if args.cmd in {"backtest", "backtest-pullback"}:
         runner = BacktestRunner(rec_engine)
         # When emitting JSON, suppress verbose runtime logs and keep only final payload.
         if args.output in {"json", "json-cn"}:

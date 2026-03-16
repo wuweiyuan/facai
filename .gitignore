@@ -21,6 +21,7 @@ htmlcov/
 # Local runtime/cache data
 .cache/
 reports/*.log
+reports/**/*.log
 
 # Editor and OS files
 .DS_Store

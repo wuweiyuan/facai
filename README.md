@@ -16,6 +16,7 @@ Command-line tool to recommend top A-share stocks before open using T-1 close da
 - `python3 -m app.main recommend-pullback --date YYYY-MM-DD [--count N] [--output table|json]`
 - `python3 -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]`
 - `python3 -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
+- `python3 -m app.main backtest-pullback --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
 - `python3 -m app.main doctor [--output table|json]`
 - `python3 -m app.main check-kline --symbol 000001 --start YYYY-MM-DD --end YYYY-MM-DD [--output table|json]`
 - `bash scripts/check_today_update.sh`
@@ -217,6 +218,24 @@ python3 -m app.main backtest --start 2026-02-01 --end 2026-03-01
 python3 -m app.main backtest --start 2026-02-01 --end 2026-03-01 --count 5
 python3 -m app.main backtest --start 2026-02-01 --end 2026-03-01 --output json-cn
 ```
+
+### 3.5) `backtest-pullback`
+
+用途：
+
+- 回测 `recommend-pullback` 使用的独立“回踩确认 / 不追高”策略
+- 用同一套成本模型和统计口径，对比原趋势策略和回踩策略
+
+命令：
+
+```bash
+python3 -m app.main backtest-pullback --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]
+```
+
+适合场景：
+
+- 想确认“减少追高”以后，胜率、平均收益和回撤有没有改善
+- 想直接比较 `backtest` 和 `backtest-pullback` 在同一区间的差异
 
 ### 4) `doctor`
 
