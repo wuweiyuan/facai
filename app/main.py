@@ -9,6 +9,7 @@ from datetime import date, datetime
 
 from app.backtest.runner import BacktestRunner
 from app.config import apply_strategy_profile, load_config
+from app.dashboard import export_dashboard_data
 from app.data_source.akshare_client import AkshareDataSource
 from app.doctor import print_doctor_report, run_doctor
 from app.engine.recommender import Recommender
@@ -261,6 +262,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_ck.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
     p_ck.add_argument("--end", required=True, help="End date YYYY-MM-DD")
     p_ck.add_argument("--output", choices=["table", "json"], default="table")
+
+    p_dash = sub.add_parser("export-dashboard-data", help="Export merged recommendation data for index.html")
+    p_dash.add_argument("--default-csv", default="reports/recommendations.csv", help="Path to recommend CSV")
+    p_dash.add_argument(
+        "--pullback-csv",
+        default="reports/pullback_recommendations.csv",
+        help="Path to recommend-pullback CSV",
+    )
+    p_dash.add_argument("--output", default="reports/dashboard-data.js", help="Path to generated dashboard data")
     return p
 
 
@@ -268,6 +278,11 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
     cfg = load_config(args.config)
+    if args.cmd == "export-dashboard-data":
+        saved = export_dashboard_data(args.default_csv, args.pullback_csv, args.output)
+        print(f"Dashboard data exported to {saved}")
+        return
+
     strategy_profile = "pullback_confirm" if args.cmd in {"recommend-pullback", "backtest-pullback"} else None
     cfg = apply_strategy_profile(cfg, strategy_profile)
     if cfg.get("network", {}).get("disable_env_proxy", True):
