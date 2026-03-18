@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>玄学选股池</title>
+  <style>
+    :root {
+      --bg: #f4efe6;
+      --panel: rgba(255, 250, 242, 0.9);
+      --panel-strong: #fffaf2;
+      --ink: #1f2a1f;
+      --muted: #5d6759;
+      --line: rgba(31, 42, 31, 0.12);
+      --accent: #1f5c4a;
+      --accent-soft: rgba(31, 92, 74, 0.12);
+      --accent-strong: #11382d;
+      --danger: #8a3b2e;
+      --shadow: 0 24px 60px rgba(38, 39, 34, 0.10);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Microsoft YaHei UI", "PingFang SC", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(31, 92, 74, 0.18), transparent 30%),
+        radial-gradient(circle at top right, rgba(138, 59, 46, 0.12), transparent 28%),
+        linear-gradient(180deg, #f8f3ea 0%, var(--bg) 52%, #efe6d8 100%);
+      min-height: 100vh;
+    }
+
+    .shell {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 32px auto 48px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      font-family: "Noto Serif SC", "Source Han Serif SC", Georgia, serif;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .panel {
+      padding: 22px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .section-title p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .section-title small {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .control-row,
+    .summary-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .control-row {
+      grid-template-columns: minmax(0, 1fr);
+      margin-bottom: 16px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    select,
+    input[type="file"],
+    button {
+      border-radius: 14px;
+      border: 1px solid rgba(31, 42, 31, 0.14);
+      font: inherit;
+    }
+
+    select,
+    input[type="file"] {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--panel-strong);
+      color: var(--ink);
+    }
+
+    .strategy-tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .tab {
+      padding: 11px 16px;
+      background: transparent;
+      color: var(--accent-strong);
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: #f9f7ef;
+      border-color: var(--accent);
+    }
+
+    .tab:hover {
+      transform: translateY(-1px);
+    }
+
+    .summary-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-bottom: 18px;
+    }
+
+    .metric {
+      padding: 18px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(248, 243, 234, 0.98));
+      border: 1px solid rgba(31, 42, 31, 0.08);
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metric .value {
+      margin-top: 8px;
+      font-size: clamp(22px, 3vw, 30px);
+      font-weight: 700;
+      font-family: "Noto Serif SC", "Source Han Serif SC", Georgia, serif;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .hint code {
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(31, 92, 74, 0.08);
+    }
+
+    .status {
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(31, 92, 74, 0.08);
+      border: 1px solid rgba(31, 92, 74, 0.10);
+      color: var(--accent-strong);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .status.warn {
+      background: rgba(138, 59, 46, 0.08);
+      border-color: rgba(138, 59, 46, 0.12);
+      color: var(--danger);
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border-radius: 18px;
+      border: 1px solid rgba(31, 42, 31, 0.08);
+      background: rgba(255, 255, 255, 0.74);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 860px;
+    }
+
+    th,
+    td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid rgba(31, 42, 31, 0.08);
+      vertical-align: middle;
+      font-size: 14px;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: rgba(244, 239, 230, 0.95);
+      color: var(--muted);
+      font-weight: 600;
+      z-index: 1;
+    }
+
+    tbody tr:hover {
+      background: rgba(31, 92, 74, 0.05);
+    }
+
+    .stock-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 136px;
+    }
+
+    .stock-code {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+    }
+
+    th.stock-col,
+    td.stock-col {
+      min-width: 160px;
+      width: 160px;
+    }
+
+    .stock-cell strong {
+      white-space: nowrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .empty {
+      padding: 44px 18px;
+      text-align: center;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    @media (max-width: 980px) {
+      .shell {
+        width: calc(100vw - 20px);
+        margin: 10px auto 22px;
+      }
+
+      .panel {
+        padding: 16px;
+        border-radius: 18px;
+      }
+
+      .summary-grid,
+      .control-row {
+        grid-template-columns: 1fr;
+      }
+
+      .strategy-tabs {
+        gap: 8px;
+      }
+
+      .tab {
+        flex: 1 1 calc(50% - 8px);
+        text-align: center;
+      }
+
+      th,
+      td {
+        padding: 12px 12px;
+        font-size: 13px;
+      }
+
+      th.stock-col,
+      td.stock-col {
+        min-width: 170px;
+        width: 170px;
+      }
+
+      .table-wrap {
+        -webkit-overflow-scrolling: touch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="panel">
+        <div class="section-title">
+          <div>
+            <h2>玄学选股池</h2>
+            <p>策略切换、日期筛选、当日推荐列表</p>
+            <small>只展示最近 20 个交易日</small>
+          </div>
+        </div>
+
+        <div class="strategy-tabs">
+          <button class="tab active" data-strategy="default" type="button">默认战法</button>
+          <button class="tab" data-strategy="pullback" type="button">回头战法</button>
+        </div>
+
+        <div class="control-row">
+          <div class="field">
+            <label for="dateSelect">交易日</label>
+            <select id="dateSelect"></select>
+          </div>
+        </div>
+
+        <div class="summary-grid">
+          <div class="metric">
+            <div class="label">当前策略</div>
+            <div class="value" id="metricStrategy">默认战法</div>
+          </div>
+          <div class="metric">
+            <div class="label">当日股票数</div>
+            <div class="value" id="metricCount">0</div>
+          </div>
+          <div class="metric">
+            <div class="label">最新运行时间</div>
+            <div class="value" id="metricRunTime">-</div>
+          </div>
+        </div>
+
+        <div class="status" id="dataStatus"></div>
+
+        <div class="table-wrap" style="margin-top: 16px;">
+          <table>
+            <thead>
+              <tr>
+                <th class="stock-col">股票</th>
+                <th>模式</th>
+                <th>总分</th>
+                <th>收盘价</th>
+                <th>止损价</th>
+                <th>止盈价</th>
+                <th>建议持有天数</th>
+                <th>运行时间</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+          <div class="empty" id="emptyState" hidden>当前策略在所选日期下没有记录。</div>
+        </div>
+    </section>
+  </div>
+
+  <script src="reports/dashboard-data.js"></script>
+  <script>
+    (function () {
+      const MAX_VISIBLE_DATES = 20;
+      const STRATEGY_META = {
+        default: { label: "默认战法" },
+        pullback: { label: "回头战法" }
+      };
+
+      const builtinData = window.STOCK_DASHBOARD_DATA || null;
+      const state = {
+        data: builtinData,
+        strategy: "default",
+        selectedDate: ""
+      };
+
+      const dateSelect = document.getElementById("dateSelect");
+      const dataStatus = document.getElementById("dataStatus");
+      const tableBody = document.getElementById("tableBody");
+      const emptyState = document.getElementById("emptyState");
+      const metricStrategy = document.getElementById("metricStrategy");
+      const metricCount = document.getElementById("metricCount");
+      const metricRunTime = document.getElementById("metricRunTime");
+      const tabs = Array.from(document.querySelectorAll(".tab"));
+
+      bindEvents();
+      render();
+
+      function bindEvents() {
+        dateSelect.addEventListener("change", function () {
+          state.selectedDate = dateSelect.value;
+          render();
+        });
+
+        tabs.forEach(function (tab) {
+          tab.addEventListener("click", function () {
+            state.strategy = tab.dataset.strategy;
+            syncTabs();
+            ensureSelectedDate();
+            render();
+          });
+        });
+      }
+
+      function render() {
+        const data = state.data;
+        syncTabs();
+
+        if (!data) {
+          dateSelect.innerHTML = "";
+          metricStrategy.textContent = STRATEGY_META[state.strategy].label;
+          metricCount.textContent = "0";
+          metricRunTime.textContent = "-";
+          setStatus("未检测到预生成数据文件。请先运行 `python -m app.main export-dashboard-data`。", true);
+          renderTable([]);
+          return;
+        }
+
+        ensureSelectedDate();
+        populateDateOptions();
+
+        const strategyData = getStrategyData(state.strategy);
+        const records = getVisibleRecords();
+        const latestRunTime = records.length ? records[0].run_time || "-" : (strategyData.latest_run_time || "-");
+
+        metricStrategy.textContent = strategyData.label;
+        metricCount.textContent = String(records.length);
+        metricRunTime.textContent = latestRunTime;
+        setStatus("当前显示的是预生成数据文件，可直接双击打开使用。 当前日期: " + (state.selectedDate || "无"), false);
+
+        renderTable(records);
+      }
+
+      function syncTabs() {
+        tabs.forEach(function (tab) {
+          tab.classList.toggle("active", tab.dataset.strategy === state.strategy);
+        });
+      }
+
+      function ensureSelectedDate() {
+        const strategyData = getStrategyData(state.strategy);
+        const dates = getVisibleDates(strategyData);
+        if (!dates.length) {
+          state.selectedDate = "";
+          return;
+        }
+        if (!dates.includes(state.selectedDate)) {
+          state.selectedDate = dates[0];
+        }
+      }
+
+      function populateDateOptions() {
+        const strategyData = getStrategyData(state.strategy);
+        const dates = getVisibleDates(strategyData);
+        dateSelect.innerHTML = "";
+
+        if (!dates.length) {
+          const option = document.createElement("option");
+          option.value = "";
+          option.textContent = "无可选日期";
+          dateSelect.appendChild(option);
+          return;
+        }
+
+        dates.forEach(function (dateValue) {
+          const option = document.createElement("option");
+          option.value = dateValue;
+          option.textContent = dateValue;
+          option.selected = dateValue === state.selectedDate;
+          dateSelect.appendChild(option);
+        });
+      }
+
+      function getStrategyData(strategyKey) {
+        const empty = {
+          key: strategyKey,
+          label: STRATEGY_META[strategyKey].label,
+          source_file: "",
+          available_dates: [],
+          latest_run_time: null,
+          records: []
+        };
+        if (!state.data || !state.data.strategies) {
+          return empty;
+        }
+        return state.data.strategies[strategyKey] || empty;
+      }
+
+      function getVisibleRecords() {
+        const strategyData = getStrategyData(state.strategy);
+        const targetDate = state.selectedDate;
+        const visibleDates = getVisibleDates(strategyData);
+        if (!targetDate) {
+          return [];
+        }
+        if (!visibleDates.includes(targetDate)) {
+          return [];
+        }
+        return (strategyData.records || []).filter(function (record) {
+          return record.trade_date === targetDate;
+        });
+      }
+
+      function getVisibleDates(strategyData) {
+        return (strategyData.available_dates || []).slice(0, MAX_VISIBLE_DATES);
+      }
+
+      function renderTable(records) {
+        tableBody.innerHTML = "";
+
+        if (!records.length) {
+          emptyState.hidden = false;
+          return;
+        }
+
+        emptyState.hidden = true;
+        records.forEach(function (record) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = [
+            "<td class=\"stock-col\"><div class=\"stock-cell\"><strong>" + escapeHtml(record.name || "-") + "</strong><span class=\"stock-code\">" + escapeHtml(record.symbol || "-") + "</span></div></td>",
+            "<td><span class=\"badge\">" + escapeHtml(record.threshold_mode || "-") + "</span></td>",
+            "<td>" + formatNumber(record.score_total, 2) + "</td>",
+            "<td>" + formatNumber(record.close, 4) + "</td>",
+            "<td>" + formatNumber(record.stop_loss_price, 4) + "</td>",
+            "<td>" + formatNumber(record.take_profit_price, 4) + "</td>",
+            "<td>" + formatInteger(record.suggested_holding_days) + "</td>",
+            "<td>" + escapeHtml(record.run_time || "-") + "</td>"
+          ].join("");
+          tableBody.appendChild(tr);
+        });
+      }
+
+      function setStatus(text, isWarn) {
+        dataStatus.textContent = text;
+        dataStatus.classList.toggle("warn", Boolean(isWarn));
+      }
+
+      function formatNumber(value, digits) {
+        if (typeof value !== "number" || !Number.isFinite(value)) {
+          return "-";
+        }
+        return value.toFixed(digits);
+      }
+
+      function formatInteger(value) {
+        if (typeof value !== "number" || !Number.isFinite(value)) {
+          return "-";
+        }
+        return String(value);
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+    })();
+  </script>
+</body>
+</html>

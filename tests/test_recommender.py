@@ -320,3 +320,8 @@ class TestRecommender(TestCase):
         args = build_parser().parse_args(["recommend-pullback", "--date", "2025-03-20"])
 
         self.assertEqual(args.cmd, "recommend-pullback")
+
+    def test_parser_accepts_export_dashboard_data(self):
+        args = build_parser().parse_args(["export-dashboard-data"])
+
+        self.assertEqual(args.cmd, "export-dashboard-data")
