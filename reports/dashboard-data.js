@@ -1,5 +1,5 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-03-18 21:15:30",
+  "generated_at": "2026-03-18 22:22:38",
   "strategies": {
     "default": {
       "key": "default",
@@ -681,13 +681,50 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "回头战法",
       "source_file": "reports/pullback_recommendations.csv",
       "available_dates": [
+        "2026-03-19",
         "2026-03-18",
         "2026-03-17",
         "2026-03-16",
         "2026-03-13"
       ],
-      "latest_run_time": "2026-03-17 22:09:38",
+      "latest_run_time": "2026-03-18 22:22:38",
       "records": [
+        {
+          "run_time": "2026-03-18 22:22:38",
+          "trade_date": "2026-03-19",
+          "symbol": "600935",
+          "name": "华塑股份",
+          "threshold_mode": "normal",
+          "score_total": 73.74,
+          "close": 3.0,
+          "stop_loss_price": 2.75,
+          "take_profit_price": 3.49,
+          "suggested_holding_days": 1
+        },
+        {
+          "run_time": "2026-03-18 22:22:38",
+          "trade_date": "2026-03-19",
+          "symbol": "601001",
+          "name": "晋控煤业",
+          "threshold_mode": "normal",
+          "score_total": 71.59,
+          "close": 17.21,
+          "stop_loss_price": 15.71,
+          "take_profit_price": 20.19,
+          "suggested_holding_days": 1
+        },
+        {
+          "run_time": "2026-03-18 22:22:38",
+          "trade_date": "2026-03-19",
+          "symbol": "605011",
+          "name": "杭州热电",
+          "threshold_mode": "normal",
+          "score_total": 71.4,
+          "close": 21.3,
+          "stop_loss_price": 20.47,
+          "take_profit_price": 22.94,
+          "suggested_holding_days": 1
+        },
         {
           "run_time": "2026-03-17 22:09:38",
           "trade_date": "2026-03-18",

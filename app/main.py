@@ -23,6 +23,14 @@ from app.reporting import (
 )
 
 
+def _resolve_dashboard_export_args(base_cfg: dict) -> tuple[str, str, str]:
+    default_csv = str(base_cfg.get("reporting", {}).get("recommendation_csv", "reports/recommendations.csv"))
+    pullback_cfg = apply_strategy_profile(base_cfg, "pullback_confirm")
+    pullback_csv = str(pullback_cfg.get("reporting", {}).get("recommendation_csv", "reports/pullback_recommendations.csv"))
+    dashboard_js = str(base_cfg.get("reporting", {}).get("dashboard_data_js", "reports/dashboard-data.js"))
+    return default_csv, pullback_csv, dashboard_js
+
+
 METRIC_LABELS_ZH = {
     "close": "收盘价",
     "ma20": "20日均线",
@@ -277,12 +285,13 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
-    cfg = load_config(args.config)
+    base_cfg = load_config(args.config)
     if args.cmd == "export-dashboard-data":
         saved = export_dashboard_data(args.default_csv, args.pullback_csv, args.output)
         print(f"Dashboard data exported to {saved}")
         return
 
+    cfg = base_cfg
     strategy_profile = "pullback_confirm" if args.cmd in {"recommend-pullback", "backtest-pullback"} else None
     cfg = apply_strategy_profile(cfg, strategy_profile)
     if cfg.get("network", {}).get("disable_env_proxy", True):
@@ -325,9 +334,18 @@ def main() -> None:
                         saved_txt = append_recommendation_txt(
                             rec, str(report_cfg.get("recommendation_txt", "reports/recommendations.txt"))
                         )
+                    dashboard_default_csv, dashboard_pullback_csv, dashboard_output = _resolve_dashboard_export_args(
+                        base_cfg
+                    )
+                    saved_dashboard = export_dashboard_data(
+                        dashboard_default_csv,
+                        dashboard_pullback_csv,
+                        dashboard_output,
+                    )
                     print(f"已写入文档: {saved}")
                     print(f"已写入文档: {saved_md}")
                     print(f"已写入文档: {saved_txt}")
+                    print(f"已写入文档: {saved_dashboard}")
             print(f"已写入文档: {log_path}")
         else:
             recs = rec_engine.recommend_many(_parse_date(args.date), count=args.count)
