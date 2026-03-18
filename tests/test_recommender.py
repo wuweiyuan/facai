@@ -7,7 +7,7 @@ from unittest import TestCase
 
 from app.config import apply_strategy_profile
 from app.engine.recommender import Recommender
-from app.main import build_parser
+from app.main import _resolve_dashboard_export_args, build_parser
 from app.models import DailyBar, StockInfo
 
 
@@ -325,3 +325,24 @@ class TestRecommender(TestCase):
         args = build_parser().parse_args(["export-dashboard-data"])
 
         self.assertEqual(args.cmd, "export-dashboard-data")
+
+    def test_resolve_dashboard_export_args_uses_default_and_pullback_paths(self):
+        cfg = {
+            "reporting": {
+                "recommendation_csv": "reports/default.csv",
+                "dashboard_data_js": "reports/dashboard.js",
+            },
+            "strategy_profiles": {
+                "pullback_confirm": {
+                    "reporting": {
+                        "recommendation_csv": "reports/pullback.csv",
+                    }
+                }
+            },
+        }
+
+        default_csv, pullback_csv, dashboard_js = _resolve_dashboard_export_args(cfg)
+
+        self.assertEqual(default_csv, "reports/default.csv")
+        self.assertEqual(pullback_csv, "reports/pullback.csv")
+        self.assertEqual(dashboard_js, "reports/dashboard.js")
