@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-03-18 22:22:38",
+  "generated_at": "2026-03-19 21:51:54",
   "strategies": {
     "default": {
       "key": "default",
       "label": "默认战法",
       "source_file": "reports/recommendations.csv",
       "available_dates": [
+        "2026-03-20",
         "2026-03-19",
         "2026-03-18",
         "2026-03-17",
@@ -24,8 +25,44 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-03-18 21:15:08",
+      "latest_run_time": "2026-03-19 20:41:23",
       "records": [
+        {
+          "run_time": "2026-03-19 20:41:23",
+          "trade_date": "2026-03-20",
+          "symbol": "600307",
+          "name": "酒钢宏兴",
+          "threshold_mode": "normal",
+          "score_total": 88.22,
+          "close": 2.28,
+          "stop_loss_price": 2.07,
+          "take_profit_price": 2.69,
+          "suggested_holding_days": 1
+        },
+        {
+          "run_time": "2026-03-19 20:41:23",
+          "trade_date": "2026-03-20",
+          "symbol": "603175",
+          "name": "超颖电子",
+          "threshold_mode": "normal",
+          "score_total": 86.02,
+          "close": 91.65,
+          "stop_loss_price": 82.37,
+          "take_profit_price": 110.2,
+          "suggested_holding_days": 1
+        },
+        {
+          "run_time": "2026-03-19 20:41:23",
+          "trade_date": "2026-03-20",
+          "symbol": "603421",
+          "name": "鼎信通讯",
+          "threshold_mode": "normal",
+          "score_total": 84.95,
+          "close": 10.33,
+          "stop_loss_price": 9.31,
+          "take_profit_price": 12.36,
+          "suggested_holding_days": 1
+        },
         {
           "run_time": "2026-03-18 21:15:08",
           "trade_date": "2026-03-19",
@@ -681,14 +718,51 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "回头战法",
       "source_file": "reports/pullback_recommendations.csv",
       "available_dates": [
+        "2026-03-20",
         "2026-03-19",
         "2026-03-18",
         "2026-03-17",
         "2026-03-16",
         "2026-03-13"
       ],
-      "latest_run_time": "2026-03-18 22:22:38",
+      "latest_run_time": "2026-03-19 21:51:54",
       "records": [
+        {
+          "run_time": "2026-03-19 21:51:54",
+          "trade_date": "2026-03-20",
+          "symbol": "600132",
+          "name": "重庆啤酒",
+          "threshold_mode": "normal",
+          "score_total": 72.18,
+          "close": 56.93,
+          "stop_loss_price": 54.6,
+          "take_profit_price": 61.58,
+          "suggested_holding_days": 1
+        },
+        {
+          "run_time": "2026-03-19 21:51:54",
+          "trade_date": "2026-03-20",
+          "symbol": "603050",
+          "name": "科林电气",
+          "threshold_mode": "normal",
+          "score_total": 72.06,
+          "close": 22.86,
+          "stop_loss_price": 20.71,
+          "take_profit_price": 27.15,
+          "suggested_holding_days": 1
+        },
+        {
+          "run_time": "2026-03-19 21:51:54",
+          "trade_date": "2026-03-20",
+          "symbol": "603565",
+          "name": "中谷物流",
+          "threshold_mode": "normal",
+          "score_total": 70.39,
+          "close": 11.01,
+          "stop_loss_price": 10.64,
+          "take_profit_price": 11.74,
+          "suggested_holding_days": 1
+        },
         {
           "run_time": "2026-03-18 22:22:38",
           "trade_date": "2026-03-19",
@@ -873,6 +947,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-03-20",
     "2026-03-19",
     "2026-03-18",
     "2026-03-17",
