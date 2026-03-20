@@ -5,7 +5,7 @@ import contextlib
 import io
 import json
 import sys
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from app.backtest.runner import BacktestRunner
 from app.config import apply_strategy_profile, load_config
@@ -67,6 +67,126 @@ def _parse_date(v: str | None) -> date:
     if not v:
         return date.today()
     return datetime.strptime(v, "%Y-%m-%d").date()
+
+
+def _resolve_next_trade_date(ds, today: date | None = None) -> date:
+    anchor = today or date.today()
+    future_dates = ds.get_trade_dates(anchor, anchor + timedelta(days=60))
+    for trade_date in future_dates:
+        if trade_date > anchor:
+            return trade_date
+    raise RuntimeError(f"No future trade date found after {anchor.isoformat()}")
+
+
+def _resolve_recommend_target_date(ds, raw_date: str | None, today: date | None = None) -> date:
+    if raw_date:
+        return _parse_date(raw_date)
+    return _resolve_next_trade_date(ds, today=today)
+
+
+def _resolve_recommend_run_specs(cmd: str) -> list[tuple[str, str | None, str]]:
+    if cmd == "recommend":
+        return [
+            ("recommend", None, "默认策略 recommend"),
+            ("recommend-pullback", "pullback_confirm", "回踩策略 recommend-pullback"),
+        ]
+    if cmd == "recommend-pullback":
+        return [("recommend-pullback", "pullback_confirm", "回踩策略 recommend-pullback")]
+    raise RuntimeError(f"Unsupported recommend command: {cmd}")
+
+
+def _configure_network(cfg: dict) -> None:
+    if cfg.get("network", {}).get("disable_env_proxy", True):
+        clear_proxy_env()
+    if cfg.get("network", {}).get("force_no_proxy_all", True):
+        force_no_proxy_all()
+        disable_requests_env_proxy()
+
+
+def _build_data_source(cfg: dict) -> AkshareDataSource:
+    ds_cfg = cfg.get("data_source", {})
+    return AkshareDataSource(
+        request_timeout_sec=float(ds_cfg.get("request_timeout_sec", 6.0)),
+        hist_retries=int(ds_cfg.get("hist_retries", 3)),
+        use_spot_name_merge=bool(ds_cfg.get("use_spot_name_merge", False)),
+        cache_enabled=bool(ds_cfg.get("cache_enabled", True)),
+        cache_dir=str(ds_cfg.get("cache_dir", ".cache/akshare")),
+    )
+
+
+def _run_recommend_profile(
+    base_cfg: dict,
+    profile_name: str | None,
+    section_title: str,
+    target_date: date,
+    count: int | None,
+    output: str,
+) -> tuple[list, bool]:
+    cfg = apply_strategy_profile(base_cfg, profile_name)
+    _configure_network(cfg)
+    ds = _build_data_source(cfg)
+    rec_engine = Recommender(ds, cfg)
+    report_cfg = cfg.get("reporting", {})
+    reporting_enabled = bool(report_cfg.get("enabled", True))
+    saved_docs: list[str] = []
+    log_path = None
+
+    def _execute_body() -> list:
+        if output != "json":
+            print(f"\n=== {section_title} ===")
+        recs = rec_engine.recommend_many(target_date, count=count)
+        if output != "json":
+            _print_recommendations(recs, output)
+        if reporting_enabled:
+            for rec in recs:
+                saved_docs.append(
+                    str(
+                        append_recommendation_csv(
+                            rec,
+                            str(report_cfg.get("recommendation_csv", "reports/recommendations.csv")),
+                        )
+                    )
+                )
+                saved_docs.append(
+                    str(
+                        append_recommendation_md(
+                            rec,
+                            str(report_cfg.get("recommendation_md", "reports/recommendations.md")),
+                        )
+                    )
+                )
+                saved_docs.append(
+                    str(
+                        append_recommendation_txt(
+                            rec,
+                            str(report_cfg.get("recommendation_txt", "reports/recommendations.txt")),
+                        )
+                    )
+                )
+        return recs
+
+    if reporting_enabled:
+        signal_date = rec_engine.resolve_signal_date(target_date)
+        log_path = resolve_recommendation_output_log_path(
+            signal_date,
+            str(report_cfg.get("recommendation_log", "reports/{signal_date}.log")),
+        )
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        with log_path.open("a", encoding="utf-8") as log_file:
+            runtime_stdout = log_file if output == "json" else _TeeStdout(sys.stdout, log_file)
+            with contextlib.redirect_stdout(runtime_stdout):
+                recs = _execute_body()
+        if output != "json":
+            for saved_doc in saved_docs:
+                print(f"已写入文档: {saved_doc}")
+            print(f"已写入文档: {log_path}")
+    else:
+        if output == "json":
+            with contextlib.redirect_stdout(io.StringIO()):
+                recs = _execute_body()
+        else:
+            recs = _execute_body()
+    return recs, reporting_enabled
 
 
 def _print_recommendations(recs, output: str) -> None:
@@ -291,66 +411,45 @@ def main() -> None:
         print(f"Dashboard data exported to {saved}")
         return
 
-    cfg = base_cfg
-    strategy_profile = "pullback_confirm" if args.cmd in {"recommend-pullback", "backtest-pullback"} else None
-    cfg = apply_strategy_profile(cfg, strategy_profile)
-    if cfg.get("network", {}).get("disable_env_proxy", True):
-        clear_proxy_env()
-    if cfg.get("network", {}).get("force_no_proxy_all", True):
-        force_no_proxy_all()
-        disable_requests_env_proxy()
-    ds_cfg = cfg.get("data_source", {})
-    ds = AkshareDataSource(
-        request_timeout_sec=float(ds_cfg.get("request_timeout_sec", 6.0)),
-        hist_retries=int(ds_cfg.get("hist_retries", 3)),
-        use_spot_name_merge=bool(ds_cfg.get("use_spot_name_merge", False)),
-        cache_enabled=bool(ds_cfg.get("cache_enabled", True)),
-        cache_dir=str(ds_cfg.get("cache_dir", ".cache/akshare")),
-    )
-    rec_engine = Recommender(ds, cfg)
-
     if args.cmd in {"recommend", "recommend-pullback"}:
-        report_cfg = cfg.get("reporting", {})
-        if bool(report_cfg.get("enabled", True)):
-            target_date = _parse_date(args.date)
-            signal_date = rec_engine.resolve_signal_date(target_date)
-            log_path = resolve_recommendation_output_log_path(
-                signal_date,
-                str(report_cfg.get("recommendation_log", "reports/{signal_date}.log")),
+        _configure_network(base_cfg)
+        target_date = _resolve_recommend_target_date(_build_data_source(base_cfg), args.date)
+        run_specs = _resolve_recommend_run_specs(args.cmd)
+        json_payload: dict[str, list[dict]] = {}
+        any_reporting_enabled = False
+        for cmd_name, profile_name, section_title in run_specs:
+            recs, reporting_enabled = _run_recommend_profile(
+                base_cfg=base_cfg,
+                profile_name=profile_name,
+                section_title=section_title,
+                target_date=target_date,
+                count=args.count,
+                output=args.output,
             )
-            log_path.parent.mkdir(parents=True, exist_ok=True)
-            with log_path.open("a", encoding="utf-8") as log_file:
-                tee_stdout = _TeeStdout(sys.stdout, log_file)
-                with contextlib.redirect_stdout(tee_stdout):
-                    recs = rec_engine.recommend_many(target_date, count=args.count)
-                    _print_recommendations(recs, args.output)
-                    for rec in recs:
-                        saved = append_recommendation_csv(
-                            rec, str(report_cfg.get("recommendation_csv", "reports/recommendations.csv"))
-                        )
-                        saved_md = append_recommendation_md(
-                            rec, str(report_cfg.get("recommendation_md", "reports/recommendations.md"))
-                        )
-                        saved_txt = append_recommendation_txt(
-                            rec, str(report_cfg.get("recommendation_txt", "reports/recommendations.txt"))
-                        )
-                    dashboard_default_csv, dashboard_pullback_csv, dashboard_output = _resolve_dashboard_export_args(
-                        base_cfg
-                    )
-                    saved_dashboard = export_dashboard_data(
-                        dashboard_default_csv,
-                        dashboard_pullback_csv,
-                        dashboard_output,
-                    )
-                    print(f"已写入文档: {saved}")
-                    print(f"已写入文档: {saved_md}")
-                    print(f"已写入文档: {saved_txt}")
-                    print(f"已写入文档: {saved_dashboard}")
-            print(f"已写入文档: {log_path}")
-        else:
-            recs = rec_engine.recommend_many(_parse_date(args.date), count=args.count)
-            _print_recommendations(recs, args.output)
+            any_reporting_enabled = any_reporting_enabled or reporting_enabled
+            json_payload[cmd_name] = [item.as_dict() for item in recs]
+        if any_reporting_enabled:
+            dashboard_default_csv, dashboard_pullback_csv, dashboard_output = _resolve_dashboard_export_args(base_cfg)
+            saved_dashboard = export_dashboard_data(
+                dashboard_default_csv,
+                dashboard_pullback_csv,
+                dashboard_output,
+            )
+            if args.output != "json":
+                print(f"已写入文档: {saved_dashboard}")
+        if args.output == "json":
+            if args.cmd == "recommend":
+                print(json.dumps(json_payload, ensure_ascii=False, indent=2))
+            else:
+                print(json.dumps(json_payload["recommend-pullback"], ensure_ascii=False, indent=2))
         return
+
+    cfg = base_cfg
+    strategy_profile = "pullback_confirm" if args.cmd in {"backtest-pullback"} else None
+    cfg = apply_strategy_profile(cfg, strategy_profile)
+    _configure_network(cfg)
+    ds = _build_data_source(cfg)
+    rec_engine = Recommender(ds, cfg)
 
     if args.cmd == "explain":
         target = _parse_date(args.date)

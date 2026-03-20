@@ -7,7 +7,12 @@ from unittest import TestCase
 
 from app.config import apply_strategy_profile
 from app.engine.recommender import Recommender
-from app.main import _resolve_dashboard_export_args, build_parser
+from app.main import (
+    _resolve_dashboard_export_args,
+    _resolve_recommend_run_specs,
+    _resolve_recommend_target_date,
+    build_parser,
+)
 from app.models import DailyBar, StockInfo
 
 
@@ -200,6 +205,40 @@ class FakePullbackDataSource(FakeDataSource):
 
 
 class TestRecommender(TestCase):
+    def test_resolve_recommend_target_date_uses_next_trade_day_when_date_missing(self):
+        ds = FakeDataSource()
+        ds.trade_dates = [date(2025, 1, 10), date(2025, 1, 13), date(2025, 1, 14)]
+
+        target = _resolve_recommend_target_date(ds, None, today=date(2025, 1, 10))
+
+        self.assertEqual(target, date(2025, 1, 13))
+
+    def test_resolve_recommend_target_date_keeps_explicit_date(self):
+        ds = FakeDataSource()
+
+        target = _resolve_recommend_target_date(ds, "2025-03-20", today=date(2025, 1, 10))
+
+        self.assertEqual(target, date(2025, 3, 20))
+
+    def test_resolve_recommend_run_specs_runs_default_and_pullback_for_recommend(self):
+        specs = _resolve_recommend_run_specs("recommend")
+
+        self.assertEqual(
+            specs,
+            [
+                ("recommend", None, "默认策略 recommend"),
+                ("recommend-pullback", "pullback_confirm", "回踩策略 recommend-pullback"),
+            ],
+        )
+
+    def test_resolve_recommend_run_specs_keeps_single_run_for_pullback_command(self):
+        specs = _resolve_recommend_run_specs("recommend-pullback")
+
+        self.assertEqual(
+            specs,
+            [("recommend-pullback", "pullback_confirm", "回踩策略 recommend-pullback")],
+        )
+
     def test_recommend_returns_one_stock(self):
         cfg = {
             "universe": {"limit": 100},
