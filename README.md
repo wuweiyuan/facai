@@ -7,18 +7,27 @@ Command-line tool to recommend top A-share stocks before open using T-1 close da
 ## Quick Start
 
 - 默认配置文件：`config/default.yaml`
-- 通用入口：`python3 -m app.main <command> [options]`
-- 如需切换配置文件：`python3 -m app.main --config config/default.yaml <command> ...`
+- Windows 通用入口：`python -m app.main <command> [options]`
+- macOS / Linux 通用入口：`python3 -m app.main <command> [options]`
+- Windows 切换配置文件：`python -m app.main --config config/default.yaml <command> ...`
+- macOS / Linux 切换配置文件：`python3 -m app.main --config config/default.yaml <command> ...`
 
 ## Commands
 
-- `python3 -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json]`
-- `python3 -m app.main recommend-pullback --date YYYY-MM-DD [--count N] [--output table|json]`
-- `python3 -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]`
-- `python3 -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
-- `python3 -m app.main backtest-pullback --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
-- `python3 -m app.main doctor [--output table|json]`
-- `python3 -m app.main check-kline --symbol 000001 --start YYYY-MM-DD --end YYYY-MM-DD [--output table|json]`
+- Windows：`python -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json]`
+- macOS / Linux：`python3 -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json]`
+- Windows：`python -m app.main recommend-pullback --date YYYY-MM-DD [--count N] [--output table|json]`
+- macOS / Linux：`python3 -m app.main recommend-pullback --date YYYY-MM-DD [--count N] [--output table|json]`
+- Windows：`python -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]`
+- macOS / Linux：`python3 -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]`
+- Windows：`python -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
+- macOS / Linux：`python3 -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
+- Windows：`python -m app.main backtest-pullback --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
+- macOS / Linux：`python3 -m app.main backtest-pullback --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
+- Windows：`python -m app.main doctor [--output table|json]`
+- macOS / Linux：`python3 -m app.main doctor [--output table|json]`
+- Windows：`python -m app.main check-kline --symbol 000001 --start YYYY-MM-DD --end YYYY-MM-DD [--output table|json]`
+- macOS / Linux：`python3 -m app.main check-kline --symbol 000001 --start YYYY-MM-DD --end YYYY-MM-DD [--output table|json]`
 - `bash scripts/check_today_update.sh`
 - `bash scripts/check_today_update_json.sh`
 - `bash scripts/check_today_update_multi.sh`
@@ -37,6 +46,10 @@ Command-line tool to recommend top A-share stocks before open using T-1 close da
 示例：
 
 ```bash
+# Windows
+python -m app.main --config config/default.yaml recommend --date 2026-03-06
+
+# macOS / Linux
 python3 -m app.main --config config/default.yaml recommend --date 2026-03-06
 ```
 
@@ -46,11 +59,16 @@ python3 -m app.main --config config/default.yaml recommend --date 2026-03-06
 
 - 按指定交易日选出推荐股票
 - 适合开盘前、盘前研究或每日复盘后生成次日观察名单
+- 执行 `recommend` 时，会自动继续运行一次 `recommend-pullback`，不用手动再执行第二次
 - 会根据配置里的过滤器、风险规则、市场环境和评分权重筛选股票
 
 命令：
 
 ```bash
+# Windows
+python -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json]
+
+# macOS / Linux
 python3 -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json]
 ```
 
@@ -58,7 +76,7 @@ python3 -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json
 
 - `--date YYYY-MM-DD`
   - 目标日期
-  - 不传时，程序会按当前日期处理
+  - 不传时，默认使用“下一个交易日”
   - 注意：程序内部会结合交易日逻辑解析“信号日”，并不是简单按自然日生搬硬套
 - `--count N`
   - 本次输出推荐数量
@@ -69,7 +87,10 @@ python3 -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json
 
 输出特点：
 
-- 终端会输出推荐股票、总分、关键指标、推荐理由
+- 终端会先输出默认 `recommend` 结果，再输出 `recommend-pullback` 结果
+- 若使用 `--output json`：
+  - `recommend` 会输出一个对象，包含 `recommend` 和 `recommend-pullback` 两组结果
+  - `recommend-pullback` 单独执行时，仍输出原来的数组结果
 - 若 `reporting.enabled: true`，还会额外写入：
   - `reports/recommendations.csv`
   - `reports/recommendations.md`
@@ -79,6 +100,7 @@ python3 -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json
 常见场景：
 
 - 每天开盘前跑一次，生成候选名单
+- 跑一次后同时拿到“默认趋势策略”和“回踩策略”两套名单
 - 调整 `strategy.enabled_modes` 后观察候选数量变化
 - 如果 `recommend` 太慢，可提高 `strategy.scan_workers` 做并发扫描
 - 配合 `explain` 深挖某只股票为何入选
@@ -86,6 +108,14 @@ python3 -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json
 示例：
 
 ```bash
+# Windows
+python -m app.main recommend
+python -m app.main recommend --date 2026-03-06
+python -m app.main recommend --date 2026-03-06 --count 5
+python -m app.main recommend --date 2026-03-06 --output json
+
+# macOS / Linux
+python3 -m app.main recommend
 python3 -m app.main recommend --date 2026-03-06
 python3 -m app.main recommend --date 2026-03-06 --count 5
 python3 -m app.main recommend --date 2026-03-06 --output json
@@ -102,6 +132,10 @@ python3 -m app.main recommend --date 2026-03-06 --output json
 命令：
 
 ```bash
+# Windows
+python -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]
+
+# macOS / Linux
 python3 -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]
 ```
 
@@ -135,6 +169,11 @@ python3 -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--o
 示例：
 
 ```bash
+# Windows
+python -m app.main explain --symbol 000001 --date 2026-03-06 --mode normal
+python -m app.main explain --symbol 600519 --date 2026-03-06 --mode relaxed --output json
+
+# macOS / Linux
 python3 -m app.main explain --symbol 000001 --date 2026-03-06 --mode normal
 python3 -m app.main explain --symbol 600519 --date 2026-03-06 --mode relaxed --output json
 ```
@@ -150,8 +189,24 @@ python3 -m app.main explain --symbol 600519 --date 2026-03-06 --mode relaxed --o
 命令：
 
 ```bash
+# Windows
+python -m app.main recommend-pullback --date YYYY-MM-DD [--count N] [--output table|json]
+
+# macOS / Linux
 python3 -m app.main recommend-pullback --date YYYY-MM-DD [--count N] [--output table|json]
 ```
+
+参数说明：
+
+- `--date YYYY-MM-DD`
+  - 目标日期
+  - 不传时，默认使用“下一个交易日”
+- `--count N`
+  - 本次输出推荐数量
+  - 不传时，默认使用 `config/default.yaml` 里 pullback 配置下的 `strategy.pick_count`
+- `--output table|json`
+  - `table`：适合终端阅读
+  - `json`：适合脚本集成、自动化处理或接口对接
 
 特点：
 
@@ -167,6 +222,18 @@ python3 -m app.main recommend-pullback --date YYYY-MM-DD [--count N] [--output t
 - 你觉得默认策略更像右侧追强，想减少“追高接盘”感
 - 想优先看“趋势还在，但位置更克制”的票
 
+示例：
+
+```bash
+# Windows
+python -m app.main recommend-pullback
+python -m app.main recommend-pullback --date 2026-03-06
+
+# macOS / Linux
+python3 -m app.main recommend-pullback
+python3 -m app.main recommend-pullback --date 2026-03-06
+```
+
 ### 3) `backtest`
 
 用途：
@@ -178,6 +245,10 @@ python3 -m app.main recommend-pullback --date YYYY-MM-DD [--count N] [--output t
 命令：
 
 ```bash
+# Windows
+python -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]
+
+# macOS / Linux
 python3 -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]
 ```
 
@@ -214,6 +285,12 @@ python3 -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--
 示例：
 
 ```bash
+# Windows
+python -m app.main backtest --start 2026-02-01 --end 2026-03-01
+python -m app.main backtest --start 2026-02-01 --end 2026-03-01 --count 5
+python -m app.main backtest --start 2026-02-01 --end 2026-03-01 --output json-cn
+
+# macOS / Linux
 python3 -m app.main backtest --start 2026-02-01 --end 2026-03-01
 python3 -m app.main backtest --start 2026-02-01 --end 2026-03-01 --count 5
 python3 -m app.main backtest --start 2026-02-01 --end 2026-03-01 --output json-cn
@@ -229,6 +306,10 @@ python3 -m app.main backtest --start 2026-02-01 --end 2026-03-01 --output json-c
 命令：
 
 ```bash
+# Windows
+python -m app.main backtest-pullback --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]
+
+# macOS / Linux
 python3 -m app.main backtest-pullback --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]
 ```
 
@@ -247,6 +328,10 @@ python3 -m app.main backtest-pullback --start YYYY-MM-DD --end YYYY-MM-DD [--cou
 命令：
 
 ```bash
+# Windows
+python -m app.main doctor [--output table|json]
+
+# macOS / Linux
 python3 -m app.main doctor [--output table|json]
 ```
 
@@ -266,6 +351,11 @@ python3 -m app.main doctor [--output table|json]
 示例：
 
 ```bash
+# Windows
+python -m app.main doctor
+python -m app.main doctor --output json
+
+# macOS / Linux
 python3 -m app.main doctor
 python3 -m app.main doctor --output json
 ```
@@ -280,6 +370,10 @@ python3 -m app.main doctor --output json
 命令：
 
 ```bash
+# Windows
+python -m app.main check-kline --symbol 000001 --start YYYY-MM-DD --end YYYY-MM-DD [--output table|json]
+
+# macOS / Linux
 python3 -m app.main check-kline --symbol 000001 --start YYYY-MM-DD --end YYYY-MM-DD [--output table|json]
 ```
 
@@ -306,6 +400,11 @@ python3 -m app.main check-kline --symbol 000001 --start YYYY-MM-DD --end YYYY-MM
 示例：
 
 ```bash
+# Windows
+python -m app.main check-kline --symbol 000001 --start 2026-02-01 --end 2026-03-01
+python -m app.main check-kline --symbol 600519 --start 2026-02-01 --end 2026-03-01 --output json
+
+# macOS / Linux
 python3 -m app.main check-kline --symbol 000001 --start 2026-02-01 --end 2026-03-01
 python3 -m app.main check-kline --symbol 600519 --start 2026-02-01 --end 2026-03-01 --output json
 ```
