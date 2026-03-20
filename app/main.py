@@ -85,11 +85,13 @@ def _resolve_recommend_target_date(ds, raw_date: str | None, today: date | None 
 
 
 def _resolve_recommend_run_specs(cmd: str) -> list[tuple[str, str | None, str]]:
-    if cmd == "recommend":
+    if cmd == "recommend-all":
         return [
             ("recommend", None, "默认策略 recommend"),
             ("recommend-pullback", "pullback_confirm", "回踩策略 recommend-pullback"),
         ]
+    if cmd == "recommend":
+        return [("recommend", None, "默认策略 recommend")]
     if cmd == "recommend-pullback":
         return [("recommend-pullback", "pullback_confirm", "回踩策略 recommend-pullback")]
     raise RuntimeError(f"Unsupported recommend command: {cmd}")
@@ -349,6 +351,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_rec.add_argument("--count", type=int, default=None, help="How many stocks to pick; defaults to strategy.pick_count")
     p_rec.add_argument("--output", choices=["table", "json"], default="table")
 
+    p_rec_all = sub.add_parser("recommend-all", help="Run both recommend and recommend-pullback for target trading day")
+    p_rec_all.add_argument("--date", default=None, help="Target date YYYY-MM-DD")
+    p_rec_all.add_argument("--count", type=int, default=None, help="How many stocks to pick per strategy run")
+    p_rec_all.add_argument("--output", choices=["table", "json"], default="table")
+
     p_rec_pb = sub.add_parser("recommend-pullback", help="Recommend pullback-confirmation stocks for target trading day")
     p_rec_pb.add_argument("--date", default=None, help="Target date YYYY-MM-DD")
     p_rec_pb.add_argument(
@@ -411,7 +418,7 @@ def main() -> None:
         print(f"Dashboard data exported to {saved}")
         return
 
-    if args.cmd in {"recommend", "recommend-pullback"}:
+    if args.cmd in {"recommend", "recommend-all", "recommend-pullback"}:
         _configure_network(base_cfg)
         target_date = _resolve_recommend_target_date(_build_data_source(base_cfg), args.date)
         run_specs = _resolve_recommend_run_specs(args.cmd)
@@ -438,10 +445,10 @@ def main() -> None:
             if args.output != "json":
                 print(f"已写入文档: {saved_dashboard}")
         if args.output == "json":
-            if args.cmd == "recommend":
+            if args.cmd == "recommend-all":
                 print(json.dumps(json_payload, ensure_ascii=False, indent=2))
             else:
-                print(json.dumps(json_payload["recommend-pullback"], ensure_ascii=False, indent=2))
+                print(json.dumps(json_payload[args.cmd], ensure_ascii=False, indent=2))
         return
 
     cfg = base_cfg

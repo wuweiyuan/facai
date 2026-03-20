@@ -59,7 +59,7 @@ def friendly_error_message(exc_or_msg: Exception | str) -> str:
     if "Market index data unavailable:" in msg:
         return "市场指数数据不可用（market_filter.fail_on_error=true），已停止执行推荐。请检查网络、DNS 或指数缓存。"
     if "Unsupported command:" in msg:
-        return "命令不受支持，请检查子命令名称（recommend/explain/backtest/doctor/check-kline）。"
+        return "命令不受支持，请检查子命令名称（recommend/recommend-all/recommend-pullback/explain/backtest/doctor/check-kline）。"
     if "Config not found:" in msg:
         return "配置文件不存在，请检查 --config 路径。"
     if "Config root must be an object" in msg:
