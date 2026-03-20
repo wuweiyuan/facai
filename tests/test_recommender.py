@@ -221,7 +221,7 @@ class TestRecommender(TestCase):
         self.assertEqual(target, date(2025, 3, 20))
 
     def test_resolve_recommend_run_specs_runs_default_and_pullback_for_recommend(self):
-        specs = _resolve_recommend_run_specs("recommend")
+        specs = _resolve_recommend_run_specs("recommend-all")
 
         self.assertEqual(
             specs,
@@ -237,6 +237,14 @@ class TestRecommender(TestCase):
         self.assertEqual(
             specs,
             [("recommend-pullback", "pullback_confirm", "回踩策略 recommend-pullback")],
+        )
+
+    def test_resolve_recommend_run_specs_keeps_single_run_for_recommend_command(self):
+        specs = _resolve_recommend_run_specs("recommend")
+
+        self.assertEqual(
+            specs,
+            [("recommend", None, "默认策略 recommend")],
         )
 
     def test_recommend_returns_one_stock(self):
@@ -359,6 +367,11 @@ class TestRecommender(TestCase):
         args = build_parser().parse_args(["recommend-pullback", "--date", "2025-03-20"])
 
         self.assertEqual(args.cmd, "recommend-pullback")
+
+    def test_parser_accepts_recommend_all(self):
+        args = build_parser().parse_args(["recommend-all", "--date", "2025-03-20"])
+
+        self.assertEqual(args.cmd, "recommend-all")
 
     def test_parser_accepts_export_dashboard_data(self):
         args = build_parser().parse_args(["export-dashboard-data"])

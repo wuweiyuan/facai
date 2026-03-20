@@ -16,6 +16,8 @@ Command-line tool to recommend top A-share stocks before open using T-1 close da
 
 - Windows：`python -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json]`
 - macOS / Linux：`python3 -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json]`
+- Windows：`python -m app.main recommend-all --date YYYY-MM-DD [--count N] [--output table|json]`
+- macOS / Linux：`python3 -m app.main recommend-all --date YYYY-MM-DD [--count N] [--output table|json]`
 - Windows：`python -m app.main recommend-pullback --date YYYY-MM-DD [--count N] [--output table|json]`
 - macOS / Linux：`python3 -m app.main recommend-pullback --date YYYY-MM-DD [--count N] [--output table|json]`
 - Windows：`python -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]`
@@ -59,7 +61,6 @@ python3 -m app.main --config config/default.yaml recommend --date 2026-03-06
 
 - 按指定交易日选出推荐股票
 - 适合开盘前、盘前研究或每日复盘后生成次日观察名单
-- 执行 `recommend` 时，会自动继续运行一次 `recommend-pullback`，不用手动再执行第二次
 - 会根据配置里的过滤器、风险规则、市场环境和评分权重筛选股票
 
 命令：
@@ -87,10 +88,8 @@ python3 -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json
 
 输出特点：
 
-- 终端会先输出默认 `recommend` 结果，再输出 `recommend-pullback` 结果
-- 若使用 `--output json`：
-  - `recommend` 会输出一个对象，包含 `recommend` 和 `recommend-pullback` 两组结果
-  - `recommend-pullback` 单独执行时，仍输出原来的数组结果
+- 终端会输出默认 `recommend` 结果
+- 若使用 `--output json`，输出单组推荐结果数组
 - 若 `reporting.enabled: true`，还会额外写入：
   - `reports/recommendations.csv`
   - `reports/recommendations.md`
@@ -100,7 +99,6 @@ python3 -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json
 常见场景：
 
 - 每天开盘前跑一次，生成候选名单
-- 跑一次后同时拿到“默认趋势策略”和“回踩策略”两套名单
 - 调整 `strategy.enabled_modes` 后观察候选数量变化
 - 如果 `recommend` 太慢，可提高 `strategy.scan_workers` 做并发扫描
 - 配合 `explain` 深挖某只股票为何入选
@@ -176,6 +174,47 @@ python -m app.main explain --symbol 600519 --date 2026-03-06 --mode relaxed --ou
 # macOS / Linux
 python3 -m app.main explain --symbol 000001 --date 2026-03-06 --mode normal
 python3 -m app.main explain --symbol 600519 --date 2026-03-06 --mode relaxed --output json
+```
+
+### 2.3) `recommend-all`
+
+用途：
+
+- 顺序执行 `recommend` 和 `recommend-pullback`
+- 适合你想一次拿到“默认趋势策略”和“回踩策略”两套名单
+- 不用手动连续执行两次命令
+
+命令：
+
+```bash
+# Windows
+python -m app.main recommend-all --date YYYY-MM-DD [--count N] [--output table|json]
+
+# macOS / Linux
+python3 -m app.main recommend-all --date YYYY-MM-DD [--count N] [--output table|json]
+```
+
+参数说明：
+
+- `--date YYYY-MM-DD`
+  - 目标日期
+  - 不传时，默认使用“下一个交易日”
+- `--count N`
+  - 每套策略各自输出的推荐数量
+- `--output table|json`
+  - `table`：先输出 `recommend`，再输出 `recommend-pullback`
+  - `json`：输出一个对象，包含 `recommend` 和 `recommend-pullback` 两组结果
+
+示例：
+
+```bash
+# Windows
+python -m app.main recommend-all
+python -m app.main recommend-all --date 2026-03-06
+
+# macOS / Linux
+python3 -m app.main recommend-all
+python3 -m app.main recommend-all --date 2026-03-06
 ```
 
 ### 2.5) `recommend-pullback`
