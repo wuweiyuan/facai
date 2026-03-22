@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-03-19 21:51:54",
+  "generated_at": "2026-03-22 21:43:39",
   "strategies": {
     "default": {
       "key": "default",
       "label": "默认战法",
       "source_file": "reports/recommendations.csv",
       "available_dates": [
+        "2026-03-23",
         "2026-03-20",
         "2026-03-19",
         "2026-03-18",
@@ -25,8 +26,44 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-03-19 20:41:23",
+      "latest_run_time": "2026-03-22 21:42:57",
       "records": [
+        {
+          "run_time": "2026-03-22 21:42:57",
+          "trade_date": "2026-03-23",
+          "symbol": "603693",
+          "name": "江苏新能",
+          "threshold_mode": "normal",
+          "score_total": 90.84,
+          "close": 16.56,
+          "stop_loss_price": 15.28,
+          "take_profit_price": 19.11,
+          "suggested_holding_days": 1
+        },
+        {
+          "run_time": "2026-03-22 21:42:57",
+          "trade_date": "2026-03-23",
+          "symbol": "600032",
+          "name": "浙江新能",
+          "threshold_mode": "normal",
+          "score_total": 90.18,
+          "close": 9.78,
+          "stop_loss_price": 9.07,
+          "take_profit_price": 11.19,
+          "suggested_holding_days": 1
+        },
+        {
+          "run_time": "2026-03-22 21:42:57",
+          "trade_date": "2026-03-23",
+          "symbol": "603538",
+          "name": "美诺华",
+          "threshold_mode": "normal",
+          "score_total": 88.88,
+          "close": 27.84,
+          "stop_loss_price": 25.58,
+          "take_profit_price": 32.34,
+          "suggested_holding_days": 1
+        },
         {
           "run_time": "2026-03-19 20:41:23",
           "trade_date": "2026-03-20",
@@ -718,6 +755,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "回头战法",
       "source_file": "reports/pullback_recommendations.csv",
       "available_dates": [
+        "2026-03-23",
         "2026-03-20",
         "2026-03-19",
         "2026-03-18",
@@ -725,8 +763,44 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-16",
         "2026-03-13"
       ],
-      "latest_run_time": "2026-03-19 21:51:54",
+      "latest_run_time": "2026-03-22 21:43:39",
       "records": [
+        {
+          "run_time": "2026-03-22 21:43:39",
+          "trade_date": "2026-03-23",
+          "symbol": "001382",
+          "name": "新亚电缆",
+          "threshold_mode": "normal",
+          "score_total": 72.92,
+          "close": 22.4,
+          "stop_loss_price": 20.62,
+          "take_profit_price": 25.94,
+          "suggested_holding_days": 1
+        },
+        {
+          "run_time": "2026-03-22 21:43:39",
+          "trade_date": "2026-03-23",
+          "symbol": "002840",
+          "name": "华统股份",
+          "threshold_mode": "normal",
+          "score_total": 70.01,
+          "close": 10.02,
+          "stop_loss_price": 9.56,
+          "take_profit_price": 10.92,
+          "suggested_holding_days": 1
+        },
+        {
+          "run_time": "2026-03-22 21:43:39",
+          "trade_date": "2026-03-23",
+          "symbol": "600461",
+          "name": "洪城环境",
+          "threshold_mode": "normal",
+          "score_total": 69.12,
+          "close": 10.09,
+          "stop_loss_price": 9.82,
+          "take_profit_price": 10.61,
+          "suggested_holding_days": 1
+        },
         {
           "run_time": "2026-03-19 21:51:54",
           "trade_date": "2026-03-20",
@@ -947,6 +1021,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-03-23",
     "2026-03-20",
     "2026-03-19",
     "2026-03-18",
