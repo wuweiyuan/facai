@@ -23,12 +23,14 @@ from app.reporting import (
 )
 
 
-def _resolve_dashboard_export_args(base_cfg: dict) -> tuple[str, str, str]:
+def _resolve_dashboard_export_args(base_cfg: dict) -> tuple[str, str, str, str]:
     default_csv = str(base_cfg.get("reporting", {}).get("recommendation_csv", "reports/recommendations.csv"))
     pullback_cfg = apply_strategy_profile(base_cfg, "pullback_confirm")
     pullback_csv = str(pullback_cfg.get("reporting", {}).get("recommendation_csv", "reports/pullback_recommendations.csv"))
+    oversold_cfg = apply_strategy_profile(base_cfg, "oversold_rebound")
+    oversold_csv = str(oversold_cfg.get("reporting", {}).get("recommendation_csv", "reports/oversold_recommendations.csv"))
     dashboard_js = str(base_cfg.get("reporting", {}).get("dashboard_data_js", "reports/dashboard-data.js"))
-    return default_csv, pullback_csv, dashboard_js
+    return default_csv, pullback_csv, oversold_csv, dashboard_js
 
 
 METRIC_LABELS_ZH = {
@@ -89,11 +91,14 @@ def _resolve_recommend_run_specs(cmd: str) -> list[tuple[str, str | None, str]]:
         return [
             ("recommend", None, "默认策略 recommend"),
             ("recommend-pullback", "pullback_confirm", "回踩策略 recommend-pullback"),
+            ("recommend-oversold", "oversold_rebound", "超跌反弹策略 recommend-oversold"),
         ]
     if cmd == "recommend":
         return [("recommend", None, "默认策略 recommend")]
     if cmd == "recommend-pullback":
         return [("recommend-pullback", "pullback_confirm", "回踩策略 recommend-pullback")]
+    if cmd == "recommend-oversold":
+        return [("recommend-oversold", "oversold_rebound", "超跌反弹策略 recommend-oversold")]
     raise RuntimeError(f"Unsupported recommend command: {cmd}")
 
 
@@ -366,6 +371,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_rec_pb.add_argument("--output", choices=["table", "json"], default="table")
 
+    p_rec_os = sub.add_parser("recommend-oversold", help="Recommend oversold-rebound stocks for target trading day")
+    p_rec_os.add_argument("--date", default=None, help="Target date YYYY-MM-DD")
+    p_rec_os.add_argument(
+        "--count",
+        type=int,
+        default=None,
+        help="How many stocks to pick; defaults to strategy.pick_count in oversold profile",
+    )
+    p_rec_os.add_argument("--output", choices=["table", "json"], default="table")
+
     p_exp = sub.add_parser("explain", help="Explain one stock score on target date")
     p_exp.add_argument("--symbol", required=True, help="Stock code like 000001")
     p_exp.add_argument("--date", default=None, help="Target date YYYY-MM-DD")
@@ -405,6 +420,11 @@ def build_parser() -> argparse.ArgumentParser:
         default="reports/pullback_recommendations.csv",
         help="Path to recommend-pullback CSV",
     )
+    p_dash.add_argument(
+        "--oversold-csv",
+        default="reports/oversold_recommendations.csv",
+        help="Path to recommend-oversold CSV",
+    )
     p_dash.add_argument("--output", default="reports/dashboard-data.js", help="Path to generated dashboard data")
     return p
 
@@ -414,11 +434,11 @@ def main() -> None:
     args = parser.parse_args()
     base_cfg = load_config(args.config)
     if args.cmd == "export-dashboard-data":
-        saved = export_dashboard_data(args.default_csv, args.pullback_csv, args.output)
+        saved = export_dashboard_data(args.default_csv, args.pullback_csv, args.oversold_csv, args.output)
         print(f"Dashboard data exported to {saved}")
         return
 
-    if args.cmd in {"recommend", "recommend-all", "recommend-pullback"}:
+    if args.cmd in {"recommend", "recommend-all", "recommend-pullback", "recommend-oversold"}:
         _configure_network(base_cfg)
         target_date = _resolve_recommend_target_date(_build_data_source(base_cfg), args.date)
         run_specs = _resolve_recommend_run_specs(args.cmd)
@@ -436,10 +456,11 @@ def main() -> None:
             any_reporting_enabled = any_reporting_enabled or reporting_enabled
             json_payload[cmd_name] = [item.as_dict() for item in recs]
         if any_reporting_enabled:
-            dashboard_default_csv, dashboard_pullback_csv, dashboard_output = _resolve_dashboard_export_args(base_cfg)
+            dashboard_default_csv, dashboard_pullback_csv, dashboard_oversold_csv, dashboard_output = _resolve_dashboard_export_args(base_cfg)
             saved_dashboard = export_dashboard_data(
                 dashboard_default_csv,
                 dashboard_pullback_csv,
+                dashboard_oversold_csv,
                 dashboard_output,
             )
             if args.output != "json":

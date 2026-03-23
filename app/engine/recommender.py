@@ -181,7 +181,7 @@ class Recommender:
         if df.empty:
             raise RuntimeError(f"No bars found for {symbol}")
         latest = df.iloc[-1]
-        if not passes_threshold(latest, mode):
+        if not passes_threshold(latest, mode, self.cfg):
             raise RuntimeError(f"{symbol} does not pass {mode} threshold")
         if not passes_risk_filter(latest, market_state, mode, self.cfg):
             raise RuntimeError(f"{symbol} does not pass risk filter in {mode} mode")
@@ -192,7 +192,7 @@ class Recommender:
             score_total=total,
             score_breakdown=breakdown,
             key_metrics=self._build_metrics(latest, market_state),
-            reason=build_reason(latest, breakdown, mode),
+            reason=build_reason(latest, breakdown, mode, self.cfg),
         )
 
     def _resolve_stock_name(self, symbol: str) -> str:
@@ -315,7 +315,7 @@ class Recommender:
         if df.empty:
             return StockScanOutcome(index=index, symbol=stock.symbol, status="df_empty", kline_success=True)
         latest = df.iloc[-1]
-        if mode != "force" and not passes_threshold(latest, mode):
+        if mode != "force" and not passes_threshold(latest, mode, self.cfg):
             return StockScanOutcome(index=index, symbol=stock.symbol, status="threshold_reject", kline_success=True)
         if not passes_risk_filter(latest, market_state, mode, self.cfg):
             market_enabled = bool(self.cfg.get("market_filter", {}).get("enabled", True))
@@ -333,7 +333,7 @@ class Recommender:
                 score_total=score_total,
                 score_breakdown=breakdown,
                 key_metrics=self._build_metrics(latest, market_state),
-                reason=build_reason(latest, breakdown, mode),
+                reason=build_reason(latest, breakdown, mode, self.cfg),
             ),
         )
 
@@ -452,11 +452,12 @@ class Recommender:
         close = float(latest["close"])
         atr14 = float(latest["atr14"]) if latest.get("atr14") is not None else 0.0
         stop_loss_price, take_profit_price = compute_stop_take_prices(close, atr14, self.cfg)
-        suggested_days = float(suggest_holding_days(latest, market_state))
+        suggested_days = float(suggest_holding_days(latest, market_state, self.cfg))
         return {
             "close": close,
             "ma20": float(latest["ma20"]),
             "ma60": float(latest["ma60"]),
+            "ret_1d": float(latest["ret_1d"]) if latest.get("ret_1d") is not None else 0.0,
             "mom5": float(latest["mom5"]),
             "mom20": float(latest["mom20"]),
             "rsi14": float(latest["rsi14"]),
@@ -465,7 +466,9 @@ class Recommender:
             "take_profit_price": take_profit_price,
             "suggested_holding_days": suggested_days,
             "vol_ratio_5_20": float(latest["vol_ratio_5_20"]) if latest.get("vol_ratio_5_20") is not None else 0.0,
+            "volume_ratio_1_20": float(latest["volume_ratio_1_20"]) if latest.get("volume_ratio_1_20") is not None else 0.0,
             "volume_zscore20": float(latest["volume_zscore20"]) if latest.get("volume_zscore20") is not None else 0.0,
+            "close_vs_ma20_pct": close / float(latest["ma20"]) - 1.0 if float(latest["ma20"]) > 0 else 0.0,
             "turnover_rate": float(latest["turnover_rate"]) if latest.get("turnover_rate") is not None else 0.0,
             "vol20_std": float(latest["vol20_std"]),
         }

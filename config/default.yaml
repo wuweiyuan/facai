@@ -372,6 +372,35 @@ strategy_profiles:
       recommendation_md: reports/pullback_recommendations.md
       recommendation_txt: reports/pullback_recommendations.txt
       recommendation_log: reports/pullback/{signal_date}.log
+  oversold_rebound:
+    strategy:
+      name: oversold_rebound_v1
+      threshold_profile: oversold_rebound
+      enabled_modes: [normal]
+      weights:
+        trend: 0.0
+        momentum: 0.0
+        stability: 0.15
+        volume: 0.15
+        oversold: 0.70
+    risk_filter:
+      oversold:
+        enabled: true
+        min_close_below_ma20_pct: 0.09
+        max_mom5: -0.12
+        max_ret_1d: -0.03
+        min_volume_ratio_1_20: 1.3
+        min_volume_zscore20: 0.8
+        max_rsi14: 45.0
+    risk_targets:
+      method: percent
+      stop_loss_pct: 0.06
+      take_profit_pct: 0.08
+    reporting:
+      recommendation_csv: reports/oversold_recommendations.csv
+      recommendation_md: reports/oversold_recommendations.md
+      recommendation_txt: reports/oversold_recommendations.txt
+      recommendation_log: reports/oversold/{signal_date}.log
 
 # 输入输出相关配置。
 io:

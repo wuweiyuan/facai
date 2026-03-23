@@ -197,6 +197,38 @@
       color: var(--danger);
     }
 
+    .playbook {
+      margin-top: 16px;
+      padding: 18px 20px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(248, 243, 234, 0.98));
+      border: 1px solid rgba(31, 42, 31, 0.08);
+    }
+
+    .playbook h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .playbook p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .playbook ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--ink);
+      line-height: 1.8;
+      font-size: 14px;
+    }
+
+    .playbook li + li {
+      margin-top: 4px;
+    }
+
     .table-wrap {
       overflow: auto;
       border-radius: 18px;
@@ -236,23 +268,30 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
-      min-width: 136px;
+      min-width: 0;
     }
 
     .stock-code {
       color: var(--muted);
-      font-size: 12px;
+      font-size: 11px;
       letter-spacing: 0.08em;
     }
 
     th.stock-col,
     td.stock-col {
-      min-width: 160px;
-      width: 160px;
+      min-width: 72px;
+      width: 72px;
+      max-width: 72px;
+      padding-left: 8px;
+      padding-right: 8px;
     }
 
     .stock-cell strong {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
+      line-height: 1.2;
     }
 
     .badge {
@@ -305,8 +344,11 @@
 
       th.stock-col,
       td.stock-col {
-        min-width: 170px;
-        width: 170px;
+        min-width: 76px;
+        width: 76px;
+        max-width: 76px;
+        padding-left: 6px;
+        padding-right: 6px;
       }
 
       .table-wrap {
@@ -329,6 +371,7 @@
         <div class="strategy-tabs">
           <button class="tab active" data-strategy="default" type="button">默认战法</button>
           <button class="tab" data-strategy="pullback" type="button">回头战法</button>
+          <button class="tab" data-strategy="oversold" type="button">超跌反弹</button>
         </div>
 
         <div class="control-row">
@@ -354,6 +397,11 @@
         </div>
 
         <div class="status" id="dataStatus"></div>
+
+        <div class="playbook" id="strategyPlaybook">
+          <h3 id="playbookTitle">默认战法说明</h3>
+          <div id="playbookBody"></div>
+        </div>
 
         <div class="table-wrap" style="margin-top: 16px;">
           <table>
@@ -381,8 +429,45 @@
     (function () {
       const MAX_VISIBLE_DATES = 20;
       const STRATEGY_META = {
-        default: { label: "默认战法" },
-        pullback: { label: "回头战法" }
+        default: {
+          label: "默认战法",
+          playbookTitle: "默认战法说明",
+          playbookHtml: [
+            "<p>默认战法更偏趋势和动量，适合做盘前候选池，不适合拿它去追每一根大阳线。</p>",
+            "<ul>",
+            "<li>优先看分数靠前、趋势结构完整的股票。</li>",
+            "<li>如果当天整体候选很少，宁可少做，不要硬凑。</li>",
+            "<li>默认更适合配合盘中确认，而不是机械追高。</li>",
+            "</ul>"
+          ].join("")
+        },
+        pullback: {
+          label: "回头战法",
+          playbookTitle: "回头战法说明",
+          playbookHtml: [
+            "<p>回头战法更强调不追高，优先看贴近均线、短期不过热、但中期结构还在的票。</p>",
+            "<ul>",
+            "<li>更适合观察回踩后的承接，而不是开盘直接追。</li>",
+            "<li>如果股价重新远离均线过多，性价比会明显下降。</li>",
+            "<li>适合和默认战法对照着看，挑位置更克制的候选。</li>",
+            "</ul>"
+          ].join("")
+        },
+        oversold: {
+          label: "超跌反弹",
+          playbookTitle: "超跌反弹买卖规则",
+          playbookHtml: [
+            "<p>这套策略做的是情绪过度后的技术修复，不是主升浪趋势跟随。核心是用前一交易日的超跌信号，在下一个交易日等止跌回稳后再动手。</p>",
+            "<ul>",
+            "<li><strong>买入规则：</strong>只看前一交易日筛出来的票；次日高开超过 3% 不追；开盘后先等 15 到 30 分钟；如果继续创新低不买；平开或小低开后止跌回升、最好重新站回开盘价附近，再考虑介入。</li>",
+            "<li><strong>仓位规则：</strong>更适合少选精做，优先前 1 到 2 只，默认观察池最多看 3 只。</li>",
+            "<li><strong>持有规则：</strong>默认持有 4 到 5 个交易日；如果第 2 到第 3 天还没有明显反弹，可以直接退出。</li>",
+            "<li><strong>止损规则：</strong>买入后单笔亏损达到 5% 到 6% 就止损，不继续硬扛。</li>",
+            "<li><strong>止盈规则：</strong>如果很快反弹到 5% 到 8%，可以提前止盈；否则第 4 到第 5 个交易日优先了结。</li>",
+            "<li><strong>空仓规则：</strong>如果当天信号很少，或者候选股次日都高开过多、继续杀跌，就不要硬做。</li>",
+            "</ul>"
+          ].join("")
+        }
       };
 
       const builtinData = window.STOCK_DASHBOARD_DATA || null;
@@ -399,6 +484,8 @@
       const metricStrategy = document.getElementById("metricStrategy");
       const metricCount = document.getElementById("metricCount");
       const metricRunTime = document.getElementById("metricRunTime");
+      const playbookTitle = document.getElementById("playbookTitle");
+      const playbookBody = document.getElementById("playbookBody");
       const tabs = Array.from(document.querySelectorAll(".tab"));
 
       bindEvents();
@@ -427,6 +514,8 @@
         if (!data) {
           dateSelect.innerHTML = "";
           metricStrategy.textContent = STRATEGY_META[state.strategy].label;
+          playbookTitle.textContent = STRATEGY_META[state.strategy].playbookTitle;
+          playbookBody.innerHTML = STRATEGY_META[state.strategy].playbookHtml;
           metricCount.textContent = "0";
           metricRunTime.textContent = "-";
           setStatus("未检测到预生成数据文件。请先运行 `python -m app.main export-dashboard-data`。", true);
@@ -442,6 +531,8 @@
         const latestRunTime = records.length ? records[0].run_time || "-" : (strategyData.latest_run_time || "-");
 
         metricStrategy.textContent = strategyData.label;
+        playbookTitle.textContent = STRATEGY_META[state.strategy].playbookTitle;
+        playbookBody.innerHTML = STRATEGY_META[state.strategy].playbookHtml;
         metricCount.textContent = String(records.length);
         metricRunTime.textContent = latestRunTime;
         setStatus("当前显示的是预生成数据文件，可直接双击打开使用。 当前日期: " + (state.selectedDate || "无"), false);

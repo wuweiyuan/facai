@@ -55,8 +55,10 @@ def passes_risk_filter(latest: pd.Series, market: MarketState, mode: str, cfg: d
     rsi14 = _to_float(latest.get("rsi14", np.nan), np.nan)
     vol20_std = _to_float(latest.get("vol20_std", np.nan), np.nan)
     vol_ratio = _to_float(latest.get("vol_ratio_5_20", np.nan), np.nan)
+    volume_ratio_1_20 = _to_float(latest.get("volume_ratio_1_20", np.nan), np.nan)
     mom5 = _to_float(latest.get("mom5", np.nan), np.nan)
     mom20 = _to_float(latest.get("mom20", np.nan), np.nan)
+    ret_1d = _to_float(latest.get("ret_1d", np.nan), np.nan)
     volume_zscore20 = _to_float(latest.get("volume_zscore20", np.nan), np.nan)
     turnover = _to_float(latest.get("turnover_rate", 0.0), 0.0)
 
@@ -66,8 +68,10 @@ def passes_risk_filter(latest: pd.Series, market: MarketState, mode: str, cfg: d
         or np.isnan(rsi14)
         or np.isnan(vol20_std)
         or np.isnan(vol_ratio)
+        or np.isnan(volume_ratio_1_20)
         or np.isnan(mom5)
         or np.isnan(mom20)
+        or np.isnan(ret_1d)
         or np.isnan(volume_zscore20)
     ):
         return False
@@ -126,6 +130,41 @@ def passes_risk_filter(latest: pd.Series, market: MarketState, mode: str, cfg: d
             return False
         min_volume_zscore20 = pullback_cfg.get("min_volume_zscore20")
         if min_volume_zscore20 is not None and volume_zscore20 < float(min_volume_zscore20):
+            return False
+    oversold_cfg = rcfg.get("oversold", {})
+    if bool(oversold_cfg.get("enabled", False)):
+        close_vs_ma20 = close / ma20 - 1.0 if ma20 > 0 else np.nan
+        if np.isnan(close_vs_ma20):
+            return False
+        min_close_below_ma20_pct = oversold_cfg.get("min_close_below_ma20_pct")
+        if min_close_below_ma20_pct is not None and close_vs_ma20 > -float(min_close_below_ma20_pct):
+            return False
+        max_close_below_ma20_pct = oversold_cfg.get("max_close_below_ma20_pct")
+        if max_close_below_ma20_pct is not None and close_vs_ma20 < -float(max_close_below_ma20_pct):
+            return False
+        max_mom5 = oversold_cfg.get("max_mom5")
+        if max_mom5 is not None and mom5 > float(max_mom5):
+            return False
+        min_mom20 = oversold_cfg.get("min_mom20")
+        if min_mom20 is not None and mom20 < float(min_mom20):
+            return False
+        max_mom20 = oversold_cfg.get("max_mom20")
+        if max_mom20 is not None and mom20 > float(max_mom20):
+            return False
+        max_ret_1d = oversold_cfg.get("max_ret_1d")
+        if max_ret_1d is not None and ret_1d > float(max_ret_1d):
+            return False
+        min_volume_ratio_1_20 = oversold_cfg.get("min_volume_ratio_1_20")
+        if min_volume_ratio_1_20 is not None and volume_ratio_1_20 < float(min_volume_ratio_1_20):
+            return False
+        min_volume_zscore20 = oversold_cfg.get("min_volume_zscore20")
+        if min_volume_zscore20 is not None and volume_zscore20 < float(min_volume_zscore20):
+            return False
+        min_rsi14 = oversold_cfg.get("min_rsi14")
+        if min_rsi14 is not None and rsi14 < float(min_rsi14):
+            return False
+        max_rsi14 = oversold_cfg.get("max_rsi14")
+        if max_rsi14 is not None and rsi14 > float(max_rsi14):
             return False
     return True
 

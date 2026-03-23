@@ -20,6 +20,8 @@ Command-line tool to recommend top A-share stocks before open using T-1 close da
 - macOS / Linux：`python3 -m app.main recommend-all --date YYYY-MM-DD [--count N] [--output table|json]`
 - Windows：`python -m app.main recommend-pullback --date YYYY-MM-DD [--count N] [--output table|json]`
 - macOS / Linux：`python3 -m app.main recommend-pullback --date YYYY-MM-DD [--count N] [--output table|json]`
+- Windows：`python -m app.main recommend-oversold --date YYYY-MM-DD [--count N] [--output table|json]`
+- macOS / Linux：`python3 -m app.main recommend-oversold --date YYYY-MM-DD [--count N] [--output table|json]`
 - Windows：`python -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]`
 - macOS / Linux：`python3 -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]`
 - Windows：`python -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
@@ -180,8 +182,8 @@ python3 -m app.main explain --symbol 600519 --date 2026-03-06 --mode relaxed --o
 
 用途：
 
-- 顺序执行 `recommend` 和 `recommend-pullback`
-- 适合你想一次拿到“默认趋势策略”和“回踩策略”两套名单
+- 顺序执行 `recommend`、`recommend-pullback` 和 `recommend-oversold`
+- 适合你想一次拿到“默认趋势策略”、“回踩策略”和“超跌反弹策略”三套名单
 - 不用手动连续执行两次命令
 
 命令：
@@ -202,8 +204,8 @@ python3 -m app.main recommend-all --date YYYY-MM-DD [--count N] [--output table|
 - `--count N`
   - 每套策略各自输出的推荐数量
 - `--output table|json`
-  - `table`：先输出 `recommend`，再输出 `recommend-pullback`
-  - `json`：输出一个对象，包含 `recommend` 和 `recommend-pullback` 两组结果
+  - `table`：依次输出 `recommend`、`recommend-pullback`、`recommend-oversold`
+  - `json`：输出一个对象，包含 `recommend`、`recommend-pullback`、`recommend-oversold` 三组结果
 
 示例：
 
@@ -271,6 +273,68 @@ python -m app.main recommend-pullback --date 2026-03-06
 # macOS / Linux
 python3 -m app.main recommend-pullback
 python3 -m app.main recommend-pullback --date 2026-03-06
+```
+
+### 2.6) `recommend-oversold`
+
+用途：
+
+- 运行一套独立的“超跌反弹 / 不硬追”策略
+- 保留原 `recommend` 和 `recommend-pullback` 两条链路不变
+- 更偏好短期急跌、明显跌离 `MA20`、并伴随放量恐慌释放的股票
+
+命令：
+
+```bash
+# Windows
+python -m app.main recommend-oversold --date YYYY-MM-DD [--count N] [--output table|json]
+
+# macOS / Linux
+python3 -m app.main recommend-oversold --date YYYY-MM-DD [--count N] [--output table|json]
+```
+
+参数说明：
+
+- `--date YYYY-MM-DD`
+  - 目标日期
+  - 不传时，默认使用“下一个交易日”
+- `--count N`
+  - 本次输出推荐数量
+  - 不传时，默认使用 `config/default.yaml` 里 oversold profile 下的 `strategy.pick_count`
+- `--output table|json`
+  - `table`：适合终端阅读
+  - `json`：适合脚本集成、自动化处理或接口对接
+
+特点：
+
+- 使用配置里的 `strategy_profiles.oversold_rebound`
+- 更关注：
+  - `5日快速回撤`
+  - `收盘明显低于 MA20`
+  - `当日继续走弱`
+  - `成交量相对 20 日均量放大`
+- 会输出到独立报表文件：
+  - `reports/oversold_recommendations.csv`
+  - `reports/oversold_recommendations.md`
+  - `reports/oversold_recommendations.txt`
+  - `reports/oversold/{signal_date}.log`
+
+适合场景：
+
+- 想单独研究“恐慌超跌后的短线修复”
+- 不想把超跌逻辑混进原趋势策略里
+- 想在 `recommend-all` 里顺带拿到一组反弹候选
+
+示例：
+
+```bash
+# Windows
+python -m app.main recommend-oversold
+python -m app.main recommend-oversold --date 2026-03-06
+
+# macOS / Linux
+python3 -m app.main recommend-oversold
+python3 -m app.main recommend-oversold --date 2026-03-06
 ```
 
 ### 3) `backtest`

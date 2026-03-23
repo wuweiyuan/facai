@@ -24,6 +24,7 @@ RECOMMENDATION_COLUMNS = [
 STRATEGY_SPECS = {
     "default": {"label": "默认战法"},
     "pullback": {"label": "回头战法"},
+    "oversold": {"label": "超跌反弹"},
 }
 
 
@@ -82,12 +83,24 @@ def load_strategy_records(path: str | Path, strategy_key: str) -> dict:
     }
 
 
-def build_dashboard_payload(default_csv: str | Path, pullback_csv: str | Path) -> dict:
+def build_dashboard_payload(
+    default_csv: str | Path,
+    pullback_csv: str | Path,
+    oversold_csv: str | Path | None = None,
+) -> dict:
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     default_data = load_strategy_records(default_csv, "default")
     pullback_data = load_strategy_records(pullback_csv, "pullback")
+    oversold_data = load_strategy_records(oversold_csv, "oversold") if oversold_csv is not None else {
+        "key": "oversold",
+        "label": STRATEGY_SPECS["oversold"]["label"],
+        "source_file": "",
+        "available_dates": [],
+        "latest_run_time": None,
+        "records": [],
+    }
     all_dates = sorted(
-        set(default_data["available_dates"]) | set(pullback_data["available_dates"]),
+        set(default_data["available_dates"]) | set(pullback_data["available_dates"]) | set(oversold_data["available_dates"]),
         reverse=True,
     )
     return {
@@ -95,13 +108,19 @@ def build_dashboard_payload(default_csv: str | Path, pullback_csv: str | Path) -
         "strategies": {
             "default": default_data,
             "pullback": pullback_data,
+            "oversold": oversold_data,
         },
         "all_dates": all_dates,
     }
 
 
-def export_dashboard_data(default_csv: str | Path, pullback_csv: str | Path, output_path: str | Path) -> Path:
-    payload = build_dashboard_payload(default_csv, pullback_csv)
+def export_dashboard_data(
+    default_csv: str | Path,
+    pullback_csv: str | Path,
+    oversold_csv: str | Path | None,
+    output_path: str | Path,
+) -> Path:
+    payload = build_dashboard_payload(default_csv, pullback_csv, oversold_csv)
     out_path = Path(output_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     content = "window.STOCK_DASHBOARD_DATA = " + json.dumps(payload, ensure_ascii=False, indent=2) + ";\n"
