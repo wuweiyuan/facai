@@ -102,6 +102,24 @@ def _resolve_recommend_run_specs(cmd: str) -> list[tuple[str, str | None, str]]:
     raise RuntimeError(f"Unsupported recommend command: {cmd}")
 
 
+def _resolve_adaptive_strategy_specs(base_cfg: dict, market_label: str) -> list[tuple[str, str | None, str]]:
+    adaptive_cfg = base_cfg.get("adaptive_strategy", {})
+    regime_orders = adaptive_cfg.get("regime_orders", {})
+    raw_order = regime_orders.get(market_label) or regime_orders.get("unknown") or ["recommend-pullback"]
+    known = {
+        "recommend": ("recommend", None, "默认策略 recommend"),
+        "recommend-pullback": ("recommend-pullback", "pullback_confirm", "回踩策略 recommend-pullback"),
+        "recommend-oversold": ("recommend-oversold", "oversold_rebound", "超跌反弹策略 recommend-oversold"),
+    }
+    out: list[tuple[str, str | None, str]] = []
+    for item in raw_order:
+        key = str(item).strip()
+        spec = known.get(key)
+        if spec and spec not in out:
+            out.append(spec)
+    return out or [known["recommend-pullback"]]
+
+
 def _configure_network(cfg: dict) -> None:
     if cfg.get("network", {}).get("disable_env_proxy", True):
         clear_proxy_env()
@@ -381,6 +399,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_rec_os.add_argument("--output", choices=["table", "json"], default="table")
 
+    p_rec_ad = sub.add_parser("recommend-adaptive", help="Auto-pick strategy by market regime for target trading day")
+    p_rec_ad.add_argument("--date", default=None, help="Target date YYYY-MM-DD")
+    p_rec_ad.add_argument("--count", type=int, default=None, help="How many stocks to pick for the chosen strategy")
+    p_rec_ad.add_argument("--output", choices=["table", "json"], default="table")
+
     p_exp = sub.add_parser("explain", help="Explain one stock score on target date")
     p_exp.add_argument("--symbol", required=True, help="Stock code like 000001")
     p_exp.add_argument("--date", default=None, help="Target date YYYY-MM-DD")
@@ -434,8 +457,79 @@ def main() -> None:
     args = parser.parse_args()
     base_cfg = load_config(args.config)
     if args.cmd == "export-dashboard-data":
-        saved = export_dashboard_data(args.default_csv, args.pullback_csv, args.oversold_csv, args.output)
+        saved = export_dashboard_data(args.default_csv, args.pullback_csv, args.oversold_csv, args.output, base_cfg)
         print(f"Dashboard data exported to {saved}")
+        return
+
+    if args.cmd == "recommend-adaptive":
+        _configure_network(base_cfg)
+        ds = _build_data_source(base_cfg)
+        target_date = _resolve_recommend_target_date(ds, args.date)
+        base_engine = Recommender(ds, base_cfg)
+        signal_date = base_engine.resolve_signal_date(target_date)
+        market_state, market_reason = base_engine._resolve_market_state(signal_date)
+        run_specs = _resolve_adaptive_strategy_specs(base_cfg, market_state.label)
+        chosen_cmd: str | None = None
+        chosen_recs = []
+        any_reporting_enabled = False
+        tried_commands: list[str] = []
+
+        if args.output != "json":
+            print(
+                f"[自适应] 目标日={target_date.isoformat()} 信号日={signal_date.isoformat()} "
+                f"市场={market_state.label} 原因={market_reason}"
+            )
+            print(f"[自适应] 策略顺序: {', '.join(cmd_name for cmd_name, _, _ in run_specs)}")
+
+        for cmd_name, profile_name, section_title in run_specs:
+            tried_commands.append(cmd_name)
+            try:
+                recs, reporting_enabled = _run_recommend_profile(
+                    base_cfg=base_cfg,
+                    profile_name=profile_name,
+                    section_title=f"自适应选择: {section_title}",
+                    target_date=target_date,
+                    count=args.count,
+                    output=args.output,
+                )
+            except RuntimeError as exc:
+                if "No candidate found in enabled modes:" not in str(exc):
+                    raise
+                if args.output != "json":
+                    print(f"[自适应] {cmd_name} 当前无候选，继续尝试下一策略。")
+                continue
+            chosen_cmd = cmd_name
+            chosen_recs = recs
+            any_reporting_enabled = any_reporting_enabled or reporting_enabled
+            break
+
+        if any_reporting_enabled:
+            dashboard_default_csv, dashboard_pullback_csv, dashboard_oversold_csv, dashboard_output = _resolve_dashboard_export_args(base_cfg)
+            saved_dashboard = export_dashboard_data(
+                dashboard_default_csv,
+                dashboard_pullback_csv,
+                dashboard_oversold_csv,
+                dashboard_output,
+                base_cfg,
+            )
+            if args.output != "json":
+                print(f"已写入文档: {saved_dashboard}")
+
+        if args.output == "json":
+            payload = {
+                "target_date": target_date.isoformat(),
+                "signal_date": signal_date.isoformat(),
+                "market_state": market_state.label,
+                "market_reason": market_reason,
+                "tried_strategies": tried_commands,
+                "chosen_strategy": chosen_cmd,
+                "recommendations": [item.as_dict() for item in chosen_recs],
+            }
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+        elif not chosen_cmd:
+            print("[自适应] 当前市场下所有候选策略都无信号，建议空仓。")
+        else:
+            print(f"[自适应] 已采用策略: {chosen_cmd}")
         return
 
     if args.cmd in {"recommend", "recommend-all", "recommend-pullback", "recommend-oversold"}:
@@ -462,6 +556,7 @@ def main() -> None:
                 dashboard_pullback_csv,
                 dashboard_oversold_csv,
                 dashboard_output,
+                base_cfg,
             )
             if args.output != "json":
                 print(f"已写入文档: {saved_dashboard}")

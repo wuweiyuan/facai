@@ -279,7 +279,16 @@ class AkshareDataSource:
                 )
                 return cached[(cached["trade_date"] >= start_date) & (cached["trade_date"] <= end_date)].copy()
 
-        fresh = self._fetch_index_frame(symbol)
+        try:
+            fresh = self._fetch_index_frame(symbol)
+        except Exception:
+            if not cached.empty:
+                print(
+                    f"[index][cache_fallback_on_error] symbol={symbol} range={start_date}->{end_date}",
+                    flush=True,
+                )
+                return cached[(cached["trade_date"] >= start_date) & (cached["trade_date"] <= end_date)].copy()
+            raise
         if fresh.empty:
             if not cached.empty:
                 print(
@@ -320,7 +329,9 @@ class AkshareDataSource:
     @staticmethod
     def _normalize_index_frame(frame: pd.DataFrame) -> pd.DataFrame:
         out = frame.copy()
-        if "date" in out.columns:
+        if "trade_date" in out.columns:
+            dt = pd.to_datetime(out["trade_date"], errors="coerce")
+        elif "date" in out.columns:
             dt = pd.to_datetime(out["date"], errors="coerce")
         else:
             dt = pd.to_datetime(out.index, errors="coerce")
