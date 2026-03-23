@@ -204,6 +204,52 @@ class FakePullbackDataSource(FakeDataSource):
         return [b for b in self._bars[symbol] if start_date <= b.trade_date <= end_date]
 
 
+class FakeOversoldDataSource(FakeDataSource):
+    def __init__(self):
+        super().__init__()
+        self.trade_dates = [date(2025, 1, 1) + timedelta(days=i) for i in range(140)]
+        self.stocks = [
+            StockInfo(symbol="000001", name="TrendLeader"),
+            StockInfo(symbol="000002", name="OversoldBounce"),
+        ]
+        self._bars = {
+            "000001": self._build_bars("000001", self._trend_returns()),
+            "000002": self._build_bars("000002", self._oversold_returns()),
+        }
+
+    def _trend_returns(self):
+        return [0.0025 if i % 6 else -0.001 for i in range(140)]
+
+    def _oversold_returns(self):
+        base = [0.0015 if i % 8 else -0.001 for i in range(110)]
+        tail = [0.002, -0.001, 0.001, 0.0, -0.002] * 5 + [-0.032, -0.030, -0.028, -0.035, -0.050]
+        return base + tail
+
+    def _build_bars(self, symbol, returns):
+        bars = []
+        close = 11.0 if symbol == "000001" else 12.0
+        for idx, (trade_date, ret) in enumerate(zip(self.trade_dates, returns)):
+            close *= 1.0 + ret
+            volume = 1_000_000 + (idx % 6) * 20_000
+            if symbol == "000002" and idx >= len(self.trade_dates) - 5:
+                volume = 1_900_000 + (idx - (len(self.trade_dates) - 5)) * 150_000
+            bars.append(
+                DailyBar(
+                    trade_date=trade_date,
+                    open=close * 0.995,
+                    high=close * 1.01,
+                    low=close * 0.99,
+                    close=close,
+                    volume=volume,
+                    turnover_rate=2.5,
+                )
+            )
+        return bars
+
+    def get_daily_bars(self, symbol, start_date, end_date):
+        return [b for b in self._bars[symbol] if start_date <= b.trade_date <= end_date]
+
+
 class TestRecommender(TestCase):
     def test_resolve_recommend_target_date_uses_next_trade_day_when_date_missing(self):
         ds = FakeDataSource()
@@ -228,6 +274,7 @@ class TestRecommender(TestCase):
             [
                 ("recommend", None, "默认策略 recommend"),
                 ("recommend-pullback", "pullback_confirm", "回踩策略 recommend-pullback"),
+                ("recommend-oversold", "oversold_rebound", "超跌反弹策略 recommend-oversold"),
             ],
         )
 
@@ -352,6 +399,53 @@ class TestRecommender(TestCase):
         self.assertEqual(default_rec.symbol, "000001")
         self.assertEqual(pullback_rec.symbol, "000002")
 
+    def test_oversold_profile_prefers_panic_selloff_stock(self):
+        cfg = {
+            "universe": {"limit": 100},
+            "filters": {"exclude_st": True, "exclude_star_board": True, "exclude_bj_board": True},
+            "strategy": {
+                "enabled_modes": ["force"],
+                "pick_count": 1,
+                "weights": {"trend": 0.35, "momentum": 0.35, "stability": 0.15, "volume": 0.15},
+            },
+            "data_freshness": {"enabled": False},
+            "strategy_profiles": {
+                "oversold_rebound": {
+                    "strategy": {
+                        "threshold_profile": "oversold_rebound",
+                        "enabled_modes": ["normal"],
+                        "weights": {
+                            "trend": 0.0,
+                            "momentum": 0.0,
+                            "stability": 0.15,
+                            "volume": 0.15,
+                            "oversold": 0.70,
+                        },
+                    },
+                    "risk_filter": {
+                        "oversold": {
+                            "enabled": True,
+                            "min_close_below_ma20_pct": 0.09,
+                            "max_mom5": -0.12,
+                            "max_ret_1d": -0.03,
+                            "min_volume_ratio_1_20": 1.3,
+                            "min_volume_zscore20": 0.8,
+                            "max_rsi14": 45.0,
+                        }
+                    },
+                }
+            },
+        }
+        ds = FakeOversoldDataSource()
+
+        default_rec = Recommender(ds, cfg).recommend(date(2025, 5, 20))
+        oversold_cfg = apply_strategy_profile(cfg, "oversold_rebound")
+        oversold_rec = Recommender(ds, oversold_cfg).recommend(date(2025, 5, 20))
+
+        self.assertEqual(default_rec.symbol, "000001")
+        self.assertEqual(oversold_rec.symbol, "000002")
+        self.assertEqual(int(oversold_rec.key_metrics["suggested_holding_days"]), 5)
+
     def test_apply_strategy_profile_does_not_mutate_base_config(self):
         cfg = {
             "strategy": {"weights": {"trend": 0.35, "momentum": 0.35}},
@@ -367,6 +461,11 @@ class TestRecommender(TestCase):
         args = build_parser().parse_args(["recommend-pullback", "--date", "2025-03-20"])
 
         self.assertEqual(args.cmd, "recommend-pullback")
+
+    def test_parser_accepts_recommend_oversold(self):
+        args = build_parser().parse_args(["recommend-oversold", "--date", "2025-03-20"])
+
+        self.assertEqual(args.cmd, "recommend-oversold")
 
     def test_parser_accepts_recommend_all(self):
         args = build_parser().parse_args(["recommend-all", "--date", "2025-03-20"])
@@ -389,12 +488,18 @@ class TestRecommender(TestCase):
                     "reporting": {
                         "recommendation_csv": "reports/pullback.csv",
                     }
-                }
+                },
+                "oversold_rebound": {
+                    "reporting": {
+                        "recommendation_csv": "reports/oversold.csv",
+                    }
+                },
             },
         }
 
-        default_csv, pullback_csv, dashboard_js = _resolve_dashboard_export_args(cfg)
+        default_csv, pullback_csv, oversold_csv, dashboard_js = _resolve_dashboard_export_args(cfg)
 
         self.assertEqual(default_csv, "reports/default.csv")
         self.assertEqual(pullback_csv, "reports/pullback.csv")
+        self.assertEqual(oversold_csv, "reports/oversold.csv")
         self.assertEqual(dashboard_js, "reports/dashboard.js")

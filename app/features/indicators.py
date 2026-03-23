@@ -49,6 +49,7 @@ def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
     out["vol_ma5"] = out["volume"].rolling(5).mean()
     out["vol_ma20"] = out["volume"].rolling(20).mean()
     out["vol_ratio_5_20"] = out["vol_ma5"] / out["vol_ma20"]
+    out["volume_ratio_1_20"] = out["volume"] / out["vol_ma20"]
     out["volume_std20"] = out["volume"].rolling(20).std()
     out["volume_zscore20"] = (out["volume"] - out["vol_ma20"]) / out["volume_std20"]
     prev_close = out["close"].shift(1)

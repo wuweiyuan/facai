@@ -1,5 +1,5 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-03-22 21:43:39",
+  "generated_at": "2026-03-23 11:29:44",
   "strategies": {
     "default": {
       "key": "default",
@@ -1016,6 +1016,53 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 13.01,
           "take_profit_price": 15.99,
           "suggested_holding_days": 3
+        }
+      ]
+    },
+    "oversold": {
+      "key": "oversold",
+      "label": "超跌反弹",
+      "source_file": "reports/oversold_recommendations.csv",
+      "available_dates": [
+        "2026-03-23"
+      ],
+      "latest_run_time": "2026-03-23 11:29:44",
+      "records": [
+        {
+          "run_time": "2026-03-23 11:29:44",
+          "trade_date": "2026-03-23",
+          "symbol": "002856",
+          "name": "美芝股份",
+          "threshold_mode": "normal",
+          "score_total": 81.42,
+          "close": 11.24,
+          "stop_loss_price": 10.56,
+          "take_profit_price": 12.13,
+          "suggested_holding_days": 4
+        },
+        {
+          "run_time": "2026-03-23 11:29:44",
+          "trade_date": "2026-03-23",
+          "symbol": "603179",
+          "name": "新泉股份",
+          "threshold_mode": "normal",
+          "score_total": 80.84,
+          "close": 64.0,
+          "stop_loss_price": 60.16,
+          "take_profit_price": 69.12,
+          "suggested_holding_days": 4
+        },
+        {
+          "run_time": "2026-03-23 11:29:44",
+          "trade_date": "2026-03-23",
+          "symbol": "002442",
+          "name": "龙星科技",
+          "threshold_mode": "normal",
+          "score_total": 76.58,
+          "close": 5.73,
+          "stop_loss_price": 5.38,
+          "take_profit_price": 6.18,
+          "suggested_holding_days": 4
         }
       ]
     }

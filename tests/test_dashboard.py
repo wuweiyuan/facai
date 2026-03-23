@@ -18,6 +18,7 @@ class TestDashboard(TestCase):
             base = Path(tmp)
             default_csv = base / "recommendations.csv"
             pullback_csv = base / "pullback_recommendations.csv"
+            oversold_csv = base / "oversold_recommendations.csv"
             default_csv.write_text(
                 "\n".join(
                     [
@@ -38,8 +39,17 @@ class TestDashboard(TestCase):
                 ),
                 encoding="utf-8",
             )
+            oversold_csv.write_text(
+                "\n".join(
+                    [
+                        "run_time,trade_date,symbol,name,threshold_mode,score_total,close,stop_loss_price,take_profit_price,suggested_holding_days",
+                        "2026-03-17 20:10:00,2026-03-18,300001,Delta,normal,71.1,6.8,6.3,7.4,5",
+                    ]
+                ),
+                encoding="utf-8",
+            )
 
-            payload = build_dashboard_payload(default_csv, pullback_csv)
+            payload = build_dashboard_payload(default_csv, pullback_csv, oversold_csv)
 
             default_records = payload["strategies"]["default"]["records"]
             self.assertEqual(len(default_records), 2)
@@ -47,14 +57,16 @@ class TestDashboard(TestCase):
             self.assertEqual(default_records[0]["score_total"], 82.6)
             self.assertEqual(payload["strategies"]["default"]["available_dates"], ["2026-03-18", "2026-03-17"])
             self.assertEqual(payload["strategies"]["default"]["latest_run_time"], "2026-03-17 10:30:00")
+            self.assertEqual(payload["strategies"]["oversold"]["records"][0]["symbol"], "300001")
             self.assertEqual(payload["all_dates"], ["2026-03-18", "2026-03-17"])
 
     def test_build_dashboard_payload_handles_missing_files(self):
         with TemporaryDirectory() as tmp:
-            payload = build_dashboard_payload(Path(tmp) / "missing-a.csv", Path(tmp) / "missing-b.csv")
+            payload = build_dashboard_payload(Path(tmp) / "missing-a.csv", Path(tmp) / "missing-b.csv", Path(tmp) / "missing-c.csv")
 
             self.assertEqual(payload["strategies"]["default"]["records"], [])
             self.assertEqual(payload["strategies"]["pullback"]["records"], [])
+            self.assertEqual(payload["strategies"]["oversold"]["records"], [])
             self.assertEqual(payload["all_dates"], [])
 
     def test_export_dashboard_data_writes_assignable_javascript(self):
@@ -71,8 +83,9 @@ class TestDashboard(TestCase):
                 encoding="utf-8",
             )
 
-            saved = export_dashboard_data(default_csv, base / "missing.csv", base / "dashboard-data.js")
+            saved = export_dashboard_data(default_csv, base / "missing.csv", base / "missing-oversold.csv", base / "dashboard-data.js")
 
             content = saved.read_text(encoding="utf-8")
             self.assertTrue(content.startswith("window.STOCK_DASHBOARD_DATA = "))
             self.assertIn('"label": "默认战法"', content)
+            self.assertIn('"label": "超跌反弹"', content)

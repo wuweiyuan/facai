@@ -41,3 +41,18 @@ class TestScoring(TestCase):
         )
         self.assertFalse(passes_threshold(latest, "normal"))
 
+    def test_passes_threshold_for_oversold_profile(self):
+        latest = pd.Series(
+            {
+                "close": 8.7,
+                "ma20": 10.0,
+                "ma60": 10.5,
+                "mom20": -0.08,
+                "mom5": -0.15,
+                "ret_1d": -0.04,
+                "rsi14": 28.0,
+                "vol20_std": 0.03,
+            }
+        )
+
+        self.assertTrue(passes_threshold(latest, "normal", {"strategy": {"threshold_profile": "oversold_rebound"}}))

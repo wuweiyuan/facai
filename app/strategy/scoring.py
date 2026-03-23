@@ -14,6 +14,12 @@ class ThresholdRule:
     min_mom20: float
 
 
+def _strategy_style(cfg: dict | None) -> str:
+    if not cfg:
+        return "trend_following"
+    return str(cfg.get("strategy", {}).get("threshold_profile", "trend_following")).strip().lower()
+
+
 def threshold_from_mode(mode: str) -> ThresholdRule:
     if mode == "normal":
         return ThresholdRule(min_rsi=35, max_rsi=75, require_ma_alignment=True, min_mom20=0.0)
@@ -24,7 +30,13 @@ def threshold_from_mode(mode: str) -> ThresholdRule:
     raise ValueError(f"Unsupported mode: {mode}")
 
 
-def passes_threshold(latest: pd.Series, mode: str) -> bool:
+def passes_threshold(latest: pd.Series, mode: str, cfg: dict | None = None) -> bool:
+    if _strategy_style(cfg) == "oversold_rebound":
+        return _passes_oversold_threshold(latest, mode)
+    return _passes_trend_threshold(latest, mode)
+
+
+def _passes_trend_threshold(latest: pd.Series, mode: str) -> bool:
     rule = threshold_from_mode(mode)
     if np.isnan(latest["ma20"]) or np.isnan(latest["ma60"]):
         return False
@@ -35,6 +47,27 @@ def passes_threshold(latest: pd.Series, mode: str) -> bool:
     if latest["mom20"] <= rule.min_mom20:
         return False
     if not (rule.min_rsi <= latest["rsi14"] <= rule.max_rsi):
+        return False
+    return True
+
+
+def _passes_oversold_threshold(latest: pd.Series, mode: str) -> bool:
+    if mode == "force":
+        return True
+    close = float(latest.get("close", np.nan))
+    ma20 = float(latest.get("ma20", np.nan))
+    mom5 = float(latest.get("mom5", np.nan))
+    ret_1d = float(latest.get("ret_1d", np.nan))
+    rsi14 = float(latest.get("rsi14", np.nan))
+    if np.isnan(close) or np.isnan(ma20) or np.isnan(mom5) or np.isnan(ret_1d) or np.isnan(rsi14):
+        return False
+    if close >= ma20:
+        return False
+    if mom5 >= -0.08:
+        return False
+    if ret_1d >= -0.02:
+        return False
+    if not (0.0 <= rsi14 <= 50.0):
         return False
     return True
 
@@ -66,7 +99,9 @@ def compute_score(latest: pd.Series, cfg: dict) -> tuple[float, dict[str, float]
     vol20_std = float(latest.get("vol20_std", 0.03))
     ma20_slope5 = float(latest.get("ma20_slope5", 0.0))
     vol_ratio_5_20 = float(latest.get("vol_ratio_5_20", 1.0))
+    volume_ratio_1_20 = float(latest.get("volume_ratio_1_20", 1.0))
     volume_zscore20 = float(latest.get("volume_zscore20", 0.0))
+    ret_1d = float(latest.get("ret_1d", 0.0))
 
     if np.isnan(ma20):
         ma20 = close
@@ -84,8 +119,12 @@ def compute_score(latest: pd.Series, cfg: dict) -> tuple[float, dict[str, float]
         ma20_slope5 = 0.0
     if np.isnan(vol_ratio_5_20):
         vol_ratio_5_20 = 1.0
+    if np.isnan(volume_ratio_1_20):
+        volume_ratio_1_20 = 1.0
     if np.isnan(volume_zscore20):
         volume_zscore20 = 0.0
+    if np.isnan(ret_1d):
+        ret_1d = 0.0
 
     trend = (
         _clip01(close / ma20 - 1.0, -0.03, 0.08) * 0.4
@@ -101,6 +140,14 @@ def compute_score(latest: pd.Series, cfg: dict) -> tuple[float, dict[str, float]
         + _centered_score(mom5, 0.0, 0.05) * 0.3
         + _centered_score(rsi14, 55.0, 18.0) * 0.2
     ) * 100
+    distance_below_ma20 = max(1.0 - close / ma20, 0.0) if ma20 > 0 else 0.0
+    oversold = (
+        _clip01(distance_below_ma20, 0.03, 0.15) * 0.30
+        + _clip01(-mom5, 0.05, 0.20) * 0.25
+        + _clip01(-ret_1d, 0.02, 0.08) * 0.15
+        + _clip01(volume_ratio_1_20, 1.0, 2.5) * 0.15
+        + _clip01(50.0 - rsi14, 0.0, 25.0) * 0.15
+    ) * 100
 
     score_breakdown = {
         "trend": trend,
@@ -110,12 +157,15 @@ def compute_score(latest: pd.Series, cfg: dict) -> tuple[float, dict[str, float]
     }
     if float(w.get("pullback", 0.0)) > 0:
         score_breakdown["pullback"] = pullback
+    if float(w.get("oversold", 0.0)) > 0:
+        score_breakdown["oversold"] = oversold
     weights = {
         "trend": float(w.get("trend", 0.35)),
         "momentum": float(w.get("momentum", 0.35)),
         "stability": float(w.get("stability", 0.15)),
         "volume": float(w.get("volume", 0.15)),
         "pullback": float(w.get("pullback", 0.0)),
+        "oversold": float(w.get("oversold", 0.0)),
     }
     weight_sum = sum(max(v, 0.0) for v in weights.values()) or 1.0
     total = (
@@ -124,11 +174,23 @@ def compute_score(latest: pd.Series, cfg: dict) -> tuple[float, dict[str, float]
         + stability * max(weights["stability"], 0.0)
         + volume * max(weights["volume"], 0.0)
         + pullback * max(weights["pullback"], 0.0)
+        + oversold * max(weights["oversold"], 0.0)
     ) / weight_sum
     return float(total), score_breakdown
 
 
-def build_reason(latest: pd.Series, score_breakdown: dict[str, float], mode: str) -> list[str]:
+def build_reason(latest: pd.Series, score_breakdown: dict[str, float], mode: str, cfg: dict | None = None) -> list[str]:
+    if _strategy_style(cfg) == "oversold_rebound":
+        reasons = [
+            f"超跌反弹分 {score_breakdown.get('oversold', 0.0):.1f}，更符合急跌、偏离均线后的技术修复候选。",
+            f"收盘位于MA20下方，5日动量 {float(latest.get('mom5', 0.0)):.2%}，RSI {float(latest.get('rsi14', 50.0)):.1f}。",
+            f"量能分 {score_breakdown.get('volume', 0.0):.1f}，当日成交量相对20日均量放大，具备恐慌释放特征。",
+        ]
+        if mode == "relaxed":
+            reasons.append("今日超跌候选较少，已启用放宽阈值模式。")
+        if mode == "force":
+            reasons.append("常规超跌筛选无结果，已启用强制推荐兜底。")
+        return reasons
     reasons = [
         f"趋势分 {score_breakdown['trend']:.1f}，收盘价高于MA20且中期均线结构较稳。",
         f"动量分 {score_breakdown['momentum']:.1f}，5日/20日动量维持正向。",

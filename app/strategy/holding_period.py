@@ -6,7 +6,13 @@ import pandas as pd
 from app.strategy.regime_risk import MarketState
 
 
-def suggest_holding_days(latest: pd.Series, market_state: MarketState) -> int:
+def suggest_holding_days(latest: pd.Series, market_state: MarketState, cfg: dict | None = None) -> int:
+    style = str((cfg or {}).get("strategy", {}).get("threshold_profile", "trend_following")).strip().lower()
+    if style == "oversold_rebound":
+        if market_state.label == "bear":
+            return 4
+        return 5
+
     mom20 = float(latest.get("mom20", 0.0))
     vol20 = float(latest.get("vol20_std", 0.05))
     rsi14 = float(latest.get("rsi14", 50.0))
@@ -31,4 +37,3 @@ def suggest_holding_days(latest: pd.Series, market_state: MarketState) -> int:
     elif market_state.label == "neutral":
         days = min(days, 3)
     return max(days, 1)
-

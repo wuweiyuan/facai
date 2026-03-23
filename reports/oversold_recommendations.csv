@@ -1,0 +1,4 @@
+run_time,trade_date,symbol,name,threshold_mode,score_total,close,stop_loss_price,take_profit_price,suggested_holding_days
+2026-03-23 11:29:44,2026-03-23,002856,美芝股份,normal,81.42,11.24,10.56,12.13,4
+2026-03-23 11:29:44,2026-03-23,603179,新泉股份,normal,80.84,64.0,60.16,69.12,4
+2026-03-23 11:29:44,2026-03-23,002442,龙星科技,normal,76.58,5.73,5.38,6.18,4
