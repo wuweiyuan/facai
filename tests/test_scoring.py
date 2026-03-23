@@ -52,6 +52,7 @@ class TestScoring(TestCase):
                 "ret_1d": -0.04,
                 "rsi14": 28.0,
                 "vol20_std": 0.03,
+                "volume_ratio_1_20": 1.6,
             }
         )
 

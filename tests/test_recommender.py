@@ -8,6 +8,7 @@ from unittest import TestCase
 from app.config import apply_strategy_profile
 from app.engine.recommender import Recommender
 from app.main import (
+    _resolve_adaptive_strategy_specs,
     _resolve_dashboard_export_args,
     _resolve_recommend_run_specs,
     _resolve_recommend_target_date,
@@ -294,6 +295,37 @@ class TestRecommender(TestCase):
             [("recommend", None, "默认策略 recommend")],
         )
 
+    def test_resolve_adaptive_strategy_specs_prefers_profile_order_from_config(self):
+        cfg = {
+            "adaptive_strategy": {
+                "regime_orders": {
+                    "bull": ["recommend", "recommend-pullback"],
+                    "bear": ["recommend-oversold"],
+                    "unknown": ["recommend-pullback"],
+                }
+            }
+        }
+
+        bull_specs = _resolve_adaptive_strategy_specs(cfg, "bull")
+        bear_specs = _resolve_adaptive_strategy_specs(cfg, "bear")
+        neutral_specs = _resolve_adaptive_strategy_specs(cfg, "neutral")
+
+        self.assertEqual(
+            bull_specs,
+            [
+                ("recommend", None, "默认策略 recommend"),
+                ("recommend-pullback", "pullback_confirm", "回踩策略 recommend-pullback"),
+            ],
+        )
+        self.assertEqual(
+            bear_specs,
+            [("recommend-oversold", "oversold_rebound", "超跌反弹策略 recommend-oversold")],
+        )
+        self.assertEqual(
+            neutral_specs,
+            [("recommend-pullback", "pullback_confirm", "回踩策略 recommend-pullback")],
+        )
+
     def test_recommend_returns_one_stock(self):
         cfg = {
             "universe": {"limit": 100},
@@ -418,19 +450,17 @@ class TestRecommender(TestCase):
                             "trend": 0.0,
                             "momentum": 0.0,
                             "stability": 0.15,
-                            "volume": 0.15,
-                            "oversold": 0.70,
+                            "volume": 0.20,
+                            "oversold": 0.65,
                         },
                     },
                     "risk_filter": {
                         "oversold": {
                             "enabled": True,
-                            "min_close_below_ma20_pct": 0.09,
+                            "min_close_below_ma20_pct": 0.10,
                             "max_mom5": -0.12,
                             "max_ret_1d": -0.03,
                             "min_volume_ratio_1_20": 1.3,
-                            "min_volume_zscore20": 0.8,
-                            "max_rsi14": 45.0,
                         }
                     },
                 }
@@ -466,6 +496,11 @@ class TestRecommender(TestCase):
         args = build_parser().parse_args(["recommend-oversold", "--date", "2025-03-20"])
 
         self.assertEqual(args.cmd, "recommend-oversold")
+
+    def test_parser_accepts_recommend_adaptive(self):
+        args = build_parser().parse_args(["recommend-adaptive", "--date", "2025-03-20"])
+
+        self.assertEqual(args.cmd, "recommend-adaptive")
 
     def test_parser_accepts_recommend_all(self):
         args = build_parser().parse_args(["recommend-all", "--date", "2025-03-20"])

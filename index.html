@@ -119,31 +119,6 @@
       color: var(--ink);
     }
 
-    .strategy-tabs {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-
-    .tab {
-      padding: 11px 16px;
-      background: transparent;
-      color: var(--accent-strong);
-      cursor: pointer;
-      transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
-    }
-
-    .tab.active {
-      background: var(--accent);
-      color: #f9f7ef;
-      border-color: var(--accent);
-    }
-
-    .tab:hover {
-      transform: translateY(-1px);
-    }
-
     .summary-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
       margin-bottom: 18px;
@@ -245,7 +220,7 @@
     th,
     td {
       padding: 14px 16px;
-      text-align: left;
+      text-align: center;
       border-bottom: 1px solid rgba(31, 42, 31, 0.08);
       vertical-align: middle;
       font-size: 14px;
@@ -257,6 +232,7 @@
       background: rgba(244, 239, 230, 0.95);
       color: var(--muted);
       font-weight: 600;
+      text-align: center;
       z-index: 1;
     }
 
@@ -269,6 +245,8 @@
       flex-direction: column;
       gap: 4px;
       min-width: 0;
+      align-items: center;
+      text-align: center;
     }
 
     .stock-code {
@@ -304,6 +282,15 @@
       font-weight: 600;
     }
 
+    th.strategy-col,
+    td.strategy-col {
+      width: 88px;
+      min-width: 88px;
+      max-width: 88px;
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+
     .empty {
       padding: 44px 18px;
       text-align: center;
@@ -327,15 +314,6 @@
         grid-template-columns: 1fr;
       }
 
-      .strategy-tabs {
-        gap: 8px;
-      }
-
-      .tab {
-        flex: 1 1 calc(50% - 8px);
-        text-align: center;
-      }
-
       th,
       td {
         padding: 12px 12px;
@@ -346,6 +324,15 @@
       td.stock-col {
         min-width: 76px;
         width: 76px;
+        max-width: 76px;
+        padding-left: 6px;
+        padding-right: 6px;
+      }
+
+      th.strategy-col,
+      td.strategy-col {
+        width: 76px;
+        min-width: 76px;
         max-width: 76px;
         padding-left: 6px;
         padding-right: 6px;
@@ -363,15 +350,9 @@
         <div class="section-title">
           <div>
             <h2>玄学选股池</h2>
-            <p>策略切换、日期筛选、当日推荐列表</p>
+            <p>自适应策略、日期筛选、当日推荐列表</p>
             <small>只展示最近 20 个交易日</small>
           </div>
-        </div>
-
-        <div class="strategy-tabs">
-          <button class="tab active" data-strategy="default" type="button">默认战法</button>
-          <button class="tab" data-strategy="pullback" type="button">回头战法</button>
-          <button class="tab" data-strategy="oversold" type="button">超跌反弹</button>
         </div>
 
         <div class="control-row">
@@ -408,6 +389,7 @@
             <thead>
               <tr>
                 <th class="stock-col">股票</th>
+                <th class="strategy-col">策略</th>
                 <th>模式</th>
                 <th>总分</th>
                 <th>收盘价</th>
@@ -429,42 +411,67 @@
     (function () {
       const MAX_VISIBLE_DATES = 20;
       const STRATEGY_META = {
-        default: {
+        adaptive: {
+          label: "自适应策略",
+          playbookTitle: "自适应策略说明",
+          playbookHtml: [
+            "<p>这页只显示 <code>recommend-adaptive</code> 的结果。系统会先判断市场状态，再决定优先尝试哪套策略；如果没有合适信号，就建议空仓。你可以把它理解成“先决定今天该打哪种仗，再决定买哪只票”。</p>",
+            "<ul>",
+            "<li><strong>牛市 / 震荡市：</strong>优先尝试 <code>recommend-pullback</code>，再看 <code>recommend</code>。思路是先做位置更克制、回踩确认的票，再考虑强趋势延续票。</li>",
+            "<li><strong>熊市：</strong>优先只尝试 <code>recommend-oversold</code>。思路是弱市更少追趋势，多做超跌修复。</li>",
+            "<li><strong>空仓原则：</strong>如果对应策略没有候选，就直接空仓，而不是为了出手硬选股票。</li>",
+            "<li><strong>看盘方式：</strong>先看页面告诉你当天采用哪套策略，再按下方对应规则执行，不需要自己临时切换思路。</li>",
+            "<li><strong>数据范围：</strong>页面仍然只保留最近 20 个交易日的数据。</li>",
+            "</ul>"
+          ].join("")
+        }
+      };
+      const SOURCE_RULES = {
+        recommend: {
           label: "默认战法",
-          playbookTitle: "默认战法说明",
-          playbookHtml: [
-            "<p>默认战法更偏趋势和动量，适合做盘前候选池，不适合拿它去追每一根大阳线。</p>",
+          title: "默认战法交易规则",
+          html: [
+            "<p>默认战法更偏趋势延续，核心是在已经走强的股票里找“还可以继续”的票。它不是低吸策略，也不是抄底策略，更适合强势环境下做右侧确认。</p>",
             "<ul>",
-            "<li>优先看分数靠前、趋势结构完整的股票。</li>",
-            "<li>如果当天整体候选很少，宁可少做，不要硬凑。</li>",
-            "<li>默认更适合配合盘中确认，而不是机械追高。</li>",
+            "<li><strong>适用环境：</strong>更适合牛市或明显偏强的震荡市，不适合普跌和情绪退潮期。</li>",
+            "<li><strong>买入前提：</strong>优先看分数靠前、趋势结构完整、量能不弱的票。最好等开盘后 15 到 30 分钟，确认个股强于大盘、强于板块再考虑介入。</li>",
+            "<li><strong>不买情况：</strong>高开过多、开盘就冲高回落、量能明显跟不上、或者跌回关键均线附近但承接很弱时，不买。</li>",
+            "<li><strong>仓位：</strong>更适合少量试仓，不要把多个同题材趋势票一起打满。</li>",
+            "<li><strong>持有：</strong>更偏 3 到 5 个交易日。第 1 到第 2 天如果完全不强，后面继续走趋势的概率会明显下降。</li>",
+            "<li><strong>止损：</strong>买入后跌破关键均线、或者单笔亏损达到 4% 到 5% 时，优先止损。</li>",
+            "<li><strong>止盈：</strong>出现放量冲高回落、加速后次日不再走强、或短期涨幅已经明显兑现时，可以分批减仓，不必硬等。</li>",
             "</ul>"
           ].join("")
         },
-        pullback: {
+        "recommend-pullback": {
           label: "回头战法",
-          playbookTitle: "回头战法说明",
-          playbookHtml: [
-            "<p>回头战法更强调不追高，优先看贴近均线、短期不过热、但中期结构还在的票。</p>",
+          title: "回头战法交易规则",
+          html: [
+            "<p>回头战法做的是上升结构里的回踩确认，不追高，重点看回踩后的承接是否成立。它不是赌反抽，而是赌“原本就强的票，回踩后恢复趋势”。</p>",
             "<ul>",
-            "<li>更适合观察回踩后的承接，而不是开盘直接追。</li>",
-            "<li>如果股价重新远离均线过多，性价比会明显下降。</li>",
-            "<li>适合和默认战法对照着看，挑位置更克制的候选。</li>",
+            "<li><strong>适用环境：</strong>最适合当前这套系统里的主策略，尤其适合震荡市和偏强市。</li>",
+            "<li><strong>买入前提：</strong>个股原本就在上升结构中，只是短期回踩。最好等它止跌后重新站回均线附近，或者至少确认不再继续走弱再买。</li>",
+            "<li><strong>不买情况：</strong>回踩过深、直接跌破中期结构、开盘就大幅拉高、或者均线附近反复无承接时，不买。</li>",
+            "<li><strong>仓位：</strong>适合做主策略，优先前 1 到 2 只，仓位可以比超跌反弹更积极一点，但仍不建议满仓同方向。</li>",
+            "<li><strong>持有：</strong>默认更适合 3 到 5 个交易日。它赚的是“回踩确认后的再走一段”，不是当天超短线脉冲。</li>",
+            "<li><strong>止损：</strong>回踩确认失败、重新跌破关键均线、或者买后 2 到 3 天完全不走强，就直接退出。</li>",
+            "<li><strong>止盈：</strong>如果恢复趋势后很快冲出一段，可分批减仓；如果回到压力位附近明显滞涨，也应优先兑现。</li>",
             "</ul>"
           ].join("")
         },
-        oversold: {
+        "recommend-oversold": {
           label: "超跌反弹",
-          playbookTitle: "超跌反弹买卖规则",
-          playbookHtml: [
-            "<p>这套策略做的是情绪过度后的技术修复，不是主升浪趋势跟随。核心是用前一交易日的超跌信号，在下一个交易日等止跌回稳后再动手。</p>",
+          title: "超跌反弹交易规则",
+          html: [
+            "<p>超跌反弹做的是情绪过度后的短线修复，不是趋势主升浪。核心是等次日止跌回稳，而不是看到暴跌就直接接飞刀。它更像战术性交易，不适合当成长持逻辑。</p>",
             "<ul>",
-            "<li><strong>买入规则：</strong>只看前一交易日筛出来的票；次日高开超过 3% 不追；开盘后先等 15 到 30 分钟；如果继续创新低不买；平开或小低开后止跌回升、最好重新站回开盘价附近，再考虑介入。</li>",
-            "<li><strong>仓位规则：</strong>更适合少选精做，优先前 1 到 2 只，默认观察池最多看 3 只。</li>",
-            "<li><strong>持有规则：</strong>默认持有 4 到 5 个交易日；如果第 2 到第 3 天还没有明显反弹，可以直接退出。</li>",
-            "<li><strong>止损规则：</strong>买入后单笔亏损达到 5% 到 6% 就止损，不继续硬扛。</li>",
-            "<li><strong>止盈规则：</strong>如果很快反弹到 5% 到 8%，可以提前止盈；否则第 4 到第 5 个交易日优先了结。</li>",
-            "<li><strong>空仓规则：</strong>如果当天信号很少，或者候选股次日都高开过多、继续杀跌，就不要硬做。</li>",
+            "<li><strong>适用环境：</strong>主要用于熊市或弱市，特别是情绪砸得很厉害、但短线容易技术修复的时候。</li>",
+            "<li><strong>买入前提：</strong>只看前一交易日筛出来的票。次日高开超过 3% 不追；先等 15 到 30 分钟；不再创新低且重新回到开盘价附近，再考虑介入。</li>",
+            "<li><strong>不买情况：</strong>开盘继续杀跌、不断创新低、低开后没有承接、或者已经高开把反弹空间吃掉时，不买。</li>",
+            "<li><strong>仓位：</strong>适合少选精做，优先前 1 到 2 只，不适合摊很多票。</li>",
+            "<li><strong>持有：</strong>更偏 2 到 3 个交易日。它赚的是“快速修复的钱”，不是长期趋势的钱。</li>",
+            "<li><strong>止损：</strong>亏损到 5% 到 6% 直接止损；如果买入后第 2 天到第 3 天仍然没有明显修复，也应该退出。</li>",
+            "<li><strong>止盈：</strong>快速反弹到 5% 到 8% 可提前止盈；如果反弹后明显转弱，也不要贪。</li>",
             "</ul>"
           ].join("")
         }
@@ -473,7 +480,7 @@
       const builtinData = window.STOCK_DASHBOARD_DATA || null;
       const state = {
         data: builtinData,
-        strategy: "default",
+        strategy: "adaptive",
         selectedDate: ""
       };
 
@@ -486,9 +493,7 @@
       const metricRunTime = document.getElementById("metricRunTime");
       const playbookTitle = document.getElementById("playbookTitle");
       const playbookBody = document.getElementById("playbookBody");
-      const tabs = Array.from(document.querySelectorAll(".tab"));
 
-      bindEvents();
       render();
 
       function bindEvents() {
@@ -496,20 +501,11 @@
           state.selectedDate = dateSelect.value;
           render();
         });
-
-        tabs.forEach(function (tab) {
-          tab.addEventListener("click", function () {
-            state.strategy = tab.dataset.strategy;
-            syncTabs();
-            ensureSelectedDate();
-            render();
-          });
-        });
       }
+      bindEvents();
 
       function render() {
         const data = state.data;
-        syncTabs();
 
         if (!data) {
           dateSelect.innerHTML = "";
@@ -528,22 +524,45 @@
 
         const strategyData = getStrategyData(state.strategy);
         const records = getVisibleRecords();
+        const dateSummary = getDateSummary(strategyData, state.selectedDate);
         const latestRunTime = records.length ? records[0].run_time || "-" : (strategyData.latest_run_time || "-");
+        const selectedSource = resolveSelectedSourceStrategy(records, dateSummary);
 
         metricStrategy.textContent = strategyData.label;
-        playbookTitle.textContent = STRATEGY_META[state.strategy].playbookTitle;
-        playbookBody.innerHTML = STRATEGY_META[state.strategy].playbookHtml;
+        applyPlaybook(selectedSource);
         metricCount.textContent = String(records.length);
         metricRunTime.textContent = latestRunTime;
-        setStatus("当前显示的是预生成数据文件，可直接双击打开使用。 当前日期: " + (state.selectedDate || "无"), false);
+        setStatus(buildStatusText(selectedSource, dateSummary), !records.length);
 
         renderTable(records);
       }
 
-      function syncTabs() {
-        tabs.forEach(function (tab) {
-          tab.classList.toggle("active", tab.dataset.strategy === state.strategy);
-        });
+      function resolveSelectedSourceStrategy(records, dateSummary) {
+        if (!records.length) {
+          return dateSummary && typeof dateSummary.chosen_strategy === "string" ? dateSummary.chosen_strategy : "";
+        }
+        const source = records[0].source_strategy || "";
+        return typeof source === "string" ? source : "";
+      }
+
+      function applyPlaybook(sourceStrategy) {
+        if (sourceStrategy && SOURCE_RULES[sourceStrategy]) {
+          playbookTitle.textContent = SOURCE_RULES[sourceStrategy].title;
+          playbookBody.innerHTML = SOURCE_RULES[sourceStrategy].html;
+          return;
+        }
+        playbookTitle.textContent = STRATEGY_META[state.strategy].playbookTitle;
+        playbookBody.innerHTML = STRATEGY_META[state.strategy].playbookHtml;
+      }
+
+      function buildStatusText(sourceStrategy, dateSummary) {
+        if (!sourceStrategy || !SOURCE_RULES[sourceStrategy]) {
+          if (dateSummary && dateSummary.market_state) {
+            return "本日无候选，建议空仓；市场状态: " + dateSummary.market_state;
+          }
+          return "本日无候选，建议空仓";
+        }
+        return "本日实际采用策略: " + SOURCE_RULES[sourceStrategy].label;
       }
 
       function ensureSelectedDate() {
@@ -587,12 +606,20 @@
           source_file: "",
           available_dates: [],
           latest_run_time: null,
-          records: []
+          records: [],
+          date_summaries: {}
         };
         if (!state.data || !state.data.strategies) {
           return empty;
         }
         return state.data.strategies[strategyKey] || empty;
+      }
+
+      function getDateSummary(strategyData, targetDate) {
+        if (!strategyData || !strategyData.date_summaries || !targetDate) {
+          return null;
+        }
+        return strategyData.date_summaries[targetDate] || null;
       }
 
       function getVisibleRecords() {
@@ -624,9 +651,11 @@
 
         emptyState.hidden = true;
         records.forEach(function (record) {
+          const sourceStrategy = normalizeSourceStrategy(record.source_strategy);
           const tr = document.createElement("tr");
           tr.innerHTML = [
             "<td class=\"stock-col\"><div class=\"stock-cell\"><strong>" + escapeHtml(record.name || "-") + "</strong><span class=\"stock-code\">" + escapeHtml(record.symbol || "-") + "</span></div></td>",
+            "<td class=\"strategy-col\"><span class=\"badge\">" + escapeHtml(sourceStrategy.label) + "</span></td>",
             "<td><span class=\"badge\">" + escapeHtml(record.threshold_mode || "-") + "</span></td>",
             "<td>" + formatNumber(record.score_total, 2) + "</td>",
             "<td>" + formatNumber(record.close, 4) + "</td>",
@@ -642,6 +671,13 @@
       function setStatus(text, isWarn) {
         dataStatus.textContent = text;
         dataStatus.classList.toggle("warn", Boolean(isWarn));
+      }
+
+      function normalizeSourceStrategy(sourceStrategy) {
+        if (sourceStrategy && SOURCE_RULES[sourceStrategy]) {
+          return SOURCE_RULES[sourceStrategy];
+        }
+        return { label: "-" };
       }
 
       function formatNumber(value, digits) {

@@ -22,6 +22,8 @@ Command-line tool to recommend top A-share stocks before open using T-1 close da
 - macOS / Linux：`python3 -m app.main recommend-pullback --date YYYY-MM-DD [--count N] [--output table|json]`
 - Windows：`python -m app.main recommend-oversold --date YYYY-MM-DD [--count N] [--output table|json]`
 - macOS / Linux：`python3 -m app.main recommend-oversold --date YYYY-MM-DD [--count N] [--output table|json]`
+- Windows：`python -m app.main recommend-adaptive --date YYYY-MM-DD [--count N] [--output table|json]`
+- macOS / Linux：`python3 -m app.main recommend-adaptive --date YYYY-MM-DD [--count N] [--output table|json]`
 - Windows：`python -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]`
 - macOS / Linux：`python3 -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]`
 - Windows：`python -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
@@ -335,6 +337,64 @@ python -m app.main recommend-oversold --date 2026-03-06
 # macOS / Linux
 python3 -m app.main recommend-oversold
 python3 -m app.main recommend-oversold --date 2026-03-06
+```
+
+### 2.7) `recommend-adaptive`
+
+用途：
+
+- 先判断当前市场属于 `bull / neutral / bear`
+- 再按配置顺序自动选择更适合的策略
+- 如果候选策略都没有信号，就明确返回空仓
+
+命令：
+
+```bash
+# Windows
+python -m app.main recommend-adaptive --date YYYY-MM-DD [--count N] [--output table|json]
+
+# macOS / Linux
+python3 -m app.main recommend-adaptive --date YYYY-MM-DD [--count N] [--output table|json]
+```
+
+参数说明：
+
+- `--date YYYY-MM-DD`
+  - 目标日期
+  - 不传时，默认使用“下一个交易日”
+- `--count N`
+  - 选中策略本次输出的推荐数量
+- `--output table|json`
+  - `table`：终端直接看结果
+  - `json`：返回市场状态、尝试过的策略、最终采用的策略和推荐列表
+
+当前默认自适应顺序：
+
+- `bull`：先 `recommend-pullback`，再 `recommend`
+- `neutral`：先 `recommend-pullback`，再 `recommend`
+- `bear`：只尝试 `recommend-oversold`
+- 如果都没有候选：建议空仓
+
+配置位置：
+
+- `config/default.yaml` 里的 `adaptive_strategy.regime_orders`
+
+适合场景：
+
+- 不想每天手动决定今天该看哪套策略
+- 想把“没信号就空仓”也纳入固定流程
+- 想把三套策略变成一个更接近实盘的统一入口
+
+示例：
+
+```bash
+# Windows
+python -m app.main recommend-adaptive
+python -m app.main recommend-adaptive --date 2026-03-23 --count 1
+
+# macOS / Linux
+python3 -m app.main recommend-adaptive
+python3 -m app.main recommend-adaptive --date 2026-03-23 --count 1
 ```
 
 ### 3) `backtest`

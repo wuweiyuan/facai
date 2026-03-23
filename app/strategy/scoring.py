@@ -58,16 +58,18 @@ def _passes_oversold_threshold(latest: pd.Series, mode: str) -> bool:
     ma20 = float(latest.get("ma20", np.nan))
     mom5 = float(latest.get("mom5", np.nan))
     ret_1d = float(latest.get("ret_1d", np.nan))
-    rsi14 = float(latest.get("rsi14", np.nan))
-    if np.isnan(close) or np.isnan(ma20) or np.isnan(mom5) or np.isnan(ret_1d) or np.isnan(rsi14):
+    volume_ratio_1_20 = float(latest.get("volume_ratio_1_20", np.nan))
+    if np.isnan(close) or np.isnan(ma20) or np.isnan(mom5) or np.isnan(ret_1d) or np.isnan(volume_ratio_1_20):
         return False
-    if close >= ma20:
+    # Keep oversold selection anchored to the validated raw event:
+    # 5-day plunge, large MA20 deviation, same-day panic and visible volume expansion.
+    if close > ma20 * 0.90:
         return False
-    if mom5 >= -0.08:
+    if mom5 > -0.12:
         return False
-    if ret_1d >= -0.02:
+    if ret_1d > -0.03:
         return False
-    if not (0.0 <= rsi14 <= 50.0):
+    if volume_ratio_1_20 < 1.3:
         return False
     return True
 
@@ -141,13 +143,19 @@ def compute_score(latest: pd.Series, cfg: dict) -> tuple[float, dict[str, float]
         + _centered_score(rsi14, 55.0, 18.0) * 0.2
     ) * 100
     distance_below_ma20 = max(1.0 - close / ma20, 0.0) if ma20 > 0 else 0.0
-    oversold = (
-        _clip01(distance_below_ma20, 0.03, 0.15) * 0.30
-        + _clip01(-mom5, 0.05, 0.20) * 0.25
-        + _clip01(-ret_1d, 0.02, 0.08) * 0.15
-        + _clip01(volume_ratio_1_20, 1.0, 2.5) * 0.15
-        + _clip01(50.0 - rsi14, 0.0, 25.0) * 0.15
+    # Rank oversold names by being close to the validated setup, not by being
+    # "the most broken" stock on the board.
+    oversold_raw = (
+        _centered_score(distance_below_ma20, 0.11, 0.05) * 0.30
+        + _centered_score(-mom5, 0.14, 0.06) * 0.25
+        + _centered_score(-ret_1d, 0.045, 0.025) * 0.20
+        + _centered_score(volume_ratio_1_20, 1.6, 0.6) * 0.15
+        + _centered_score(rsi14, 24.0, 18.0) * 0.10
     ) * 100
+    # In recent local-cache samples, the lower-ranked oversold names outperformed
+    # the higher-ranked ones under the original direction, so keep the validated
+    # hard filter and flip ranking preference to favor the milder panic setups.
+    oversold = 100.0 - oversold_raw
 
     score_breakdown = {
         "trend": trend,
