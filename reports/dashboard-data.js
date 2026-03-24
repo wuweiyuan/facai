@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-03-24 09:32:35",
+  "generated_at": "2026-03-24 20:03:54",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-03-25",
         "2026-03-24",
         "2026-03-23",
         "2026-03-20",
@@ -27,8 +28,22 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-03-23 11:29:44",
+      "latest_run_time": "2026-03-24 20:03:54",
       "records": [
+        {
+          "run_time": "2026-03-24 20:03:54",
+          "trade_date": "2026-03-25",
+          "symbol": "600925",
+          "name": "苏能股份",
+          "threshold_mode": "normal",
+          "score_total": 72.15,
+          "close": 4.88,
+          "stop_loss_price": 4.7,
+          "take_profit_price": 5.22,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend-pullback"
+        },
         {
           "run_time": "2026-03-23 11:29:44",
           "trade_date": "2026-03-23",
@@ -72,6 +87,174 @@ window.STOCK_DASHBOARD_DATA = {
           "source_strategy": "recommend-oversold"
         },
         {
+          "run_time": "2026-03-19 21:51:54",
+          "trade_date": "2026-03-20",
+          "symbol": "600132",
+          "name": "重庆啤酒",
+          "threshold_mode": "normal",
+          "score_total": 72.18,
+          "close": 56.93,
+          "stop_loss_price": 54.6,
+          "take_profit_price": 61.58,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend-pullback"
+        },
+        {
+          "run_time": "2026-03-19 21:51:54",
+          "trade_date": "2026-03-20",
+          "symbol": "603050",
+          "name": "科林电气",
+          "threshold_mode": "normal",
+          "score_total": 72.06,
+          "close": 22.86,
+          "stop_loss_price": 20.71,
+          "take_profit_price": 27.15,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend-pullback"
+        },
+        {
+          "run_time": "2026-03-19 21:51:54",
+          "trade_date": "2026-03-20",
+          "symbol": "603565",
+          "name": "中谷物流",
+          "threshold_mode": "normal",
+          "score_total": 70.39,
+          "close": 11.01,
+          "stop_loss_price": 10.64,
+          "take_profit_price": 11.74,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend-pullback"
+        },
+        {
+          "run_time": "2026-03-18 22:22:38",
+          "trade_date": "2026-03-19",
+          "symbol": "600935",
+          "name": "华塑股份",
+          "threshold_mode": "normal",
+          "score_total": 73.74,
+          "close": 3.0,
+          "stop_loss_price": 2.75,
+          "take_profit_price": 3.49,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend-pullback"
+        },
+        {
+          "run_time": "2026-03-18 22:22:38",
+          "trade_date": "2026-03-19",
+          "symbol": "601001",
+          "name": "晋控煤业",
+          "threshold_mode": "normal",
+          "score_total": 71.59,
+          "close": 17.21,
+          "stop_loss_price": 15.71,
+          "take_profit_price": 20.19,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend-pullback"
+        },
+        {
+          "run_time": "2026-03-18 22:22:38",
+          "trade_date": "2026-03-19",
+          "symbol": "605011",
+          "name": "杭州热电",
+          "threshold_mode": "normal",
+          "score_total": 71.4,
+          "close": 21.3,
+          "stop_loss_price": 20.47,
+          "take_profit_price": 22.94,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend-pullback"
+        },
+        {
+          "run_time": "2026-03-17 22:09:38",
+          "trade_date": "2026-03-18",
+          "symbol": "000539",
+          "name": "粤电力Ａ",
+          "threshold_mode": "normal",
+          "score_total": 71.18,
+          "close": 5.1,
+          "stop_loss_price": 4.84,
+          "take_profit_price": 5.6,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend-pullback"
+        },
+        {
+          "run_time": "2026-03-17 22:09:38",
+          "trade_date": "2026-03-18",
+          "symbol": "000966",
+          "name": "长源电力",
+          "threshold_mode": "normal",
+          "score_total": 70.87,
+          "close": 4.81,
+          "stop_loss_price": 4.52,
+          "take_profit_price": 5.37,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend-pullback"
+        },
+        {
+          "run_time": "2026-03-17 22:09:38",
+          "trade_date": "2026-03-18",
+          "symbol": "001207",
+          "name": "联科科技",
+          "threshold_mode": "normal",
+          "score_total": 70.82,
+          "close": 28.47,
+          "stop_loss_price": 26.3,
+          "take_profit_price": 32.79,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend-pullback"
+        },
+        {
+          "run_time": "2026-03-16 20:57:16",
+          "trade_date": "2026-03-17",
+          "symbol": "600528",
+          "name": "中铁工业",
+          "threshold_mode": "normal",
+          "score_total": 73.53,
+          "close": 8.51,
+          "stop_loss_price": 8.23,
+          "take_profit_price": 9.06,
+          "suggested_holding_days": 2,
+          "exit_plan": "",
+          "source_strategy": "recommend-pullback"
+        },
+        {
+          "run_time": "2026-03-16 20:57:16",
+          "trade_date": "2026-03-17",
+          "symbol": "600426",
+          "name": "华鲁恒升",
+          "threshold_mode": "normal",
+          "score_total": 70.76,
+          "close": 39.21,
+          "stop_loss_price": 34.7,
+          "take_profit_price": 48.22,
+          "suggested_holding_days": 3,
+          "exit_plan": "",
+          "source_strategy": "recommend-pullback"
+        },
+        {
+          "run_time": "2026-03-16 20:57:16",
+          "trade_date": "2026-03-17",
+          "symbol": "600582",
+          "name": "天地科技",
+          "threshold_mode": "normal",
+          "score_total": 70.7,
+          "close": 6.15,
+          "stop_loss_price": 5.97,
+          "take_profit_price": 6.49,
+          "suggested_holding_days": 2,
+          "exit_plan": "",
+          "source_strategy": "recommend-pullback"
+        },
+        {
           "run_time": "2026-03-15 12:23:58",
           "trade_date": "2026-03-16",
           "symbol": "603519",
@@ -110,6 +293,48 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 45.73,
           "take_profit_price": 59.13,
           "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend-pullback"
+        },
+        {
+          "run_time": "2026-03-13 15:25:40",
+          "trade_date": "2026-03-13",
+          "symbol": "002299",
+          "name": "圣农发展",
+          "threshold_mode": "normal",
+          "score_total": 68.49,
+          "close": 19.02,
+          "stop_loss_price": 18.18,
+          "take_profit_price": 20.69,
+          "suggested_holding_days": 3,
+          "exit_plan": "",
+          "source_strategy": "recommend-pullback"
+        },
+        {
+          "run_time": "2026-03-13 15:25:40",
+          "trade_date": "2026-03-13",
+          "symbol": "600202",
+          "name": "哈空调",
+          "threshold_mode": "normal",
+          "score_total": 68.15,
+          "close": 6.43,
+          "stop_loss_price": 6.14,
+          "take_profit_price": 6.99,
+          "suggested_holding_days": 2,
+          "exit_plan": "",
+          "source_strategy": "recommend-pullback"
+        },
+        {
+          "run_time": "2026-03-13 15:25:40",
+          "trade_date": "2026-03-13",
+          "symbol": "002170",
+          "name": "芭田股份",
+          "threshold_mode": "normal",
+          "score_total": 67.47,
+          "close": 14.01,
+          "stop_loss_price": 13.01,
+          "take_profit_price": 15.99,
+          "suggested_holding_days": 3,
           "exit_plan": "",
           "source_strategy": "recommend-pullback"
         },
@@ -373,12 +598,24 @@ window.STOCK_DASHBOARD_DATA = {
             "recommend-oversold"
           ],
           "chosen_strategy": null,
-          "has_recommendations": false
+          "has_recommendations": false,
+          "chosen_count": null
+        },
+        "2026-03-25": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1
         },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
-            "recommend-oversold"
+            "recommend-oversold",
+            "recommend-pullback"
           ],
           "chosen_strategy": "recommend-oversold",
           "has_recommendations": true
@@ -386,34 +623,38 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-20": {
           "market_state": "bear",
           "tried_strategies": [
-            "recommend-oversold"
+            "recommend-oversold",
+            "recommend-pullback"
           ],
-          "chosen_strategy": null,
-          "has_recommendations": false
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true
         },
         "2026-03-19": {
           "market_state": "bear",
           "tried_strategies": [
-            "recommend-oversold"
+            "recommend-oversold",
+            "recommend-pullback"
           ],
-          "chosen_strategy": null,
-          "has_recommendations": false
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true
         },
         "2026-03-18": {
           "market_state": "bear",
           "tried_strategies": [
-            "recommend-oversold"
+            "recommend-oversold",
+            "recommend-pullback"
           ],
-          "chosen_strategy": null,
-          "has_recommendations": false
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true
         },
         "2026-03-17": {
           "market_state": "bear",
           "tried_strategies": [
-            "recommend-oversold"
+            "recommend-oversold",
+            "recommend-pullback"
           ],
-          "chosen_strategy": null,
-          "has_recommendations": false
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true
         },
         "2026-03-16": {
           "market_state": "neutral",
@@ -427,10 +668,11 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-13": {
           "market_state": "bear",
           "tried_strategies": [
-            "recommend-oversold"
+            "recommend-oversold",
+            "recommend-pullback"
           ],
-          "chosen_strategy": null,
-          "has_recommendations": false
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true
         },
         "2026-03-12": {
           "market_state": "neutral",
@@ -462,7 +704,8 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-09": {
           "market_state": "bear",
           "tried_strategies": [
-            "recommend-oversold"
+            "recommend-oversold",
+            "recommend-pullback"
           ],
           "chosen_strategy": null,
           "has_recommendations": false
@@ -470,7 +713,8 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-06": {
           "market_state": "bear",
           "tried_strategies": [
-            "recommend-oversold"
+            "recommend-oversold",
+            "recommend-pullback"
           ],
           "chosen_strategy": null,
           "has_recommendations": false
@@ -478,7 +722,8 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-05": {
           "market_state": "bear",
           "tried_strategies": [
-            "recommend-oversold"
+            "recommend-oversold",
+            "recommend-pullback"
           ],
           "chosen_strategy": null,
           "has_recommendations": false
@@ -486,7 +731,8 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04": {
           "market_state": "bear",
           "tried_strategies": [
-            "recommend-oversold"
+            "recommend-oversold",
+            "recommend-pullback"
           ],
           "chosen_strategy": null,
           "has_recommendations": false
@@ -494,7 +740,8 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-03": {
           "market_state": "bear",
           "tried_strategies": [
-            "recommend-oversold"
+            "recommend-oversold",
+            "recommend-pullback"
           ],
           "chosen_strategy": null,
           "has_recommendations": false
@@ -539,6 +786,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-03-25",
     "2026-03-24",
     "2026-03-23",
     "2026-03-20",
