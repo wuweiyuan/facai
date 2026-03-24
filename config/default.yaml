@@ -459,6 +459,10 @@ reporting:
   # 这类 .log 文件通常属于本地运行产物，不建议提交到代码仓库。
   recommendation_log: reports/{signal_date}.log
 
+  # recommend-adaptive 的日度运行摘要。
+  # 即使当天没有选出股票，也会写入一条记录，供 dashboard 展示“空仓”状态。
+  adaptive_run_csv: reports/adaptive_runs.csv
+
 # ------------------------------------------------------------
 # 调参参考模板（以下内容全部为注释，不会参与实际配置）
 # ------------------------------------------------------------

@@ -16,6 +16,7 @@ from app.engine.recommender import Recommender
 from app.error_messages import friendly_error_message
 from app.network import clear_proxy_env, disable_requests_env_proxy, force_no_proxy_all
 from app.reporting import (
+    append_adaptive_run_csv,
     append_recommendation_csv,
     append_recommendation_md,
     append_recommendation_txt,
@@ -473,6 +474,7 @@ def main() -> None:
         chosen_recs = []
         any_reporting_enabled = False
         tried_commands: list[str] = []
+        adaptive_reporting_enabled = bool(base_cfg.get("reporting", {}).get("enabled", True))
 
         if args.output != "json":
             print(
@@ -503,7 +505,24 @@ def main() -> None:
             any_reporting_enabled = any_reporting_enabled or reporting_enabled
             break
 
-        if any_reporting_enabled:
+        if adaptive_reporting_enabled:
+            adaptive_summary = {
+                "target_date": target_date.isoformat(),
+                "signal_date": signal_date.isoformat(),
+                "market_state": market_state.label,
+                "market_reason": market_reason,
+                "tried_strategies": tried_commands,
+                "chosen_strategy": chosen_cmd,
+                "has_recommendations": bool(chosen_recs),
+            }
+            saved_adaptive_csv = append_adaptive_run_csv(
+                adaptive_summary,
+                str(base_cfg.get("reporting", {}).get("adaptive_run_csv", "reports/adaptive_runs.csv")),
+            )
+            if args.output != "json":
+                print(f"已写入文档: {saved_adaptive_csv}")
+
+        if any_reporting_enabled or adaptive_reporting_enabled:
             dashboard_default_csv, dashboard_pullback_csv, dashboard_oversold_csv, dashboard_output = _resolve_dashboard_export_args(base_cfg)
             saved_dashboard = export_dashboard_data(
                 dashboard_default_csv,

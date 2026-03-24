@@ -201,6 +201,31 @@ def append_recommendation_output_log(content: str, signal_date: date, path_templ
     return out_path
 
 
+def append_adaptive_run_csv(run_summary: dict, path: str) -> Path:
+    out_path = Path(path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    row = {
+        "run_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "target_date": str(run_summary.get("target_date", "")),
+        "signal_date": str(run_summary.get("signal_date", "")),
+        "market_state": str(run_summary.get("market_state", "")),
+        "market_reason": str(run_summary.get("market_reason", "")),
+        "tried_strategies": ",".join(run_summary.get("tried_strategies", [])),
+        "chosen_strategy": str(run_summary.get("chosen_strategy", "") or ""),
+        "has_recommendations": "true" if bool(run_summary.get("has_recommendations", False)) else "false",
+    }
+    if out_path.exists():
+        try:
+            old = pd.read_csv(out_path, dtype=str)
+            df = pd.concat([old, pd.DataFrame([row])], ignore_index=True)
+        except Exception:
+            df = pd.DataFrame([row])
+    else:
+        df = pd.DataFrame([row])
+    df.to_csv(out_path, index=False)
+    return out_path
+
+
 def resolve_recommendation_output_log_path(signal_date: date, path_template: str) -> Path:
     signal_date_compact = signal_date.strftime("%Y%m%d")
     resolved_path = path_template.format(signal_date=signal_date_compact, signal_date_iso=signal_date.isoformat())
