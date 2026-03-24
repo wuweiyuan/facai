@@ -32,7 +32,7 @@ class CandidateScore:
     name: str
     score_total: float
     score_breakdown: dict[str, float]
-    key_metrics: dict[str, float]
+    key_metrics: dict[str, Any]
     reason: list[str]
 
 
@@ -43,7 +43,7 @@ class RecommendationResult:
     name: str
     score_total: float
     score_breakdown: dict[str, float]
-    key_metrics: dict[str, float]
+    key_metrics: dict[str, Any]
     reason: list[str]
     threshold_mode: str
 
@@ -54,7 +54,10 @@ class RecommendationResult:
             "name": self.name,
             "score_total": round(self.score_total, 2),
             "score_breakdown": {k: round(v, 2) for k, v in self.score_breakdown.items()},
-            "key_metrics": {k: round(v, 4) for k, v in self.key_metrics.items()},
+            "key_metrics": {
+                k: round(v, 4) if isinstance(v, (int, float)) and not isinstance(v, bool) else v
+                for k, v in self.key_metrics.items()
+            },
             "reason": self.reason,
             "threshold_mode": self.threshold_mode,
         }

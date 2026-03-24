@@ -22,6 +22,7 @@ def _build_row(rec: RecommendationResult) -> dict:
         "stop_loss_price": round(float(rec.key_metrics.get("stop_loss_price", 0.0)), 4),
         "take_profit_price": round(float(rec.key_metrics.get("take_profit_price", 0.0)), 4),
         "suggested_holding_days": int(float(rec.key_metrics.get("suggested_holding_days", 0.0))),
+        "exit_plan": str(rec.key_metrics.get("exit_plan", "") or ""),
     }
     return row
 
@@ -66,6 +67,7 @@ def append_recommendation_md(rec: RecommendationResult, path: str) -> Path:
         "stop_loss_price",
         "take_profit_price",
         "suggested_holding_days",
+        "exit_plan",
     ]
     header_labels_cn = {
         "run_time": "运行时间",
@@ -78,6 +80,7 @@ def append_recommendation_md(rec: RecommendationResult, path: str) -> Path:
         "stop_loss_price": "止损价",
         "take_profit_price": "止盈价",
         "suggested_holding_days": "建议持股天数",
+        "exit_plan": "退出规则",
     }
     header_labels_en = {
         "run_time": "run_time",
@@ -90,6 +93,7 @@ def append_recommendation_md(rec: RecommendationResult, path: str) -> Path:
         "stop_loss_price": "stop_loss_price",
         "take_profit_price": "take_profit_price",
         "suggested_holding_days": "suggested_holding_days",
+        "exit_plan": "exit_plan",
     }
     for c in cols:
         if c not in df.columns:
@@ -100,7 +104,7 @@ def append_recommendation_md(rec: RecommendationResult, path: str) -> Path:
 
     display_cols = [header_labels_cn[c] for c in cols]
     header = "| " + " | ".join(display_cols) + " |\n"
-    sep = "|---|---|---|---|---|---:|---:|---:|---:|---:|\n"
+    sep = "|---|---|---|---|---|---:|---:|---:|---:|---:|---|\n"
     lines = []
     for _, r in df.iterrows():
         vals = [str(r[c]) for c in cols]
@@ -141,6 +145,7 @@ def append_recommendation_txt(rec: RecommendationResult, path: str) -> Path:
         "stop_loss_price",
         "take_profit_price",
         "suggested_holding_days",
+        "exit_plan",
     ]
     header_labels_cn = {
         "run_time": "运行时间",
@@ -153,6 +158,7 @@ def append_recommendation_txt(rec: RecommendationResult, path: str) -> Path:
         "stop_loss_price": "止损价",
         "take_profit_price": "止盈价",
         "suggested_holding_days": "建议持股天数",
+        "exit_plan": "退出规则",
     }
     for c in cols:
         if c not in df.columns:
@@ -213,6 +219,7 @@ def append_adaptive_run_csv(run_summary: dict, path: str) -> Path:
         "tried_strategies": ",".join(run_summary.get("tried_strategies", [])),
         "chosen_strategy": str(run_summary.get("chosen_strategy", "") or ""),
         "has_recommendations": "true" if bool(run_summary.get("has_recommendations", False)) else "false",
+        "chosen_count": str(run_summary.get("chosen_count", "") or ""),
     }
     if out_path.exists():
         try:

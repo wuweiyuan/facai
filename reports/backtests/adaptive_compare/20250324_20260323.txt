@@ -1,0 +1,15 @@
+Period: 2025-03-24 -> 2026-03-23
+
+metric                        current experimental        delta
+total_trades                      178          178            0
+skipped_days                       59           59            0
+win_rate_net_1d                0.4831       0.4831       0.0000
+win_rate_net_3d                0.5337       0.5337       0.0000
+avg_return_1d_net              0.0012       0.0012       0.0000
+avg_return_3d_net              0.0073       0.0073       0.0000
+avg_return_5d_net              0.0071       0.0071       0.0000
+max_drawdown_proxy             0.2560       0.2560       0.0000
+
+adaptive_strategy_counts {'recommend-pullback': 177, 'recommend-oversold': 1}
+                         {'recommend-pullback': 177, 'recommend-oversold': 1}
+                         {'recommend-oversold': 0, 'recommend-pullback': 0}

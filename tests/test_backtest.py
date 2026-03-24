@@ -77,3 +77,18 @@ class TestBacktest(TestCase):
         args = build_parser().parse_args(["backtest-pullback", "--start", "2025-01-10", "--end", "2025-03-10"])
 
         self.assertEqual(args.cmd, "backtest-pullback")
+
+    def test_parser_accepts_backtest_adaptive(self):
+        args = build_parser().parse_args(["backtest-adaptive", "--start", "2025-01-10", "--end", "2025-03-10"])
+
+        self.assertEqual(args.cmd, "backtest-adaptive")
+
+    def test_parser_accepts_backtest_bull(self):
+        args = build_parser().parse_args(["backtest-bull", "--start", "2025-01-10", "--end", "2025-03-10"])
+
+        self.assertEqual(args.cmd, "backtest-bull")
+
+    def test_parser_accepts_backtest_relative(self):
+        args = build_parser().parse_args(["backtest-relative", "--start", "2025-01-10", "--end", "2025-03-10"])
+
+        self.assertEqual(args.cmd, "backtest-relative")

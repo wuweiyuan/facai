@@ -21,6 +21,7 @@ RECOMMENDATION_COLUMNS = [
     "stop_loss_price",
     "take_profit_price",
     "suggested_holding_days",
+    "exit_plan",
 ]
 
 STRATEGY_SPECS = {
@@ -307,6 +308,7 @@ def _load_adaptive_run_summaries(cfg: dict | None) -> dict[str, dict]:
             "tried_strategies": tried,
             "chosen_strategy": _clean_text(row.get("chosen_strategy", "")) or None,
             "has_recommendations": _clean_text(row.get("has_recommendations", "")).lower() == "true",
+            "chosen_count": _to_int(row.get("chosen_count", "")),
         }
     return out
 
@@ -323,6 +325,7 @@ def _row_to_record(row: pd.Series) -> dict:
         "stop_loss_price": _to_float(row.get("stop_loss_price", "")),
         "take_profit_price": _to_float(row.get("take_profit_price", "")),
         "suggested_holding_days": _to_int(row.get("suggested_holding_days", "")),
+        "exit_plan": _clean_text(row.get("exit_plan", "")),
     }
 
 

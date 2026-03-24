@@ -166,6 +166,20 @@ def passes_risk_filter(latest: pd.Series, market: MarketState, mode: str, cfg: d
         max_rsi14 = oversold_cfg.get("max_rsi14")
         if max_rsi14 is not None and rsi14 > float(max_rsi14):
             return False
+    relative_cfg = rcfg.get("relative_strength", {})
+    if bool(relative_cfg.get("enabled", False)):
+        excess_mom20 = mom20 - market.mom20
+        min_excess_mom20 = relative_cfg.get("min_excess_mom20")
+        if min_excess_mom20 is not None and excess_mom20 < float(min_excess_mom20):
+            return False
+        min_mom5 = relative_cfg.get("min_mom5")
+        if min_mom5 is not None and mom5 < float(min_mom5):
+            return False
+        min_close_above_ma20_pct = relative_cfg.get("min_close_above_ma20_pct")
+        if min_close_above_ma20_pct is not None:
+            close_vs_ma20 = close / ma20 - 1.0 if ma20 > 0 else np.nan
+            if np.isnan(close_vs_ma20) or close_vs_ma20 < float(min_close_above_ma20_pct):
+                return False
     return True
 
 

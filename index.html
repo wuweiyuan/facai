@@ -532,7 +532,7 @@
         applyPlaybook(selectedSource);
         metricCount.textContent = String(records.length);
         metricRunTime.textContent = latestRunTime;
-        setStatus(buildStatusText(selectedSource, dateSummary), !records.length);
+        setStatus(buildStatusText(selectedSource, dateSummary, records), !records.length);
 
         renderTable(records);
       }
@@ -555,14 +555,19 @@
         playbookBody.innerHTML = STRATEGY_META[state.strategy].playbookHtml;
       }
 
-      function buildStatusText(sourceStrategy, dateSummary) {
+      function buildStatusText(sourceStrategy, dateSummary, records) {
         if (!sourceStrategy || !SOURCE_RULES[sourceStrategy]) {
           if (dateSummary && dateSummary.market_state) {
             return "本日无候选，建议空仓；市场状态: " + dateSummary.market_state;
           }
           return "本日无候选，建议空仓";
         }
-        return "本日实际采用策略: " + SOURCE_RULES[sourceStrategy].label;
+        const firstRecord = records && records.length ? records[0] : null;
+        const exitPlan = firstRecord && firstRecord.exit_plan ? "；" + firstRecord.exit_plan : "";
+        const holdDays = firstRecord && typeof firstRecord.suggested_holding_days === "number"
+          ? "；默认持有: " + firstRecord.suggested_holding_days + "天"
+          : "";
+        return "本日实际采用策略: " + SOURCE_RULES[sourceStrategy].label + holdDays + exitPlan;
       }
 
       function ensureSelectedDate() {

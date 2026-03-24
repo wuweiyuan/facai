@@ -9,7 +9,7 @@ from app.data_source.base import MarketDataSource
 from app.error_messages import friendly_error_message
 from app.features.indicators import add_indicators, bars_to_df
 from app.models import CandidateScore, RecommendationResult, StockInfo
-from app.strategy.holding_period import suggest_holding_days
+from app.strategy.holding_period import build_exit_plan, suggest_holding_days
 from app.strategy.regime_risk import MarketState, detect_market_state, passes_risk_filter
 from app.strategy.risk_targets import compute_stop_take_prices
 from app.strategy.scoring import build_reason, compute_score, passes_threshold
@@ -180,7 +180,8 @@ class Recommender:
         df = add_indicators(bars_to_df(bars))
         if df.empty:
             raise RuntimeError(f"No bars found for {symbol}")
-        latest = df.iloc[-1]
+        latest = df.iloc[-1].copy()
+        latest["market_mom20"] = market_state.mom20
         if not passes_threshold(latest, mode, self.cfg):
             raise RuntimeError(f"{symbol} does not pass {mode} threshold")
         if not passes_risk_filter(latest, market_state, mode, self.cfg):
@@ -314,7 +315,8 @@ class Recommender:
         df = add_indicators(bars_to_df(bars))
         if df.empty:
             return StockScanOutcome(index=index, symbol=stock.symbol, status="df_empty", kline_success=True)
-        latest = df.iloc[-1]
+        latest = df.iloc[-1].copy()
+        latest["market_mom20"] = market_state.mom20
         if mode != "force" and not passes_threshold(latest, mode, self.cfg):
             return StockScanOutcome(index=index, symbol=stock.symbol, status="threshold_reject", kline_success=True)
         if not passes_risk_filter(latest, market_state, mode, self.cfg):
@@ -453,6 +455,7 @@ class Recommender:
         atr14 = float(latest["atr14"]) if latest.get("atr14") is not None else 0.0
         stop_loss_price, take_profit_price = compute_stop_take_prices(close, atr14, self.cfg)
         suggested_days = float(suggest_holding_days(latest, market_state, self.cfg))
+        exit_plan = build_exit_plan(latest, market_state, self.cfg)
         return {
             "close": close,
             "ma20": float(latest["ma20"]),
@@ -460,6 +463,8 @@ class Recommender:
             "ret_1d": float(latest["ret_1d"]) if latest.get("ret_1d") is not None else 0.0,
             "mom5": float(latest["mom5"]),
             "mom20": float(latest["mom20"]),
+            "market_mom20": float(latest["market_mom20"]) if latest.get("market_mom20") is not None else 0.0,
+            "mom20_excess_vs_market": float(latest["mom20"] - latest["market_mom20"]) if latest.get("market_mom20") is not None else 0.0,
             "rsi14": float(latest["rsi14"]),
             "atr14": atr14,
             "stop_loss_price": stop_loss_price,
@@ -471,4 +476,5 @@ class Recommender:
             "close_vs_ma20_pct": close / float(latest["ma20"]) - 1.0 if float(latest["ma20"]) > 0 else 0.0,
             "turnover_rate": float(latest["turnover_rate"]) if latest.get("turnover_rate") is not None else 0.0,
             "vol20_std": float(latest["vol20_std"]),
+            "exit_plan": exit_plan,
         }
