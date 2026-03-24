@@ -143,28 +143,23 @@ def _build_adaptive_strategy_data(default_data: dict, pullback_data: dict, overs
         "recommend-pullback": pullback_data,
         "recommend-oversold": oversold_data,
     }
-    order_map = _resolve_adaptive_regime_orders(cfg)
-    market_labels = _resolve_market_labels(
-        available_dates=sorted(
-            set(default_data.get("available_dates", []))
-            | set(pullback_data.get("available_dates", []))
-            | set(oversold_data.get("available_dates", []))
-        ),
-        cfg=cfg,
-    )
-
-    adaptive_records: list[dict] = []
+    adaptive_run_summaries = _load_adaptive_run_summaries(cfg)
     adaptive_dates = sorted(
-        set(default_data.get("available_dates", []))
+        set(adaptive_run_summaries.keys())
+        | set(default_data.get("available_dates", []))
         | set(pullback_data.get("available_dates", []))
         | set(oversold_data.get("available_dates", [])),
         reverse=True,
     )
+    order_map = _resolve_adaptive_regime_orders(cfg)
+    market_labels = _resolve_market_labels(available_dates=adaptive_dates, cfg=cfg)
+
+    adaptive_records: list[dict] = []
     latest_run_time: str | None = max(
         [value for value in [default_data.get("latest_run_time"), pullback_data.get("latest_run_time"), oversold_data.get("latest_run_time")] if value],
         default=None,
     )
-    date_summaries: dict[str, dict] = {}
+    date_summaries: dict[str, dict] = dict(adaptive_run_summaries)
 
     records_by_strategy_and_date = {
         "recommend": _group_records_by_date(default_data.get("records", [])),
@@ -174,20 +169,34 @@ def _build_adaptive_strategy_data(default_data: dict, pullback_data: dict, overs
 
     for trade_date in adaptive_dates:
         market_label = market_labels[trade_date]
+        saved_summary = date_summaries.get(trade_date)
         ordered_cmds = order_map.get(market_label) or order_map.get("unknown") or ["recommend-pullback"]
+        if saved_summary and saved_summary.get("tried_strategies"):
+            ordered_cmds = saved_summary["tried_strategies"]
         chosen_records: list[dict] = []
         chosen_cmd: str | None = None
-        for cmd_name in ordered_cmds:
-            chosen_records = records_by_strategy_and_date.get(cmd_name, {}).get(trade_date, [])
-            if chosen_records:
-                chosen_cmd = cmd_name
-                break
-        date_summaries[trade_date] = {
-            "market_state": market_label,
-            "tried_strategies": ordered_cmds,
-            "chosen_strategy": chosen_cmd,
-            "has_recommendations": bool(chosen_records),
-        }
+        if saved_summary:
+            chosen_cmd = saved_summary.get("chosen_strategy")
+            if chosen_cmd:
+                chosen_records = records_by_strategy_and_date.get(chosen_cmd, {}).get(trade_date, [])
+                if not saved_summary.get("has_recommendations", False):
+                    chosen_records = []
+            else:
+                chosen_records = []
+            saved_summary.setdefault("market_state", market_label)
+            saved_summary.setdefault("tried_strategies", ordered_cmds)
+        else:
+            for cmd_name in ordered_cmds:
+                chosen_records = records_by_strategy_and_date.get(cmd_name, {}).get(trade_date, [])
+                if chosen_records:
+                    chosen_cmd = cmd_name
+                    break
+            date_summaries[trade_date] = {
+                "market_state": market_label,
+                "tried_strategies": ordered_cmds,
+                "chosen_strategy": chosen_cmd,
+                "has_recommendations": bool(chosen_records),
+            }
         for record in chosen_records:
             enriched = dict(record)
             enriched["source_strategy"] = chosen_cmd
@@ -265,6 +274,41 @@ def _resolve_market_labels(available_dates: list[str], cfg: dict | None) -> dict
             continue
         labels[trade_date] = detect_market_state(normalized_closes, dt, cfg).label
     return labels
+
+
+def _load_adaptive_run_summaries(cfg: dict | None) -> dict[str, dict]:
+    if not cfg:
+        return {}
+    reporting_cfg = cfg.get("reporting", {})
+    raw_path = reporting_cfg.get("adaptive_run_csv")
+    if not raw_path:
+        return {}
+    path = Path(str(raw_path))
+    if not path.exists():
+        return {}
+    try:
+        df = pd.read_csv(path, dtype=str)
+    except Exception:
+        return {}
+    required = {"target_date", "market_state", "tried_strategies", "chosen_strategy", "has_recommendations", "run_time"}
+    if df.empty or not required.issubset(df.columns):
+        return {}
+    df = df.fillna("")
+    df = df.sort_values(["run_time", "target_date"])
+    df = df.drop_duplicates(subset=["target_date"], keep="last")
+    out: dict[str, dict] = {}
+    for _, row in df.iterrows():
+        target_date = _clean_text(row.get("target_date", ""))
+        if not target_date:
+            continue
+        tried = [item.strip() for item in _clean_text(row.get("tried_strategies", "")).split(",") if item.strip()]
+        out[target_date] = {
+            "market_state": _clean_text(row.get("market_state", "")),
+            "tried_strategies": tried,
+            "chosen_strategy": _clean_text(row.get("chosen_strategy", "")) or None,
+            "has_recommendations": _clean_text(row.get("has_recommendations", "")).lower() == "true",
+        }
+    return out
 
 
 def _row_to_record(row: pd.Series) -> dict:

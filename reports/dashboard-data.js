@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-03-23 17:57:45",
+  "generated_at": "2026-03-24 09:19:06",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-03-24",
         "2026-03-23",
         "2026-03-20",
         "2026-03-19",
@@ -342,6 +343,14 @@ window.STOCK_DASHBOARD_DATA = {
         }
       ],
       "date_summaries": {
+        "2026-03-24": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -506,6 +515,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-03-24",
     "2026-03-23",
     "2026-03-20",
     "2026-03-19",

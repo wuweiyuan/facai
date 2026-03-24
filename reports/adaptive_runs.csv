@@ -1,0 +1,4 @@
+run_time,target_date,signal_date,market_state,market_reason,tried_strategies,chosen_strategy,has_recommendations
+2026-03-24 09:13:01,2026-03-24,2026-03-23,bear,ok,recommend-oversold,,false
+2026-03-24 09:16:13,2026-03-24,2026-03-23,bear,ok,recommend-oversold,,false
+2026-03-24 09:19:06,2026-03-24,2026-03-23,bear,ok,recommend-oversold,,false

@@ -52,6 +52,7 @@ class TestDashboard(TestCase):
             cfg = {
                 "data_source": {"cache_dir": str(base)},
                 "market_filter": {"index_symbol": "000300", "lookback_days": 120},
+                "reporting": {"adaptive_run_csv": str(base / "adaptive_runs.csv")},
                 "adaptive_strategy": {
                     "regime_orders": {
                         "bull": ["recommend-pullback", "recommend"],
@@ -74,14 +75,25 @@ class TestDashboard(TestCase):
                 ),
                 encoding="utf-8",
             )
+            (base / "adaptive_runs.csv").write_text(
+                "\n".join(
+                    [
+                        "run_time,target_date,signal_date,market_state,market_reason,tried_strategies,chosen_strategy,has_recommendations",
+                        "2026-03-17 21:00:00,2026-03-17,2026-03-16,bear,ok,recommend-oversold,,false",
+                        "2026-03-18 21:00:00,2026-03-18,2026-03-17,bull,ok,\"recommend-pullback,recommend\",recommend-pullback,true",
+                    ]
+                ),
+                encoding="utf-8",
+            )
 
             payload = build_dashboard_payload(default_csv, pullback_csv, oversold_csv, cfg)
 
             adaptive_records = payload["strategies"]["adaptive"]["records"]
-            self.assertEqual(len(adaptive_records), 2)
+            self.assertEqual(len(adaptive_records), 1)
             self.assertEqual(adaptive_records[0]["symbol"], "600000")
             self.assertEqual(adaptive_records[0]["source_strategy"], "recommend-pullback")
             self.assertEqual(payload["strategies"]["adaptive"]["available_dates"], ["2026-03-18", "2026-03-17"])
+            self.assertFalse(payload["strategies"]["adaptive"]["date_summaries"]["2026-03-17"]["has_recommendations"])
             self.assertEqual(payload["all_dates"], ["2026-03-18", "2026-03-17"])
 
     def test_build_dashboard_payload_handles_missing_files(self):
