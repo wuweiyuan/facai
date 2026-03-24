@@ -9,6 +9,7 @@ from app.config import apply_strategy_profile
 from app.engine.recommender import Recommender
 from app.main import (
     _resolve_adaptive_strategy_specs,
+    _resolve_adaptive_pick_count,
     _resolve_dashboard_export_args,
     _resolve_recommend_run_specs,
     _resolve_recommend_target_date,
@@ -326,6 +327,21 @@ class TestRecommender(TestCase):
             [("recommend-pullback", "pullback_confirm", "回踩策略 recommend-pullback")],
         )
 
+    def test_resolve_adaptive_pick_count_uses_strategy_defaults_and_allows_override(self):
+        cfg = {
+            "adaptive_strategy": {
+                "strategy_pick_counts": {
+                    "recommend": 1,
+                    "recommend-pullback": 1,
+                    "recommend-oversold": 3,
+                }
+            }
+        }
+
+        self.assertEqual(_resolve_adaptive_pick_count(cfg, "recommend", None), 1)
+        self.assertEqual(_resolve_adaptive_pick_count(cfg, "recommend-oversold", None), 3)
+        self.assertEqual(_resolve_adaptive_pick_count(cfg, "recommend-oversold", 2), 2)
+
     def test_recommend_returns_one_stock(self):
         cfg = {
             "universe": {"limit": 100},
@@ -474,7 +490,7 @@ class TestRecommender(TestCase):
 
         self.assertEqual(default_rec.symbol, "000001")
         self.assertEqual(oversold_rec.symbol, "000002")
-        self.assertEqual(int(oversold_rec.key_metrics["suggested_holding_days"]), 5)
+        self.assertEqual(int(oversold_rec.key_metrics["suggested_holding_days"]), 3)
 
     def test_apply_strategy_profile_does_not_mutate_base_config(self):
         cfg = {
@@ -496,6 +512,16 @@ class TestRecommender(TestCase):
         args = build_parser().parse_args(["recommend-oversold", "--date", "2025-03-20"])
 
         self.assertEqual(args.cmd, "recommend-oversold")
+
+    def test_parser_accepts_recommend_bull(self):
+        args = build_parser().parse_args(["recommend-bull", "--date", "2025-03-20"])
+
+        self.assertEqual(args.cmd, "recommend-bull")
+
+    def test_parser_accepts_recommend_relative(self):
+        args = build_parser().parse_args(["recommend-relative", "--date", "2025-03-20"])
+
+        self.assertEqual(args.cmd, "recommend-relative")
 
     def test_parser_accepts_recommend_adaptive(self):
         args = build_parser().parse_args(["recommend-adaptive", "--date", "2025-03-20"])

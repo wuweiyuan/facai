@@ -57,3 +57,40 @@ class TestScoring(TestCase):
         )
 
         self.assertTrue(passes_threshold(latest, "normal", {"strategy": {"threshold_profile": "oversold_rebound"}}))
+
+    def test_compute_score_supports_relative_strength_component(self):
+        latest = pd.Series(
+            {
+                "close": 11.0,
+                "ma20": 10.3,
+                "ma60": 9.9,
+                "mom20": 0.12,
+                "market_mom20": 0.04,
+                "mom5": 0.04,
+                "ret_1d": 0.01,
+                "rsi14": 61.0,
+                "vol20_std": 0.02,
+                "ma20_slope5": 0.01,
+                "vol_ratio_5_20": 1.1,
+                "volume_ratio_1_20": 1.2,
+                "volume_zscore20": 0.4,
+            }
+        )
+
+        total, breakdown = compute_score(
+            latest,
+            {
+                "strategy": {
+                    "weights": {
+                        "trend": 0.4,
+                        "momentum": 0.2,
+                        "stability": 0.2,
+                        "volume": 0.1,
+                        "relative_strength": 0.1,
+                    }
+                }
+            },
+        )
+
+        self.assertGreater(total, 0)
+        self.assertIn("relative_strength", breakdown)

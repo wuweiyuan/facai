@@ -1,9 +1,9 @@
-# 当前正式主配置
+# 当前正式主配置快照
 #
 # 说明：
-# - 这是当前建议用于日常运行 `recommend-adaptive` / `backtest-adaptive` 的主配置。
-# - 它已经过 baseline 对比验证，当前阶段作为正式主配置使用。
-# - 如果后续要继续做实验，建议复制出新的实验配置，不要直接覆盖这份文件。
+# - 这是当前建议用于日常运行 `recommend-adaptive` / `backtest-adaptive` 的稳定版配置快照。
+# - 若后续继续调参，建议保留该文件不动，作为“已验证可用版本”的固定参照。
+# - 历史基线请看 `config/default.baseline.yaml`。
 #
 # 项目默认配置文件
 #
@@ -411,22 +411,16 @@ strategy_profiles:
       name: bull_trend_research_v1
       enabled_modes: [normal]
       weights:
-        trend: 0.40
-        momentum: 0.15
+        trend: 0.50
+        momentum: 0.20
         stability: 0.20
         volume: 0.10
-        relative_strength: 0.15
     market_filter:
       block_on_bear: true
     risk_filter:
       max_vol20_std: 0.06
       rsi_upper: 76.0
       min_vol_ratio_5_20: 0.85
-      relative_strength:
-        enabled: true
-        min_excess_mom20: 0.03
-        min_mom5: 0.0
-        min_close_above_ma20_pct: 0.01
       weak_market:
         enabled: true
         max_vol20_std: 0.05
@@ -436,39 +430,6 @@ strategy_profiles:
       recommendation_md: reports/bull_recommendations.md
       recommendation_txt: reports/bull_recommendations.txt
       recommendation_log: reports/bull/{signal_date}.log
-  relative_strength:
-    strategy:
-      name: relative_strength_v1
-      enabled_modes: [normal]
-      weights:
-        trend: 0.25
-        momentum: 0.15
-        stability: 0.15
-        volume: 0.10
-        pullback: 0.10
-        relative_strength: 0.25
-    risk_filter:
-      relative_strength:
-        enabled: true
-        min_excess_mom20: 0.04
-        min_mom5: -0.01
-        min_close_above_ma20_pct: 0.0
-      pullback:
-        enabled: true
-        min_close_above_ma20_pct: 0.0
-        max_close_above_ma20_pct: 0.08
-        min_mom20: 0.02
-        max_mom20: 0.25
-        min_mom5: -0.01
-        max_mom5: 0.08
-        min_rsi14: 45.0
-        max_rsi14: 78.0
-        max_volume_zscore20: 2.2
-    reporting:
-      recommendation_csv: reports/relative_recommendations.csv
-      recommendation_md: reports/relative_recommendations.md
-      recommendation_txt: reports/relative_recommendations.txt
-      recommendation_log: reports/relative/{signal_date}.log
 
 # 自适应策略编排。
 # 先判断市场状态，再决定优先尝试哪套策略；如果全部无信号，就接受空仓。

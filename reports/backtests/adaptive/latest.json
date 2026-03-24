@@ -1,0 +1,27 @@
+{
+  "period": "2025-03-24 -> 2026-03-23",
+  "attempted_days": 237,
+  "total_trades": 178,
+  "skipped_days": 59,
+  "win_rate_gross_1d": 0.5224719101123596,
+  "win_rate_gross_3d": 0.5730337078651685,
+  "win_rate_net_1d": 0.48314606741573035,
+  "win_rate_net_3d": 0.5337078651685393,
+  "avg_return_1d_gross": 0.0031471917073095683,
+  "avg_return_3d_gross": 0.009235631226329357,
+  "avg_return_5d_gross": 0.009034373875544977,
+  "avg_return_1d_net": 0.0012427960972302672,
+  "avg_return_3d_net": 0.007319677195324289,
+  "avg_return_5d_net": 0.007118801915704029,
+  "max_drawdown_proxy": 0.25598028369378306,
+  "threshold_mode_counts": {
+    "normal": 178
+  },
+  "error_counts": {},
+  "error_examples": [],
+  "records": [],
+  "adaptive_strategy_counts": {
+    "recommend-pullback": 177,
+    "recommend-oversold": 1
+  }
+}

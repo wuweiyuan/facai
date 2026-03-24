@@ -9,9 +9,11 @@ from app.strategy.regime_risk import MarketState
 def suggest_holding_days(latest: pd.Series, market_state: MarketState, cfg: dict | None = None) -> int:
     style = str((cfg or {}).get("strategy", {}).get("threshold_profile", "trend_following")).strip().lower()
     if style == "oversold_rebound":
-        if market_state.label == "bear":
+        return 3
+    if style == "pullback_confirm":
+        if market_state.label == "bull":
             return 4
-        return 5
+        return 3
 
     mom20 = float(latest.get("mom20", 0.0))
     vol20 = float(latest.get("vol20_std", 0.05))
@@ -37,3 +39,14 @@ def suggest_holding_days(latest: pd.Series, market_state: MarketState, cfg: dict
     elif market_state.label == "neutral":
         days = min(days, 3)
     return max(days, 1)
+
+
+def build_exit_plan(latest: pd.Series, market_state: MarketState, cfg: dict | None = None) -> str:
+    style = str((cfg or {}).get("strategy", {}).get("threshold_profile", "trend_following")).strip().lower()
+    if style == "oversold_rebound":
+        return "默认持有2到3天；2天内不修复或亏损5%到6%止损；快速反弹5%到8%止盈。"
+    if style == "pullback_confirm":
+        return "默认持有3到4天；跌回关键均线或2到3天不走强就退出；到压力位滞涨可分批止盈。"
+    if market_state.label == "bull":
+        return "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。"
+    return "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。"

@@ -1,5 +1,5 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-03-24 09:19:06",
+  "generated_at": "2026-03-24 09:32:35",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
@@ -40,6 +40,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 10.56,
           "take_profit_price": 12.13,
           "suggested_holding_days": 4,
+          "exit_plan": "",
           "source_strategy": "recommend-oversold"
         },
         {
@@ -53,6 +54,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 60.16,
           "take_profit_price": 69.12,
           "suggested_holding_days": 4,
+          "exit_plan": "",
           "source_strategy": "recommend-oversold"
         },
         {
@@ -66,6 +68,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 5.38,
           "take_profit_price": 6.18,
           "suggested_holding_days": 4,
+          "exit_plan": "",
           "source_strategy": "recommend-oversold"
         },
         {
@@ -79,6 +82,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 13.21,
           "take_profit_price": 14.78,
           "suggested_holding_days": 1,
+          "exit_plan": "",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -92,6 +96,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 13.12,
           "take_profit_price": 15.71,
           "suggested_holding_days": 1,
+          "exit_plan": "",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -105,6 +110,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 45.73,
           "take_profit_price": 59.13,
           "suggested_holding_days": 1,
+          "exit_plan": "",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -118,6 +124,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 15.31,
           "take_profit_price": 19.81,
           "suggested_holding_days": 3,
+          "exit_plan": "",
           "source_strategy": "recommend"
         },
         {
@@ -131,6 +138,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 4.07,
           "take_profit_price": 5.05,
           "suggested_holding_days": 3,
+          "exit_plan": "",
           "source_strategy": "recommend"
         },
         {
@@ -144,6 +152,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 25.67,
           "take_profit_price": 32.43,
           "suggested_holding_days": 3,
+          "exit_plan": "",
           "source_strategy": "recommend"
         },
         {
@@ -157,6 +166,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 4.15,
           "take_profit_price": 5.06,
           "suggested_holding_days": 3,
+          "exit_plan": "",
           "source_strategy": "recommend"
         },
         {
@@ -170,6 +180,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 14.7,
           "take_profit_price": 18.88,
           "suggested_holding_days": 3,
+          "exit_plan": "",
           "source_strategy": "recommend"
         },
         {
@@ -183,6 +194,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 21.05,
           "take_profit_price": 25.59,
           "suggested_holding_days": 3,
+          "exit_plan": "",
           "source_strategy": "recommend"
         },
         {
@@ -196,6 +208,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 36.55,
           "take_profit_price": 47.34,
           "suggested_holding_days": 1,
+          "exit_plan": "",
           "source_strategy": "recommend"
         },
         {
@@ -209,6 +222,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 37.33,
           "take_profit_price": 48.33,
           "suggested_holding_days": 1,
+          "exit_plan": "",
           "source_strategy": "recommend"
         },
         {
@@ -222,6 +236,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 21.92,
           "take_profit_price": 26.59,
           "suggested_holding_days": 1,
+          "exit_plan": "",
           "source_strategy": "recommend"
         },
         {
@@ -235,6 +250,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 19.39,
           "take_profit_price": 27.27,
           "suggested_holding_days": 1,
+          "exit_plan": "",
           "source_strategy": "recommend"
         },
         {
@@ -248,6 +264,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 39.9,
           "take_profit_price": 50.26,
           "suggested_holding_days": 1,
+          "exit_plan": "",
           "source_strategy": "recommend"
         },
         {
@@ -261,6 +278,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 6.85,
           "take_profit_price": 8.47,
           "suggested_holding_days": 3,
+          "exit_plan": "",
           "source_strategy": "recommend"
         },
         {
@@ -274,6 +292,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 7.28,
           "take_profit_price": 9.24,
           "suggested_holding_days": 3,
+          "exit_plan": "",
           "source_strategy": "recommend"
         },
         {
@@ -287,6 +306,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 10.64,
           "take_profit_price": 13.32,
           "suggested_holding_days": 3,
+          "exit_plan": "",
           "source_strategy": "recommend"
         },
         {
@@ -300,6 +320,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 6.23,
           "take_profit_price": 7.69,
           "suggested_holding_days": 3,
+          "exit_plan": "",
           "source_strategy": "recommend"
         },
         {
@@ -313,6 +334,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 16.05,
           "take_profit_price": 19.57,
           "suggested_holding_days": 3,
+          "exit_plan": "",
           "source_strategy": "recommend"
         },
         {
@@ -326,6 +348,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 11.9,
           "take_profit_price": 14.1,
           "suggested_holding_days": null,
+          "exit_plan": "",
           "source_strategy": "recommend"
         },
         {
@@ -339,6 +362,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 11.8,
           "take_profit_price": 13.8,
           "suggested_holding_days": null,
+          "exit_plan": "",
           "source_strategy": "recommend"
         }
       ],

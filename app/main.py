@@ -5,15 +5,20 @@ import contextlib
 import io
 import json
 import sys
+from collections import Counter
 from datetime import date, datetime, timedelta
+from pathlib import Path
 
 from app.backtest.runner import BacktestRunner
+from app.backtest.local_adaptive import run_local_adaptive_backtest
+from app.backtest.local_single import run_local_single_backtest
 from app.config import apply_strategy_profile, load_config
 from app.dashboard import export_dashboard_data
 from app.data_source.akshare_client import AkshareDataSource
 from app.doctor import print_doctor_report, run_doctor
 from app.engine.recommender import Recommender
 from app.error_messages import friendly_error_message
+from app.models import BacktestRecord
 from app.network import clear_proxy_env, disable_requests_env_proxy, force_no_proxy_all
 from app.reporting import (
     append_adaptive_run_csv,
@@ -40,6 +45,8 @@ METRIC_LABELS_ZH = {
     "ma60": "60日均线",
     "mom5": "5日动量",
     "mom20": "20日动量",
+    "market_mom20": "市场20日动量",
+    "mom20_excess_vs_market": "相对市场20日超额动量",
     "rsi14": "RSI14",
     "atr14": "ATR14",
     "stop_loss_price": "止损价",
@@ -100,6 +107,10 @@ def _resolve_recommend_run_specs(cmd: str) -> list[tuple[str, str | None, str]]:
         return [("recommend-pullback", "pullback_confirm", "回踩策略 recommend-pullback")]
     if cmd == "recommend-oversold":
         return [("recommend-oversold", "oversold_rebound", "超跌反弹策略 recommend-oversold")]
+    if cmd == "recommend-bull":
+        return [("recommend-bull", "bull_trend_research", "强市趋势研究策略 recommend-bull")]
+    if cmd == "recommend-relative":
+        return [("recommend-relative", "relative_strength", "相对强弱研究策略 recommend-relative")]
     raise RuntimeError(f"Unsupported recommend command: {cmd}")
 
 
@@ -111,6 +122,8 @@ def _resolve_adaptive_strategy_specs(base_cfg: dict, market_label: str) -> list[
         "recommend": ("recommend", None, "默认策略 recommend"),
         "recommend-pullback": ("recommend-pullback", "pullback_confirm", "回踩策略 recommend-pullback"),
         "recommend-oversold": ("recommend-oversold", "oversold_rebound", "超跌反弹策略 recommend-oversold"),
+        "recommend-bull": ("recommend-bull", "bull_trend_research", "强市趋势研究策略 recommend-bull"),
+        "recommend-relative": ("recommend-relative", "relative_strength", "相对强弱研究策略 recommend-relative"),
     }
     out: list[tuple[str, str | None, str]] = []
     for item in raw_order:
@@ -119,6 +132,66 @@ def _resolve_adaptive_strategy_specs(base_cfg: dict, market_label: str) -> list[
         if spec and spec not in out:
             out.append(spec)
     return out or [known["recommend-pullback"]]
+
+
+def _resolve_adaptive_pick_count(base_cfg: dict, cmd_name: str, override_count: int | None) -> int | None:
+    if override_count is not None:
+        return override_count
+    adaptive_cfg = base_cfg.get("adaptive_strategy", {})
+    counts_cfg = adaptive_cfg.get("strategy_pick_counts", {})
+    raw = counts_cfg.get(cmd_name)
+    if raw is None:
+        return None
+    try:
+        return max(int(raw), 1)
+    except (TypeError, ValueError):
+        return None
+
+
+def _choose_adaptive_recommendations(
+    base_cfg: dict,
+    ds,
+    target_date: date,
+    override_count: int | None,
+) -> dict:
+    base_engine = Recommender(ds, base_cfg)
+    signal_date = base_engine.resolve_signal_date(target_date)
+    market_state, market_reason = base_engine._resolve_market_state(signal_date)
+    run_specs = _resolve_adaptive_strategy_specs(base_cfg, market_state.label)
+    tried_commands: list[str] = []
+    chosen_cmd: str | None = None
+    chosen_recs = []
+    chosen_count: int | None = None
+    chosen_profile_name: str | None = None
+
+    for cmd_name, profile_name, _section_title in run_specs:
+        tried_commands.append(cmd_name)
+        resolved_count = _resolve_adaptive_pick_count(base_cfg, cmd_name, override_count)
+        cfg = apply_strategy_profile(base_cfg, profile_name)
+        engine = Recommender(ds, cfg)
+        try:
+            recs = engine.recommend_many(target_date, count=resolved_count)
+        except RuntimeError as exc:
+            if "No candidate found in enabled modes:" not in str(exc):
+                raise
+            continue
+        chosen_cmd = cmd_name
+        chosen_recs = recs
+        chosen_count = resolved_count
+        chosen_profile_name = profile_name
+        break
+
+    return {
+        "target_date": target_date.isoformat(),
+        "signal_date": signal_date.isoformat(),
+        "market_state": market_state.label,
+        "market_reason": market_reason,
+        "tried_strategies": tried_commands,
+        "chosen_strategy": chosen_cmd,
+        "chosen_count": chosen_count,
+        "chosen_profile_name": chosen_profile_name,
+        "recommendations": chosen_recs,
+    }
 
 
 def _configure_network(cfg: dict) -> None:
@@ -229,8 +302,13 @@ def _print_recommendations(recs, output: str) -> None:
         print(f"总分: {item.score_total:.2f}")
         print("关键指标:")
         for k, v in item.key_metrics.items():
+            if k == "exit_plan":
+                continue
             label = METRIC_LABELS_ZH.get(k, k)
             print(f"  - {label}: {v:.4f}")
+        exit_plan = item.key_metrics.get("exit_plan")
+        if exit_plan:
+            print(f"退出规则: {exit_plan}")
         print("推荐理由:")
         for ridx, r in enumerate(item.reason, start=1):
             print(f"  {ridx}. {r}")
@@ -355,6 +433,9 @@ def _print_backtest(summary: dict, output: str) -> None:
     mode_counts = summary.get("threshold_mode_counts", {})
     if mode_counts:
         print(f"模式分布: {mode_counts}")
+    adaptive_counts = summary.get("adaptive_strategy_counts", {})
+    if adaptive_counts:
+        print(f"自适应策略分布: {adaptive_counts}")
     error_counts = summary.get("error_counts", {})
     if error_counts:
         print(f"错误统计: {error_counts}")
@@ -363,6 +444,94 @@ def _print_backtest(summary: dict, output: str) -> None:
         print("错误示例:")
         for e in examples[:5]:
             print(f"  - {e['trade_date']} {e['error_type']}: {e['message']}")
+
+
+def _format_backtest_output(summary: dict, output: str) -> str:
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        _print_backtest(summary, output)
+    return buf.getvalue()
+
+
+def _resolve_adaptive_backtest_report_paths(base_cfg: dict, start_date: date, end_date: date) -> tuple[str, str]:
+    reporting_cfg = base_cfg.get("reporting", {})
+    period_key = f"{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}"
+    period_template = str(
+        reporting_cfg.get(
+            "adaptive_backtest_summary",
+            "reports/backtests/adaptive/{period_key}.json",
+        )
+    )
+    latest_path = str(reporting_cfg.get("adaptive_backtest_latest", "reports/backtests/adaptive/latest.json"))
+    return period_template.format(period_key=period_key), latest_path
+
+
+def _load_json_file(path: str) -> dict | None:
+    file_path = Path(path)
+    if not file_path.exists():
+        return None
+    try:
+        return json.loads(file_path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def _save_json_file(path: str, payload: dict) -> str:
+    file_path = Path(path)
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    file_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return str(file_path)
+
+
+def _build_backtest_delta(current: dict, previous: dict | None) -> dict | None:
+    if not previous or previous.get("period") != current.get("period"):
+        return None
+    keys = [
+        "total_trades",
+        "skipped_days",
+        "win_rate_net_1d",
+        "win_rate_net_3d",
+        "avg_return_1d_net",
+        "avg_return_3d_net",
+        "avg_return_5d_net",
+        "max_drawdown_proxy",
+    ]
+    delta: dict[str, float] = {}
+    for key in keys:
+        cur = current.get(key)
+        prev = previous.get(key)
+        if isinstance(cur, (int, float)) and isinstance(prev, (int, float)):
+            delta[key] = round(cur - prev, 6)
+    current_counts = current.get("adaptive_strategy_counts", {})
+    prev_counts = previous.get("adaptive_strategy_counts", {})
+    if isinstance(current_counts, dict) and isinstance(prev_counts, dict):
+        count_delta = {}
+        for key in set(current_counts) | set(prev_counts):
+            count_delta[key] = int(current_counts.get(key, 0)) - int(prev_counts.get(key, 0))
+        delta["adaptive_strategy_counts"] = count_delta
+    return delta or None
+
+
+def _print_backtest_delta(delta: dict | None) -> None:
+    if not delta:
+        return
+    print("与上次同区间结果对比:")
+    for key in [
+        "total_trades",
+        "skipped_days",
+        "win_rate_net_1d",
+        "win_rate_net_3d",
+        "avg_return_1d_net",
+        "avg_return_3d_net",
+        "avg_return_5d_net",
+        "max_drawdown_proxy",
+    ]:
+        if key not in delta:
+            continue
+        print(f"  - {key}: {delta[key]:+}")
+    strategy_delta = delta.get("adaptive_strategy_counts")
+    if isinstance(strategy_delta, dict):
+        print(f"  - adaptive_strategy_counts: {strategy_delta}")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -400,6 +569,26 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_rec_os.add_argument("--output", choices=["table", "json"], default="table")
 
+    p_rec_bull = sub.add_parser("recommend-bull", help="Recommend bull-trend research stocks for target trading day")
+    p_rec_bull.add_argument("--date", default=None, help="Target date YYYY-MM-DD")
+    p_rec_bull.add_argument(
+        "--count",
+        type=int,
+        default=None,
+        help="How many stocks to pick; defaults to strategy.pick_count in bull research profile",
+    )
+    p_rec_bull.add_argument("--output", choices=["table", "json"], default="table")
+
+    p_rec_rel = sub.add_parser("recommend-relative", help="Recommend relative-strength research stocks for target trading day")
+    p_rec_rel.add_argument("--date", default=None, help="Target date YYYY-MM-DD")
+    p_rec_rel.add_argument(
+        "--count",
+        type=int,
+        default=None,
+        help="How many stocks to pick; defaults to strategy.pick_count in relative-strength profile",
+    )
+    p_rec_rel.add_argument("--output", choices=["table", "json"], default="table")
+
     p_rec_ad = sub.add_parser("recommend-adaptive", help="Auto-pick strategy by market regime for target trading day")
     p_rec_ad.add_argument("--date", default=None, help="Target date YYYY-MM-DD")
     p_rec_ad.add_argument("--count", type=int, default=None, help="How many stocks to pick for the chosen strategy")
@@ -427,6 +616,35 @@ def build_parser() -> argparse.ArgumentParser:
         help="How many stocks per day; defaults to strategy.pick_count in pullback profile",
     )
     p_bt_pb.add_argument("--output", choices=["table", "json", "json-cn"], default="json-cn")
+
+    p_bt_bull = sub.add_parser("backtest-bull", help="Backtest the bull-trend research strategy over period")
+    p_bt_bull.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
+    p_bt_bull.add_argument("--end", required=True, help="End date YYYY-MM-DD")
+    p_bt_bull.add_argument(
+        "--count",
+        type=int,
+        default=None,
+        help="How many stocks per day; defaults to strategy.pick_count in bull research profile",
+    )
+    p_bt_bull.add_argument("--output", choices=["table", "json", "json-cn"], default="json-cn")
+
+    p_bt_rel = sub.add_parser("backtest-relative", help="Backtest the relative-strength research strategy over period")
+    p_bt_rel.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
+    p_bt_rel.add_argument("--end", required=True, help="End date YYYY-MM-DD")
+    p_bt_rel.add_argument(
+        "--count",
+        type=int,
+        default=None,
+        help="How many stocks per day; defaults to strategy.pick_count in relative-strength profile",
+    )
+    p_bt_rel.add_argument("--output", choices=["table", "json", "json-cn"], default="json-cn")
+
+    p_bt_ad = sub.add_parser("backtest-adaptive", help="Backtest the adaptive strategy over period")
+    p_bt_ad.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
+    p_bt_ad.add_argument("--end", required=True, help="End date YYYY-MM-DD")
+    p_bt_ad.add_argument("--count", type=int, default=None, help="Optional override for per-strategy adaptive pick count")
+    p_bt_ad.add_argument("--output", choices=["table", "json", "json-cn"], default="json-cn")
+    p_bt_ad.add_argument("--no-save-report", action="store_true", help="Do not save adaptive backtest report files")
 
     p_doc = sub.add_parser("doctor", help="Run connectivity diagnostics for data sources")
     p_doc.add_argument("--output", choices=["table", "json"], default="table")
@@ -475,6 +693,7 @@ def main() -> None:
         any_reporting_enabled = False
         tried_commands: list[str] = []
         adaptive_reporting_enabled = bool(base_cfg.get("reporting", {}).get("enabled", True))
+        chosen_count: int | None = None
 
         if args.output != "json":
             print(
@@ -485,13 +704,14 @@ def main() -> None:
 
         for cmd_name, profile_name, section_title in run_specs:
             tried_commands.append(cmd_name)
+            resolved_count = _resolve_adaptive_pick_count(base_cfg, cmd_name, args.count)
             try:
                 recs, reporting_enabled = _run_recommend_profile(
                     base_cfg=base_cfg,
                     profile_name=profile_name,
                     section_title=f"自适应选择: {section_title}",
                     target_date=target_date,
-                    count=args.count,
+                    count=resolved_count,
                     output=args.output,
                 )
             except RuntimeError as exc:
@@ -502,6 +722,7 @@ def main() -> None:
                 continue
             chosen_cmd = cmd_name
             chosen_recs = recs
+            chosen_count = resolved_count
             any_reporting_enabled = any_reporting_enabled or reporting_enabled
             break
 
@@ -514,6 +735,7 @@ def main() -> None:
                 "tried_strategies": tried_commands,
                 "chosen_strategy": chosen_cmd,
                 "has_recommendations": bool(chosen_recs),
+                "chosen_count": chosen_count or 0,
             }
             saved_adaptive_csv = append_adaptive_run_csv(
                 adaptive_summary,
@@ -542,16 +764,18 @@ def main() -> None:
                 "market_reason": market_reason,
                 "tried_strategies": tried_commands,
                 "chosen_strategy": chosen_cmd,
+                "chosen_count": chosen_count,
                 "recommendations": [item.as_dict() for item in chosen_recs],
             }
             print(json.dumps(payload, ensure_ascii=False, indent=2))
         elif not chosen_cmd:
             print("[自适应] 当前市场下所有候选策略都无信号，建议空仓。")
         else:
-            print(f"[自适应] 已采用策略: {chosen_cmd}")
+            count_note = f"；采用数量: {chosen_count}" if chosen_count else ""
+            print(f"[自适应] 已采用策略: {chosen_cmd}{count_note}")
         return
 
-    if args.cmd in {"recommend", "recommend-all", "recommend-pullback", "recommend-oversold"}:
+    if args.cmd in {"recommend", "recommend-all", "recommend-pullback", "recommend-oversold", "recommend-bull", "recommend-relative"}:
         _configure_network(base_cfg)
         target_date = _resolve_recommend_target_date(_build_data_source(base_cfg), args.date)
         run_specs = _resolve_recommend_run_specs(args.cmd)
@@ -586,8 +810,40 @@ def main() -> None:
                 print(json.dumps(json_payload[args.cmd], ensure_ascii=False, indent=2))
         return
 
+    if args.cmd == "backtest-adaptive":
+        cfg = base_cfg
+        _configure_network(cfg)
+        start = _parse_date(args.start)
+        end = _parse_date(args.end)
+        summary = run_local_adaptive_backtest(base_cfg, start, end, args.count)
+        previous_summary = None
+        saved_paths: list[str] = []
+        if not args.no_save_report:
+            period_path, latest_path = _resolve_adaptive_backtest_report_paths(base_cfg, start, end)
+            previous_summary = _load_json_file(period_path)
+            saved_paths.append(_save_json_file(period_path, summary))
+            saved_paths.append(_save_json_file(latest_path, summary))
+        delta = _build_backtest_delta(summary, previous_summary)
+        if args.output in {"json", "json-cn"}:
+            payload = dict(summary)
+            if delta:
+                payload["comparison_to_previous"] = delta
+            print(_format_backtest_output(payload, args.output), end="")
+        else:
+            _print_backtest(summary, args.output)
+            if delta:
+                _print_backtest_delta(delta)
+            if saved_paths:
+                for path in saved_paths:
+                    print(f"已写入文档: {path}")
+        return
+
     cfg = base_cfg
-    strategy_profile = "pullback_confirm" if args.cmd in {"backtest-pullback"} else None
+    strategy_profile = None
+    if args.cmd in {"backtest-pullback"}:
+        strategy_profile = "pullback_confirm"
+    elif args.cmd in {"backtest-bull"}:
+        strategy_profile = "bull_trend_research"
     cfg = apply_strategy_profile(cfg, strategy_profile)
     _configure_network(cfg)
     ds = _build_data_source(cfg)
@@ -619,6 +875,20 @@ def main() -> None:
         print("理由:")
         for idx, r in enumerate(cand.reason, start=1):
             print(f"  {idx}. {r}")
+        return
+
+    if args.cmd == "backtest-bull":
+        start = _parse_date(args.start)
+        end = _parse_date(args.end)
+        summary = run_local_single_backtest(base_cfg, "bull_trend_research", start, end, args.count)
+        _print_backtest(summary, args.output)
+        return
+
+    if args.cmd == "backtest-relative":
+        start = _parse_date(args.start)
+        end = _parse_date(args.end)
+        summary = run_local_single_backtest(base_cfg, "relative_strength", start, end, args.count)
+        _print_backtest(summary, args.output)
         return
 
     if args.cmd in {"backtest", "backtest-pullback"}:

@@ -104,6 +104,7 @@ def compute_score(latest: pd.Series, cfg: dict) -> tuple[float, dict[str, float]
     volume_ratio_1_20 = float(latest.get("volume_ratio_1_20", 1.0))
     volume_zscore20 = float(latest.get("volume_zscore20", 0.0))
     ret_1d = float(latest.get("ret_1d", 0.0))
+    market_mom20 = float(latest.get("market_mom20", 0.0))
 
     if np.isnan(ma20):
         ma20 = close
@@ -127,6 +128,8 @@ def compute_score(latest: pd.Series, cfg: dict) -> tuple[float, dict[str, float]
         volume_zscore20 = 0.0
     if np.isnan(ret_1d):
         ret_1d = 0.0
+    if np.isnan(market_mom20):
+        market_mom20 = 0.0
 
     trend = (
         _clip01(close / ma20 - 1.0, -0.03, 0.08) * 0.4
@@ -141,6 +144,10 @@ def compute_score(latest: pd.Series, cfg: dict) -> tuple[float, dict[str, float]
         _centered_score(distance_above_ma20, 0.01, 0.03) * 0.5
         + _centered_score(mom5, 0.0, 0.05) * 0.3
         + _centered_score(rsi14, 55.0, 18.0) * 0.2
+    ) * 100
+    relative_strength = (
+        _clip01(mom20 - market_mom20, -0.01, 0.15) * 0.7
+        + _clip01(mom5, -0.03, 0.10) * 0.3
     ) * 100
     distance_below_ma20 = max(1.0 - close / ma20, 0.0) if ma20 > 0 else 0.0
     # Rank oversold names by being close to the validated setup, not by being
@@ -167,6 +174,8 @@ def compute_score(latest: pd.Series, cfg: dict) -> tuple[float, dict[str, float]
         score_breakdown["pullback"] = pullback
     if float(w.get("oversold", 0.0)) > 0:
         score_breakdown["oversold"] = oversold
+    if float(w.get("relative_strength", 0.0)) > 0:
+        score_breakdown["relative_strength"] = relative_strength
     weights = {
         "trend": float(w.get("trend", 0.35)),
         "momentum": float(w.get("momentum", 0.35)),
@@ -174,6 +183,7 @@ def compute_score(latest: pd.Series, cfg: dict) -> tuple[float, dict[str, float]
         "volume": float(w.get("volume", 0.15)),
         "pullback": float(w.get("pullback", 0.0)),
         "oversold": float(w.get("oversold", 0.0)),
+        "relative_strength": float(w.get("relative_strength", 0.0)),
     }
     weight_sum = sum(max(v, 0.0) for v in weights.values()) or 1.0
     total = (
@@ -183,6 +193,7 @@ def compute_score(latest: pd.Series, cfg: dict) -> tuple[float, dict[str, float]
         + volume * max(weights["volume"], 0.0)
         + pullback * max(weights["pullback"], 0.0)
         + oversold * max(weights["oversold"], 0.0)
+        + relative_strength * max(weights["relative_strength"], 0.0)
     ) / weight_sum
     return float(total), score_breakdown
 
@@ -207,6 +218,8 @@ def build_reason(latest: pd.Series, score_breakdown: dict[str, float], mode: str
     ]
     if "pullback" in score_breakdown:
         reasons.append(f"回踩确认分 {score_breakdown['pullback']:.1f}，股价更接近均线而非追高位置。")
+    if "relative_strength" in score_breakdown:
+        reasons.append(f"相对强弱分 {score_breakdown['relative_strength']:.1f}，个股近期表现强于市场基准。")
     if mode == "relaxed":
         reasons.append("今日候选较少，已启用放宽阈值模式。")
     if mode == "force":

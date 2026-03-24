@@ -12,6 +12,22 @@ Command-line tool to recommend top A-share stocks before open using T-1 close da
 - Windows 切换配置文件：`python -m app.main --config config/default.yaml <command> ...`
 - macOS / Linux 切换配置文件：`python3 -m app.main --config config/default.yaml <command> ...`
 
+## 当前分工
+
+- 当前主入口：`recommend-adaptive`
+- 当前主配置：`config/default.yaml`
+- 当前稳定快照：`config/default.stable.yaml`
+- 历史基线：`config/default.baseline.yaml`
+- 研究策略：`recommend-bull` / `backtest-bull`
+
+当前建议：
+
+- 日常运行优先用 `recommend-adaptive`
+- 需要验证长区间表现时，用 `backtest-adaptive`
+- 需要做优化前后对比时，用 `scripts/compare_adaptive_configs.py`
+- `recommend-bull` 目前只用于研究，不建议直接接入主流程
+- `config/default.experimental.yaml` 已废弃，不再建议使用
+
 ## Commands
 
 - Windows：`python -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json]`
@@ -24,12 +40,16 @@ Command-line tool to recommend top A-share stocks before open using T-1 close da
 - macOS / Linux：`python3 -m app.main recommend-oversold --date YYYY-MM-DD [--count N] [--output table|json]`
 - Windows：`python -m app.main recommend-adaptive --date YYYY-MM-DD [--count N] [--output table|json]`
 - macOS / Linux：`python3 -m app.main recommend-adaptive --date YYYY-MM-DD [--count N] [--output table|json]`
+- Windows：`python -m app.main recommend-bull --date YYYY-MM-DD [--count N] [--output table|json]`
+- macOS / Linux：`python3 -m app.main recommend-bull --date YYYY-MM-DD [--count N] [--output table|json]`
 - Windows：`python -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]`
 - macOS / Linux：`python3 -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]`
 - Windows：`python -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
 - macOS / Linux：`python3 -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
 - Windows：`python -m app.main backtest-pullback --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
 - macOS / Linux：`python3 -m app.main backtest-pullback --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
+- Windows：`python -m app.main backtest-bull --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
+- macOS / Linux：`python3 -m app.main backtest-bull --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
 - Windows：`python -m app.main doctor [--output table|json]`
 - macOS / Linux：`python3 -m app.main doctor [--output table|json]`
 - Windows：`python -m app.main check-kline --symbol 000001 --start YYYY-MM-DD --end YYYY-MM-DD [--output table|json]`
@@ -397,6 +417,29 @@ python3 -m app.main recommend-adaptive
 python3 -m app.main recommend-adaptive --date 2026-03-23 --count 1
 ```
 
+### 2.8) `recommend-bull`
+
+用途：
+
+- 这是给 `recommend` 单独开的强市研究入口
+- 只用于研究“强趋势策略在 bull 市里是否值得重新进入主流程”
+- 不建议直接替代当前主入口 `recommend-adaptive`
+
+命令：
+
+```bash
+# Windows
+python -m app.main recommend-bull --date YYYY-MM-DD [--count N] [--output table|json]
+
+# macOS / Linux
+python3 -m app.main recommend-bull --date YYYY-MM-DD [--count N] [--output table|json]
+```
+
+适合场景：
+
+- 想单独看强市趋势票而不影响主配置
+- 想验证 `recommend` 是否有资格回到 adaptive 主流程
+
 ### 3) `backtest`
 
 用途：
@@ -480,6 +523,28 @@ python3 -m app.main backtest-pullback --start YYYY-MM-DD --end YYYY-MM-DD [--cou
 
 - 想确认“减少追高”以后，胜率、平均收益和回撤有没有改善
 - 想直接比较 `backtest` 和 `backtest-pullback` 在同一区间的差异
+
+### 3.6) `backtest-bull`
+
+用途：
+
+- 回测 `recommend-bull` 这套强市研究版趋势策略
+- 只用于验证它是否值得重新并入 adaptive 主流程
+
+命令：
+
+```bash
+# Windows
+python -m app.main backtest-bull --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]
+
+# macOS / Linux
+python3 -m app.main backtest-bull --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]
+```
+
+建议：
+
+- 先和 `backtest-adaptive` 做对比
+- 如果它没有明显优于当前主流程，就继续只保留为研究策略
 
 ### 4) `doctor`
 
