@@ -64,6 +64,10 @@ def friendly_error_message(exc_or_msg: Exception | str) -> str:
         return "配置文件不存在，请检查 --config 路径。"
     if "Config root must be an object" in msg:
         return "配置文件格式错误：根节点必须是对象（YAML 映射）。"
+    if "Sector map not found:" in msg:
+        return "板块映射文件不存在，请检查 sector_map.path 或 --path。"
+    if "Sector map must include headers: symbol,sector" in msg:
+        return "板块映射文件格式错误，必须至少包含两列：symbol,sector。"
     if "Unsupported mode:" in msg:
         return "模式参数不支持，请使用 normal、relaxed 或 force。"
     if "akshare is required but unavailable" in msg:

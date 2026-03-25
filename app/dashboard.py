@@ -22,6 +22,7 @@ RECOMMENDATION_COLUMNS = [
     "take_profit_price",
     "suggested_holding_days",
     "exit_plan",
+    "source_strategy",
 ]
 
 STRATEGY_SPECS = {
@@ -29,6 +30,7 @@ STRATEGY_SPECS = {
     "pullback": {"label": "回头战法"},
     "oversold": {"label": "超跌反弹"},
     "adaptive": {"label": "自适应策略"},
+    "opportunity": {"label": "机会池"},
 }
 
 
@@ -92,6 +94,7 @@ def build_dashboard_payload(
     pullback_csv: str | Path,
     oversold_csv: str | Path | None = None,
     cfg: dict | None = None,
+    opportunity_csv: str | Path | None = None,
 ) -> dict:
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     default_data = load_strategy_records(default_csv, "default")
@@ -104,6 +107,14 @@ def build_dashboard_payload(
         "latest_run_time": None,
         "records": [],
     }
+    opportunity_data = load_strategy_records(opportunity_csv, "opportunity") if opportunity_csv is not None else {
+        "key": "opportunity",
+        "label": STRATEGY_SPECS["opportunity"]["label"],
+        "source_file": "",
+        "available_dates": [],
+        "latest_run_time": None,
+        "records": [],
+    }
     adaptive_data = _build_adaptive_strategy_data(
         default_data=default_data,
         pullback_data=pullback_data,
@@ -111,13 +122,14 @@ def build_dashboard_payload(
         cfg=cfg,
     )
     all_dates = sorted(
-        set(adaptive_data["available_dates"]),
+        set(adaptive_data["available_dates"]) | set(opportunity_data["available_dates"]),
         reverse=True,
     )
     return {
         "generated_at": generated_at,
         "strategies": {
             "adaptive": adaptive_data,
+            "opportunity": opportunity_data,
         },
         "all_dates": all_dates,
     }
@@ -129,8 +141,15 @@ def export_dashboard_data(
     oversold_csv: str | Path | None,
     output_path: str | Path,
     cfg: dict | None = None,
+    opportunity_csv: str | Path | None = None,
 ) -> Path:
-    payload = build_dashboard_payload(default_csv, pullback_csv, oversold_csv, cfg)
+    payload = build_dashboard_payload(
+        default_csv=default_csv,
+        pullback_csv=pullback_csv,
+        oversold_csv=oversold_csv,
+        cfg=cfg,
+        opportunity_csv=opportunity_csv,
+    )
     out_path = Path(output_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     content = "window.STOCK_DASHBOARD_DATA = " + json.dumps(payload, ensure_ascii=False, indent=2) + ";\n"
@@ -326,6 +345,7 @@ def _row_to_record(row: pd.Series) -> dict:
         "take_profit_price": _to_float(row.get("take_profit_price", "")),
         "suggested_holding_days": _to_int(row.get("suggested_holding_days", "")),
         "exit_plan": _clean_text(row.get("exit_plan", "")),
+        "source_strategy": _clean_text(row.get("source_strategy", "")),
     }
 
 

@@ -1,16 +1,24 @@
 from __future__ import annotations
 
+import io
+import json
+import sys
+from contextlib import redirect_stdout
 from datetime import date, timedelta
+from types import SimpleNamespace
 import threading
 import time
 from unittest import TestCase
+from unittest.mock import Mock, patch
 
+import app.main as main_module
 from app.config import apply_strategy_profile
 from app.engine.recommender import Recommender
 from app.main import (
     _resolve_adaptive_strategy_specs,
     _resolve_adaptive_pick_count,
     _resolve_dashboard_export_args,
+    _resolve_opportunity_pool_specs,
     _resolve_recommend_run_specs,
     _resolve_recommend_target_date,
     build_parser,
@@ -342,6 +350,104 @@ class TestRecommender(TestCase):
         self.assertEqual(_resolve_adaptive_pick_count(cfg, "recommend-oversold", None), 3)
         self.assertEqual(_resolve_adaptive_pick_count(cfg, "recommend-oversold", 2), 2)
 
+    def test_resolve_opportunity_pool_specs_applies_profile_overrides(self):
+        cfg = {
+            "opportunity_pool": {
+                "regime_orders": {
+                    "bear": ["recommend-oversold", "recommend-pullback"],
+                },
+                "profile_overrides": {
+                    "recommend-oversold": "oversold_opportunity",
+                    "recommend-pullback": "pullback_opportunity",
+                },
+            }
+        }
+
+        specs = _resolve_opportunity_pool_specs(cfg, "bear")
+
+        self.assertEqual(
+            specs,
+            [
+                ("recommend-oversold", "oversold_opportunity", "超跌反弹策略 recommend-oversold"),
+                ("recommend-pullback", "pullback_opportunity", "回踩策略 recommend-pullback"),
+            ],
+        )
+
+    def test_recommend_adaptive_runs_opportunity_pool_when_no_signal(self):
+        cfg = {"reporting": {"enabled": False}}
+        fake_target_date = date(2025, 3, 20)
+        fake_signal_date = date(2025, 3, 19)
+        fake_market_state = SimpleNamespace(label="neutral")
+        fake_opportunity_payload = {
+            "target_date": "2025-03-20",
+            "signal_date": "2025-03-19",
+            "market_state": "neutral",
+            "market_reason": "test reason",
+            "pool": [
+                {
+                    "symbol": "000001",
+                    "name": "Alpha",
+                    "source_label": "回踩策略 recommend-pullback",
+                    "score_total": 88.5,
+                    "key_metrics": {"close": 12.3, "suggested_holding_days": 5},
+                }
+            ],
+        }
+
+        with (
+            patch.object(sys, "argv", ["prog", "recommend-adaptive", "--output", "json"]),
+            patch("app.main.load_config", return_value=cfg),
+            patch("app.main._configure_network"),
+            patch("app.main._build_data_source", return_value=Mock()),
+            patch("app.main._resolve_recommend_target_date", return_value=fake_target_date),
+            patch("app.main._resolve_adaptive_strategy_specs", return_value=[("recommend-pullback", "pullback_confirm", "x")]),
+            patch("app.main._run_recommend_profile", side_effect=RuntimeError("No candidate found in enabled modes: normal")),
+            patch("app.main._build_opportunity_pool", return_value=fake_opportunity_payload) as build_pool,
+            patch("app.main.Recommender") as recommender_cls,
+        ):
+            recommender_cls.return_value.resolve_signal_date.return_value = fake_signal_date
+            recommender_cls.return_value._resolve_market_state.return_value = (fake_market_state, "test reason")
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                main_module.main()
+
+        payload = json.loads(buf.getvalue())
+        self.assertIsNone(payload["chosen_strategy"])
+        self.assertEqual(payload["recommendations"], [])
+        self.assertEqual(payload["opportunity_pool"], fake_opportunity_payload)
+        build_pool.assert_called_once()
+
+    def test_recommend_adaptive_does_not_run_opportunity_pool_when_signal_exists(self):
+        cfg = {"reporting": {"enabled": False}}
+        fake_target_date = date(2025, 3, 20)
+        fake_signal_date = date(2025, 3, 19)
+        fake_market_state = SimpleNamespace(label="neutral")
+        fake_rec = Mock()
+        fake_rec.as_dict.return_value = {"symbol": "000001", "name": "Alpha"}
+
+        with (
+            patch.object(sys, "argv", ["prog", "recommend-adaptive", "--output", "json"]),
+            patch("app.main.load_config", return_value=cfg),
+            patch("app.main._configure_network"),
+            patch("app.main._build_data_source", return_value=Mock()),
+            patch("app.main._resolve_recommend_target_date", return_value=fake_target_date),
+            patch("app.main._resolve_adaptive_strategy_specs", return_value=[("recommend-pullback", "pullback_confirm", "x")]),
+            patch("app.main._run_recommend_profile", return_value=([fake_rec], False)),
+            patch("app.main._build_opportunity_pool") as build_pool,
+            patch("app.main.Recommender") as recommender_cls,
+        ):
+            recommender_cls.return_value.resolve_signal_date.return_value = fake_signal_date
+            recommender_cls.return_value._resolve_market_state.return_value = (fake_market_state, "test reason")
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                main_module.main()
+
+        payload = json.loads(buf.getvalue())
+        self.assertEqual(payload["chosen_strategy"], "recommend-pullback")
+        self.assertEqual(payload["recommendations"], [{"symbol": "000001", "name": "Alpha"}])
+        self.assertIsNone(payload["opportunity_pool"])
+        build_pool.assert_not_called()
+
     def test_recommend_returns_one_stock(self):
         cfg = {
             "universe": {"limit": 100},
@@ -528,6 +634,16 @@ class TestRecommender(TestCase):
 
         self.assertEqual(args.cmd, "recommend-adaptive")
 
+    def test_parser_accepts_check_sector_map(self):
+        args = build_parser().parse_args(["check-sector-map"])
+
+        self.assertEqual(args.cmd, "check-sector-map")
+
+    def test_parser_accepts_recommend_opportunity(self):
+        args = build_parser().parse_args(["recommend-opportunity", "--date", "2025-03-20"])
+
+        self.assertEqual(args.cmd, "recommend-opportunity")
+
     def test_parser_accepts_recommend_all(self):
         args = build_parser().parse_args(["recommend-all", "--date", "2025-03-20"])
 
@@ -558,9 +674,10 @@ class TestRecommender(TestCase):
             },
         }
 
-        default_csv, pullback_csv, oversold_csv, dashboard_js = _resolve_dashboard_export_args(cfg)
+        default_csv, pullback_csv, oversold_csv, opportunity_csv, dashboard_js = _resolve_dashboard_export_args(cfg)
 
         self.assertEqual(default_csv, "reports/default.csv")
         self.assertEqual(pullback_csv, "reports/pullback.csv")
         self.assertEqual(oversold_csv, "reports/oversold.csv")
+        self.assertEqual(opportunity_csv, "reports/opportunity_recommendations.csv")
         self.assertEqual(dashboard_js, "reports/dashboard.js")

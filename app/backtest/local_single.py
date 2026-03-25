@@ -13,6 +13,7 @@ import pandas as pd
 from app.config import apply_strategy_profile
 from app.features.indicators import add_indicators
 from app.models import BacktestRecord, StockInfo
+from app.sector_strength import build_sector_metrics_from_cache, load_symbol_sector_map, should_use_sector_metrics
 from app.strategy.regime_risk import detect_market_state, passes_risk_filter
 from app.strategy.scoring import compute_score, passes_threshold
 from app.universe.filtering import filter_universe
@@ -59,6 +60,12 @@ def run_local_single_backtest(base_cfg: dict, profile_name: str | None, start_da
         for row in csv.DictReader(f):
             index_closes[datetime.strptime(row["trade_date"], "%Y-%m-%d").date()] = float(row["close"])
     market_states = {dt: detect_market_state(index_closes, dt, cfg) for dt in attempted_dates}
+    sector_symbol_map = load_symbol_sector_map(cfg) if should_use_sector_metrics(cfg) else {}
+    sector_metrics = (
+        build_sector_metrics_from_cache(cache_dir, sector_symbol_map, start_date, end_date)
+        if sector_symbol_map and should_use_sector_metrics(cfg)
+        else {}
+    )
 
     available_symbols = {p.stem for p in bars_dir.glob("*.csv")}
     universe = {item.symbol for item in filter_universe(stocks, cfg, start_date) if item.symbol in available_symbols}
@@ -86,14 +93,21 @@ def run_local_single_backtest(base_cfg: dict, profile_name: str | None, start_da
 
         for row in df.itertuples(index=False):
             latest_dict = row._asdict()
-            latest = pd.Series(latest_dict)
             signal_date = latest_dict["trade_date"]
-            latest["market_mom20"] = market_states[signal_date].mom20
-            if not passes_threshold(latest, "normal", cfg):
+            latest_view = dict(latest_dict)
+            latest_view["market_mom20"] = market_states[signal_date].mom20
+            sector = sector_symbol_map.get(symbol)
+            if sector:
+                metrics = sector_metrics.get((signal_date, sector))
+                if metrics:
+                    latest_view["sector_mom20"] = metrics.get("sector_mom20", 0.0)
+                    latest_view["sector_mom5"] = metrics.get("sector_mom5", 0.0)
+                    latest_view["mom20_excess_vs_sector"] = float(latest_view.get("mom20", 0.0)) - float(latest_view["sector_mom20"])
+            if not passes_threshold(latest_view, "normal", cfg):
                 continue
-            if not passes_risk_filter(latest, market_states[signal_date], "normal", cfg):
+            if not passes_risk_filter(latest_view, market_states[signal_date], "normal", cfg):
                 continue
-            score_total, _ = compute_score(latest, cfg)
+            score_total, _ = compute_score(latest_view, cfg)
             candidates[signal_date].append(
                 (
                     symbol,

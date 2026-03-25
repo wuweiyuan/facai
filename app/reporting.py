@@ -233,6 +233,42 @@ def append_adaptive_run_csv(run_summary: dict, path: str) -> Path:
     return out_path
 
 
+def append_opportunity_pool_csv(pool_summary: dict, path: str) -> Path:
+    out_path = Path(path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    run_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    rows = []
+    for item in pool_summary.get("pool", []):
+        key_metrics = item.get("key_metrics", {}) or {}
+        rows.append(
+            {
+                "run_time": run_time,
+                "trade_date": str(pool_summary.get("target_date", "")),
+                "symbol": str(item.get("symbol", "")),
+                "name": str(item.get("name", "")),
+                "threshold_mode": str(item.get("threshold_mode", "")),
+                "score_total": round(float(item.get("score_total", 0.0)), 2),
+                "close": round(float(key_metrics.get("close", 0.0)), 4),
+                "stop_loss_price": round(float(key_metrics.get("stop_loss_price", 0.0)), 4),
+                "take_profit_price": round(float(key_metrics.get("take_profit_price", 0.0)), 4),
+                "suggested_holding_days": int(float(key_metrics.get("suggested_holding_days", 0.0))) if key_metrics.get("suggested_holding_days") is not None else "",
+                "exit_plan": str(key_metrics.get("exit_plan", "") or ""),
+                "source_strategy": str(item.get("source_strategy", "") or ""),
+            }
+        )
+    if out_path.exists():
+        try:
+            old = pd.read_csv(out_path, dtype=str)
+            df = pd.concat([old, pd.DataFrame(rows)], ignore_index=True)
+        except Exception:
+            df = pd.DataFrame(rows)
+    else:
+        df = pd.DataFrame(rows)
+    if not df.empty:
+        df.to_csv(out_path, index=False)
+    return out_path
+
+
 def resolve_recommendation_output_log_path(signal_date: date, path_template: str) -> Path:
     signal_date_compact = signal_date.strftime("%Y%m%d")
     resolved_path = path_template.format(signal_date=signal_date_compact, signal_date_iso=signal_date.isoformat())

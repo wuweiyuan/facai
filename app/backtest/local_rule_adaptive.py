@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import json
 from collections import Counter, defaultdict
+from dataclasses import asdict, dataclass
 from datetime import date, datetime
 from pathlib import Path
 from statistics import mean
@@ -17,6 +18,13 @@ from app.strategy.scoring import compute_score, passes_threshold
 from app.universe.filtering import filter_universe
 
 
+@dataclass(frozen=True)
+class SymbolPath:
+    dates: tuple[date, ...]
+    closes: tuple[float, ...]
+    date_to_idx: dict[date, int]
+
+
 def run_local_rule_adaptive_backtest(base_cfg: dict, start_date: date, end_date: date, count_override: int | None = None) -> dict:
     cache_dir = Path(str(base_cfg.get("data_source", {}).get("cache_dir", ".cache/akshare")))
     bars_dir = cache_dir / "bars"
@@ -28,6 +36,7 @@ def run_local_rule_adaptive_backtest(base_cfg: dict, start_date: date, end_date:
         "recommend": json.loads(json.dumps(base_cfg)),
         "recommend-pullback": apply_strategy_profile(base_cfg, "pullback_confirm"),
         "recommend-oversold": apply_strategy_profile(base_cfg, "oversold_rebound"),
+        "recommend-relative": apply_strategy_profile(base_cfg, "relative_strength"),
     }
     for cfg in profiles.values():
         cfg.setdefault("data_freshness", {})["enabled"] = False
@@ -80,7 +89,7 @@ def run_local_rule_adaptive_backtest(base_cfg: dict, start_date: date, end_date:
     pick_count_map = base_cfg.get("adaptive_strategy", {}).get("strategy_pick_counts", {})
 
     candidates: dict[str, dict[date, list[dict]]] = {name: defaultdict(list) for name in profiles}
-    bars_cache: dict[str, pd.DataFrame] = {}
+    bars_cache: dict[str, SymbolPath] = {}
 
     for path in bars_dir.glob("*.csv"):
         symbol = path.stem
@@ -94,29 +103,41 @@ def run_local_rule_adaptive_backtest(base_cfg: dict, start_date: date, end_date:
         if df.empty:
             continue
         df = add_indicators(df)
-        bars_cache[symbol] = df
+        dates = tuple(df["trade_date"].tolist())
+        closes = tuple(float(v) for v in df["close"].tolist())
+        bars_cache[symbol] = SymbolPath(
+            dates=dates,
+            closes=closes,
+            date_to_idx={trade_date: idx for idx, trade_date in enumerate(dates)},
+        )
         df = df[df["trade_date"].isin(attempted_set)]
         if df.empty:
             continue
         for row in df.itertuples(index=False):
             latest_dict = row._asdict()
-            latest = pd.Series(latest_dict)
             signal_date = latest_dict["trade_date"]
             for name, cfg in profiles.items():
                 if symbol not in universe_by_profile[name]:
                     continue
-                latest_copy = latest.copy()
-                latest_copy["market_mom20"] = market_states_by_profile[name][signal_date].mom20
-                if not passes_threshold(latest_copy, "normal", cfg):
+                latest_view = dict(latest_dict)
+                latest_view["market_mom20"] = market_states_by_profile[name][signal_date].mom20
+                accepted_mode = None
+                for mode in _resolve_enabled_modes(cfg):
+                    if mode != "force" and not passes_threshold(latest_view, mode, cfg):
+                        continue
+                    if not passes_risk_filter(latest_view, market_states_by_profile[name][signal_date], mode, cfg):
+                        continue
+                    accepted_mode = mode
+                    break
+                if accepted_mode is None:
                     continue
-                if not passes_risk_filter(latest_copy, market_states_by_profile[name][signal_date], "normal", cfg):
-                    continue
-                score_total, _ = compute_score(latest_copy, cfg)
+                score_total, _ = compute_score(latest_view, cfg)
                 candidates[name][signal_date].append(
                     {
                         "symbol": symbol,
                         "score": score_total,
                         "close": float(latest_dict["close"]),
+                        "threshold_mode": accepted_mode,
                     }
                 )
 
@@ -140,24 +161,24 @@ def run_local_rule_adaptive_backtest(base_cfg: dict, start_date: date, end_date:
         if not picked or not chosen_cmd:
             continue
 
-        trade_dates_for_eval = [item["trade_date"] for item in bars_cache[picked[0]["symbol"]]["trade_date"].to_frame().itertuples(index=False) if item]
         basket_1d = []
         basket_3d = []
         basket_5d = []
         for item in picked:
             symbol = item["symbol"]
-            rule_ret = _simulate_rule_exit(symbol, dt, trade_dates, bars_cache[symbol], chosen_cmd)
+            rule_ret = _simulate_rule_exit(dt, bars_cache[symbol], chosen_cmd)
             basket_1d.append(rule_ret["ret_1d_net"])
             basket_3d.append(rule_ret["ret_3d_net"])
             basket_5d.append(rule_ret["ret_5d_net"])
         strategy_counts[chosen_cmd] += 1
-        mode_counts["normal"] += 1
+        picked_mode = picked[0].get("threshold_mode", "normal")
+        mode_counts[picked_mode] += 1
         records.append(
             BacktestRecord(
                 trade_date=dt,
                 symbol=chosen_cmd,
                 name=chosen_cmd,
-                threshold_mode="normal",
+                threshold_mode=picked_mode,
                 ret_1d_gross=None,
                 ret_3d_gross=None,
                 ret_5d_gross=None,
@@ -170,28 +191,28 @@ def run_local_rule_adaptive_backtest(base_cfg: dict, start_date: date, end_date:
     return _build_summary(records, start_date, end_date, len(attempted_dates), dict(strategy_counts), dict(mode_counts))
 
 
-def _simulate_rule_exit(symbol: str, signal_date: date, trade_dates: list[date], bars_df: pd.DataFrame, strategy_name: str) -> dict[str, float | None]:
-    if signal_date not in trade_dates:
+def _simulate_rule_exit(signal_date: date, symbol_path: SymbolPath, strategy_name: str) -> dict[str, float | None]:
+    if signal_date not in symbol_path.date_to_idx:
         return {"ret_1d_net": None, "ret_3d_net": None, "ret_5d_net": None}
-    idx = trade_dates.index(signal_date)
-    path = bars_df[bars_df["trade_date"] >= signal_date].copy().reset_index(drop=True)
-    if len(path) < 2:
+    start_idx = symbol_path.date_to_idx[signal_date]
+    path_len = len(symbol_path.closes) - start_idx
+    if path_len < 2:
         return {"ret_1d_net": None, "ret_3d_net": None, "ret_5d_net": None}
-    entry = float(path.iloc[0]["close"])
-    one_day = float(path.iloc[1]["close"]) / entry - 1.0 if len(path) > 1 else None
+    entry = symbol_path.closes[start_idx]
+    one_day = symbol_path.closes[start_idx + 1] / entry - 1.0 if path_len > 1 else None
 
     if strategy_name == "recommend-oversold":
-        max_hold = min(3, len(path) - 1)
+        max_hold = min(3, path_len - 1)
         take_profit = 0.06
         stop_loss = -0.055
         idle_day_limit = 2
     elif strategy_name == "recommend-pullback":
-        max_hold = min(4, len(path) - 1)
+        max_hold = min(4, path_len - 1)
         take_profit = 0.07
         stop_loss = -0.04
         idle_day_limit = 3
     else:
-        max_hold = min(3, len(path) - 1)
+        max_hold = min(3, path_len - 1)
         take_profit = 0.06
         stop_loss = -0.045
         idle_day_limit = 2
@@ -199,7 +220,7 @@ def _simulate_rule_exit(symbol: str, signal_date: date, trade_dates: list[date],
     exit_ret = None
     best_seen = -1.0
     for day_idx in range(1, max_hold + 1):
-        ret = float(path.iloc[day_idx]["close"]) / entry - 1.0
+        ret = symbol_path.closes[start_idx + day_idx] / entry - 1.0
         best_seen = max(best_seen, ret)
         if ret <= stop_loss:
             exit_ret = ret
@@ -211,7 +232,7 @@ def _simulate_rule_exit(symbol: str, signal_date: date, trade_dates: list[date],
             exit_ret = ret
             break
     if exit_ret is None:
-        exit_ret = float(path.iloc[max_hold]["close"]) / entry - 1.0
+        exit_ret = symbol_path.closes[start_idx + max_hold] / entry - 1.0
 
     three_day = exit_ret if max_hold >= 3 else exit_ret
     five_day = exit_ret
@@ -266,6 +287,18 @@ def _build_summary(
         "records": [asdict(record) for record in records],
         "adaptive_strategy_counts": strategy_counts,
     }
+
+
+def _resolve_enabled_modes(cfg: dict) -> list[str]:
+    raw = cfg.get("strategy", {}).get("enabled_modes", ["normal", "relaxed", "force"])
+    if not isinstance(raw, list):
+        return ["normal", "relaxed", "force"]
+    out = []
+    for item in raw:
+        mode = str(item).strip().lower()
+        if mode in {"normal", "relaxed", "force"} and mode not in out:
+            out.append(mode)
+    return out or ["normal", "relaxed", "force"]
 
 
 def _apply_round_trip_cost(gross_ret: float | None) -> float | None:

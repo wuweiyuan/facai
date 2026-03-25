@@ -92,3 +92,8 @@ class TestBacktest(TestCase):
         args = build_parser().parse_args(["backtest-relative", "--start", "2025-01-10", "--end", "2025-03-10"])
 
         self.assertEqual(args.cmd, "backtest-relative")
+
+    def test_parser_accepts_backtest_adaptive_rules(self):
+        args = build_parser().parse_args(["backtest-adaptive-rules", "--start", "2025-01-10", "--end", "2025-03-10"])
+
+        self.assertEqual(args.cmd, "backtest-adaptive-rules")

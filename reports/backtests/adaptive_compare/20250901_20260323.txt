@@ -1,6 +1,6 @@
 Period: 2025-09-01 -> 2026-03-23
 
-metric                        current experimental        delta
+metric                        current oversold_neutral        delta
 total_trades                       69           69            0
 skipped_days                       58           58            0
 win_rate_net_1d                0.4348       0.4348       0.0000

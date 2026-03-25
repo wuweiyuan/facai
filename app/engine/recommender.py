@@ -9,6 +9,7 @@ from app.data_source.base import MarketDataSource
 from app.error_messages import friendly_error_message
 from app.features.indicators import add_indicators, bars_to_df
 from app.models import CandidateScore, RecommendationResult, StockInfo
+from app.sector_strength import build_sector_metrics_from_cache, load_symbol_sector_map, should_use_sector_metrics
 from app.strategy.holding_period import build_exit_plan, suggest_holding_days
 from app.strategy.regime_risk import MarketState, detect_market_state, passes_risk_filter
 from app.strategy.risk_targets import compute_stop_take_prices
@@ -35,6 +36,9 @@ class Recommender:
         self.cfg = cfg
         self._stock_name_map: dict[str, str] | None = None
         self._last_run_meta: dict | None = None
+        self._sector_symbol_map: dict[str, str] | None = None
+        self._sector_metrics_cache: dict[tuple[date, str], dict[str, float]] | None = None
+        self._sector_metrics_range: tuple[date, date] | None = None
 
     def get_last_run_meta(self) -> dict | None:
         return self._last_run_meta
@@ -182,6 +186,7 @@ class Recommender:
             raise RuntimeError(f"No bars found for {symbol}")
         latest = df.iloc[-1].copy()
         latest["market_mom20"] = market_state.mom20
+        latest = self._enrich_sector_metrics(latest, symbol, signal_date)
         if not passes_threshold(latest, mode, self.cfg):
             raise RuntimeError(f"{symbol} does not pass {mode} threshold")
         if not passes_risk_filter(latest, market_state, mode, self.cfg):
@@ -206,6 +211,34 @@ class Recommender:
                 # Keep explain resilient even when stock list API is unavailable.
                 self._stock_name_map = {}
         return self._stock_name_map.get(symbol, symbol)
+
+    def _enrich_sector_metrics(self, latest, symbol: str, signal_date: date):
+        if not should_use_sector_metrics(self.cfg):
+            return latest
+        if self._sector_symbol_map is None:
+            self._sector_symbol_map = load_symbol_sector_map(self.cfg)
+        if not self._sector_symbol_map:
+            return latest
+        sector = self._sector_symbol_map.get(symbol)
+        if not sector:
+            return latest
+        cache_dir = str(self.cfg.get("data_source", {}).get("cache_dir", ".cache/akshare"))
+        required_range = (signal_date - timedelta(days=220), signal_date)
+        if self._sector_metrics_cache is None or self._sector_metrics_range != required_range:
+            self._sector_metrics_cache = build_sector_metrics_from_cache(
+                cache_dir=cache_dir,
+                symbol_sector_map=self._sector_symbol_map,
+                start_date=required_range[0],
+                end_date=required_range[1],
+            )
+            self._sector_metrics_range = required_range
+        sector_metrics = (self._sector_metrics_cache or {}).get((signal_date, sector))
+        if not sector_metrics:
+            return latest
+        latest["sector_mom20"] = sector_metrics.get("sector_mom20", 0.0)
+        latest["sector_mom5"] = sector_metrics.get("sector_mom5", 0.0)
+        latest["mom20_excess_vs_sector"] = float(latest.get("mom20", 0.0)) - float(latest["sector_mom20"])
+        return latest
 
     def _rank_candidates(
         self,
@@ -317,6 +350,7 @@ class Recommender:
             return StockScanOutcome(index=index, symbol=stock.symbol, status="df_empty", kline_success=True)
         latest = df.iloc[-1].copy()
         latest["market_mom20"] = market_state.mom20
+        latest = self._enrich_sector_metrics(latest, stock.symbol, signal_date)
         if mode != "force" and not passes_threshold(latest, mode, self.cfg):
             return StockScanOutcome(index=index, symbol=stock.symbol, status="threshold_reject", kline_success=True)
         if not passes_risk_filter(latest, market_state, mode, self.cfg):
@@ -465,6 +499,8 @@ class Recommender:
             "mom20": float(latest["mom20"]),
             "market_mom20": float(latest["market_mom20"]) if latest.get("market_mom20") is not None else 0.0,
             "mom20_excess_vs_market": float(latest["mom20"] - latest["market_mom20"]) if latest.get("market_mom20") is not None else 0.0,
+            "sector_mom20": float(latest["sector_mom20"]) if latest.get("sector_mom20") is not None else 0.0,
+            "mom20_excess_vs_sector": float(latest["mom20_excess_vs_sector"]) if latest.get("mom20_excess_vs_sector") is not None else 0.0,
             "rsi14": float(latest["rsi14"]),
             "atr14": atr14,
             "stop_loss_price": stop_loss_price,

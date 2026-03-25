@@ -1,0 +1,241 @@
+# 实验配置：当主策略 pullback 没有候选时，用 oversold 做兜底
+#
+# 目的：
+# - 在不污染当前正式主配置的前提下，测试“oversold 兜底”能否减少空仓
+# - 仅用于和 current 做 A/B 对比，不建议直接替代 default.yaml
+
+timezone: Asia/Shanghai
+
+network:
+  disable_env_proxy: true
+  force_no_proxy_all: true
+
+data_source:
+  request_timeout_sec: 6.0
+  hist_retries: 3
+  use_spot_name_merge: false
+  cache_enabled: true
+  cache_dir: .cache/akshare
+
+data_freshness:
+  enabled: true
+  stop_on_stale: true
+  probe_symbol: "000001"
+  probe_lookback_days: 10
+  stop_on_stale_stock: false
+  stock_stale_suspend_days: 5
+
+universe:
+  limit: 0
+
+filters:
+  exclude_st: true
+  exclude_star_board: true
+  exclude_bj_board: true
+  exclude_gem_board: true
+
+market_filter:
+  enabled: true
+  index_symbol: "000300"
+  lookback_days: 120
+  fail_on_error: true
+  stop_on_stale: true
+  block_on_bear: false
+
+risk_filter:
+  enabled: true
+  min_price: 2.0
+  max_price: 200.0
+  max_vol20_std: 0.07
+  rsi_upper: 82.0
+  min_vol_ratio_5_20: 0.70
+  require_turnover_data: false
+  min_turnover_rate: 0.0
+  weak_market:
+    enabled: true
+    max_vol20_std: 0.055
+    require_mom20_positive: true
+
+execution_cost:
+  enabled: true
+  commission_rate: 0.0002
+  stamp_duty_sell_rate: 0.0005
+  slippage_bps: 5.0
+  min_commission_per_side: 0.0
+
+risk_targets:
+  method: atr
+  stop_loss_atr_mult: 1.5
+  take_profit_atr_mult: 3.0
+  stop_loss_pct: 0.03
+  take_profit_pct: 0.06
+  price_round_tick: 0.01
+
+strategy:
+  name: trend_momentum_v1
+  lookback_days: 120
+  pick_count: 3
+  enabled_modes: [normal]
+  max_symbols_per_run: 0
+  progress_every: 10
+  scan_workers: 4
+  failed_symbol_examples: 20
+  weights:
+    trend: 0.40
+    momentum: 0.30
+    stability: 0.20
+    volume: 0.10
+
+fallback:
+  mode: relaxed
+
+strategy_profiles:
+  pullback_confirm:
+    strategy:
+      name: pullback_confirm_v1
+      enabled_modes: [normal, relaxed]
+      weights:
+        trend: 0.20
+        momentum: 0.15
+        stability: 0.20
+        volume: 0.10
+        pullback: 0.35
+    risk_filter:
+      pullback:
+        enabled: true
+        min_close_above_ma20_pct: 0.0
+        max_close_above_ma20_pct: 0.05
+        min_mom20: 0.0
+        max_mom20: 0.18
+        min_mom5: -0.04
+        max_mom5: 0.05
+        min_rsi14: 38.0
+        max_rsi14: 78.0
+        max_volume_zscore20: 1.8
+    reporting:
+      recommendation_csv: reports/pullback_recommendations.csv
+      recommendation_md: reports/pullback_recommendations.md
+      recommendation_txt: reports/pullback_recommendations.txt
+      recommendation_log: reports/pullback/{signal_date}.log
+  oversold_rebound:
+    strategy:
+      name: oversold_rebound_v1
+      threshold_profile: oversold_rebound
+      enabled_modes: [normal]
+      weights:
+        trend: 0.0
+        momentum: 0.0
+        stability: 0.15
+        volume: 0.20
+        oversold: 0.65
+    risk_filter:
+      oversold:
+        enabled: true
+        min_close_below_ma20_pct: 0.10
+        max_mom5: -0.12
+        max_ret_1d: -0.03
+        min_volume_ratio_1_20: 1.3
+    risk_targets:
+      method: percent
+      stop_loss_pct: 0.06
+      take_profit_pct: 0.08
+    reporting:
+      recommendation_csv: reports/oversold_recommendations.csv
+      recommendation_md: reports/oversold_recommendations.md
+      recommendation_txt: reports/oversold_recommendations.txt
+      recommendation_log: reports/oversold/{signal_date}.log
+  bull_trend_research:
+    strategy:
+      name: bull_trend_research_v1
+      enabled_modes: [normal]
+      weights:
+        trend: 0.40
+        momentum: 0.15
+        stability: 0.20
+        volume: 0.10
+        relative_strength: 0.15
+    market_filter:
+      block_on_bear: true
+    risk_filter:
+      max_vol20_std: 0.06
+      rsi_upper: 76.0
+      min_vol_ratio_5_20: 0.85
+      relative_strength:
+        enabled: true
+        min_excess_mom20: 0.03
+        min_mom5: 0.0
+        min_close_above_ma20_pct: 0.01
+      weak_market:
+        enabled: true
+        max_vol20_std: 0.05
+        require_mom20_positive: true
+    reporting:
+      recommendation_csv: reports/bull_recommendations.csv
+      recommendation_md: reports/bull_recommendations.md
+      recommendation_txt: reports/bull_recommendations.txt
+      recommendation_log: reports/bull/{signal_date}.log
+  relative_strength:
+    strategy:
+      name: relative_strength_v1
+      enabled_modes: [normal]
+      weights:
+        trend: 0.25
+        momentum: 0.15
+        stability: 0.15
+        volume: 0.10
+        pullback: 0.10
+        relative_strength: 0.25
+    risk_filter:
+      relative_strength:
+        enabled: true
+        min_excess_mom20: 0.04
+        min_mom5: -0.01
+        min_close_above_ma20_pct: 0.0
+      pullback:
+        enabled: true
+        min_close_above_ma20_pct: 0.0
+        max_close_above_ma20_pct: 0.08
+        min_mom20: 0.02
+        max_mom20: 0.25
+        min_mom5: -0.01
+        max_mom5: 0.08
+        min_rsi14: 45.0
+        max_rsi14: 78.0
+        max_volume_zscore20: 2.2
+    reporting:
+      recommendation_csv: reports/relative_recommendations.csv
+      recommendation_md: reports/relative_recommendations.md
+      recommendation_txt: reports/relative_recommendations.txt
+      recommendation_log: reports/relative/{signal_date}.log
+
+adaptive_strategy:
+  regime_orders:
+    bull: [recommend-pullback, recommend-oversold, recommend]
+    neutral: [recommend-pullback, recommend-oversold, recommend]
+    bear: [recommend-oversold, recommend-pullback]
+    unknown: [recommend-pullback, recommend-oversold]
+  strategy_pick_counts:
+    recommend: 1
+    recommend-pullback: 1
+    recommend-oversold: 3
+    recommend-bull: 1
+    recommend-relative: 1
+
+io:
+  default_output: table
+
+backtest:
+  verbose_errors: true
+  progress_to_stderr: true
+  progress_every_days: 5
+  max_error_examples: 20
+
+reporting:
+  enabled: true
+  recommendation_csv: reports/recommendations.csv
+  recommendation_md: reports/recommendations.md
+  recommendation_txt: reports/recommendations.txt
+  recommendation_log: reports/{signal_date}.log
+  adaptive_run_csv: reports/adaptive_runs.csv
+  adaptive_backtest_summary: reports/backtests/adaptive/{period_key}.json
+  adaptive_backtest_latest: reports/backtests/adaptive/latest.json

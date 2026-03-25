@@ -180,6 +180,21 @@ def passes_risk_filter(latest: pd.Series, market: MarketState, mode: str, cfg: d
             close_vs_ma20 = close / ma20 - 1.0 if ma20 > 0 else np.nan
             if np.isnan(close_vs_ma20) or close_vs_ma20 < float(min_close_above_ma20_pct):
                 return False
+    sector_cfg = rcfg.get("sector_relative", {})
+    if bool(sector_cfg.get("enabled", False)):
+        sector_mom20 = _to_float(latest.get("sector_mom20", np.nan), np.nan)
+        if np.isnan(sector_mom20):
+            return False
+        excess_vs_sector = mom20 - sector_mom20
+        min_excess_vs_sector = sector_cfg.get("min_excess_mom20")
+        if min_excess_vs_sector is not None and excess_vs_sector < float(min_excess_vs_sector):
+            return False
+        min_sector_mom20 = sector_cfg.get("min_sector_mom20")
+        if min_sector_mom20 is not None and sector_mom20 < float(min_sector_mom20):
+            return False
+        min_mom5 = sector_cfg.get("min_mom5")
+        if min_mom5 is not None and mom5 < float(min_mom5):
+            return False
     return True
 
 
