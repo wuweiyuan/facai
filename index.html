@@ -285,6 +285,7 @@
       color: var(--accent-strong);
       font-size: 12px;
       font-weight: 600;
+      white-space: nowrap;
     }
 
     th.strategy-col,
@@ -336,9 +337,9 @@
 
       th.strategy-col,
       td.strategy-col {
-        width: 76px;
-        min-width: 76px;
-        max-width: 76px;
+        width: 96px;
+        min-width: 96px;
+        max-width: 96px;
         padding-left: 6px;
         padding-right: 6px;
       }
@@ -598,8 +599,10 @@
           return "本日无候选，建议空仓";
         }
         const firstRecord = records && records.length ? records[0] : null;
-        const exitPlan = firstRecord && firstRecord.exit_plan ? "；" + firstRecord.exit_plan : "";
-        const holdDays = firstRecord && typeof firstRecord.suggested_holding_days === "number"
+        const rawExitPlan = firstRecord && firstRecord.exit_plan ? String(firstRecord.exit_plan).trim() : "";
+        const exitPlan = rawExitPlan ? "；" + rawExitPlan : "";
+        const shouldShowHoldDays = !rawExitPlan;
+        const holdDays = firstRecord && shouldShowHoldDays && typeof firstRecord.suggested_holding_days === "number"
           ? "；默认持有: " + firstRecord.suggested_holding_days + "天"
           : "";
         return "本日实际采用策略: " + SOURCE_RULES[sourceStrategy].label + holdDays + exitPlan;
@@ -640,19 +643,19 @@
       }
 
       function getStrategyData(strategyKey) {
-        const empty = {
+        if (state.data && state.data.strategies && state.data.strategies[strategyKey]) {
+          return state.data.strategies[strategyKey];
+        }
+        const meta = STRATEGY_META[strategyKey] || null;
+        return {
           key: strategyKey,
-          label: STRATEGY_META[strategyKey].label,
+          label: meta ? meta.label : strategyKey,
           source_file: "",
           available_dates: [],
           latest_run_time: null,
           records: [],
           date_summaries: {}
         };
-        if (!state.data || !state.data.strategies) {
-          return empty;
-        }
-        return state.data.strategies[strategyKey] || empty;
       }
 
       function getDateSummary(strategyData, targetDate) {
