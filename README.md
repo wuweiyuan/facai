@@ -1,678 +1,191 @@
 # A-share Daily Picker
 
-Command-line tool to recommend top A-share stocks before open using T-1 close data.
+基于 T-1 收盘数据、用于开盘前选股和回测的 A 股命令行研究工具。
 
-中文说明：一个基于 T-1 收盘数据、用于开盘前选股的 A 股命令行研究工具。
+当前建议把它当成一个以 `recommend-adaptive` 为主入口、以 `backtest-adaptive` 为主验证入口的本地研究仓库，而不是一个面向外部发布的通用产品。
 
-## Quick Start
+## 当前主线
 
-- 默认配置文件：`config/default.yaml`
-- Windows 通用入口：`python -m app.main <command> [options]`
-- macOS / Linux 通用入口：`python3 -m app.main <command> [options]`
-- Windows 切换配置文件：`python -m app.main --config config/default.yaml <command> ...`
-- macOS / Linux 切换配置文件：`python3 -m app.main --config config/default.yaml <command> ...`
-
-## 当前分工
-
-- 当前主入口：`recommend-adaptive`
-- 当前主配置：`config/default.yaml`
-- 当前稳定快照：`config/default.stable.yaml`
+- 正式主入口：`recommend-adaptive`
+- 正式主回测：`backtest-adaptive`
+- 正式主配置：`config/default.yaml`
+- 稳定快照：`config/default.stable.yaml`
 - 历史基线：`config/default.baseline.yaml`
-- 研究策略：`recommend-bull` / `backtest-bull`
+- 研究总结：`FINAL_STRATEGY_SUMMARY.md`
 
-当前建议：
+当前默认思路：
 
-- 日常运行优先用 `recommend-adaptive`
-- 需要验证长区间表现时，用 `backtest-adaptive`
-- 需要做优化前后对比时，用 `scripts/compare_adaptive_configs.py`
-- `recommend-bull` 目前只用于研究，不建议直接接入主流程
-- `config/default.experimental.yaml` 已废弃，不再建议使用
+- `bull / neutral` 市场优先走 `recommend-pullback`
+- `bear` 市场优先走 `recommend-oversold`
+- 没有合格信号时允许空仓
 
-## Commands
+## 跨平台命令约定
 
-- Windows：`python -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json]`
-- macOS / Linux：`python3 -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json]`
-- Windows：`python -m app.main recommend-all --date YYYY-MM-DD [--count N] [--output table|json]`
-- macOS / Linux：`python3 -m app.main recommend-all --date YYYY-MM-DD [--count N] [--output table|json]`
-- Windows：`python -m app.main recommend-pullback --date YYYY-MM-DD [--count N] [--output table|json]`
-- macOS / Linux：`python3 -m app.main recommend-pullback --date YYYY-MM-DD [--count N] [--output table|json]`
-- Windows：`python -m app.main recommend-oversold --date YYYY-MM-DD [--count N] [--output table|json]`
-- macOS / Linux：`python3 -m app.main recommend-oversold --date YYYY-MM-DD [--count N] [--output table|json]`
-- Windows：`python -m app.main recommend-adaptive --date YYYY-MM-DD [--count N] [--output table|json]`
-- macOS / Linux：`python3 -m app.main recommend-adaptive --date YYYY-MM-DD [--count N] [--output table|json]`
-- Windows：`python -m app.main recommend-bull --date YYYY-MM-DD [--count N] [--output table|json]`
-- macOS / Linux：`python3 -m app.main recommend-bull --date YYYY-MM-DD [--count N] [--output table|json]`
-- Windows：`python -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]`
-- macOS / Linux：`python3 -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]`
-- Windows：`python -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
-- macOS / Linux：`python3 -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
-- Windows：`python -m app.main backtest-pullback --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
-- macOS / Linux：`python3 -m app.main backtest-pullback --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
-- Windows：`python -m app.main backtest-bull --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
-- macOS / Linux：`python3 -m app.main backtest-bull --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]`
-- Windows：`python -m app.main doctor [--output table|json]`
-- macOS / Linux：`python3 -m app.main doctor [--output table|json]`
-- Windows：`python -m app.main check-kline --symbol 000001 --start YYYY-MM-DD --end YYYY-MM-DD [--output table|json]`
-- macOS / Linux：`python3 -m app.main check-kline --symbol 000001 --start YYYY-MM-DD --end YYYY-MM-DD [--output table|json]`
-- `bash scripts/check_today_update.sh`
-- `bash scripts/check_today_update_json.sh`
-- `bash scripts/check_today_update_multi.sh`
+- macOS / Linux 默认使用 `python3`
+- Windows 默认使用 `python`
+- 看到 `python3 -m app.main ...` 时，Windows 直接替换为 `python -m app.main ...`
+- 看到 `python3 scripts/xxx.py ...` 时，Windows 直接替换为 `python scripts/xxx.py ...`
 
-## 中文命令详解
+## 快速开始
 
-### 全局参数
-
-- `--config`：指定 YAML 配置文件路径；默认是 `config/default.yaml`
-- 适用范围：所有子命令
-- 常见用途：
-  - 保留一份默认配置做日常使用
-  - 复制一份保守版/激进版配置做对比测试
-  - 回测时临时切换到另一套参数
-
-示例：
+### 1. 安装依赖
 
 ```bash
-# Windows
-python -m app.main --config config/default.yaml recommend --date 2026-03-06
-
 # macOS / Linux
-python3 -m app.main --config config/default.yaml recommend --date 2026-03-06
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+
+# Windows PowerShell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -e .
 ```
 
-### 1) `recommend`
-
-用途：
-
-- 按指定交易日选出推荐股票
-- 适合开盘前、盘前研究或每日复盘后生成次日观察名单
-- 会根据配置里的过滤器、风险规则、市场环境和评分权重筛选股票
-
-命令：
+### 2. 先跑一遍主入口
 
 ```bash
-# Windows
-python -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json]
-
 # macOS / Linux
-python3 -m app.main recommend --date YYYY-MM-DD [--count N] [--output table|json]
+python3 -m app.main recommend-adaptive --date YYYY-MM-DD
+
+# Windows
+python -m app.main recommend-adaptive --date YYYY-MM-DD
 ```
 
-参数说明：
+如果不传 `--date`，推荐类命令默认会尝试使用“下一个交易日”。
+
+### 3. 跑主回测
+
+```bash
+# macOS / Linux
+python3 -m app.main backtest-adaptive --start YYYY-MM-DD --end YYYY-MM-DD --output table
+
+# Windows
+python -m app.main backtest-adaptive --start YYYY-MM-DD --end YYYY-MM-DD --output table
+```
+
+### 4. 查看报表
+
+- 推荐结果默认写到 `reports/`
+- 仪表盘数据默认写到 `reports/dashboard-data.js`
+- 静态页面入口是 `index.html`
+
+## 日常使用建议
+
+### 盘前正式信号
+
+```bash
+# macOS / Linux
+python3 -m app.main recommend-adaptive --date YYYY-MM-DD
+
+# Windows
+python -m app.main recommend-adaptive --date YYYY-MM-DD
+```
+
+### 固定持有期回测
+
+```bash
+# macOS / Linux
+python3 -m app.main backtest-adaptive --start YYYY-MM-DD --end YYYY-MM-DD --output table
+
+# Windows
+python -m app.main backtest-adaptive --start YYYY-MM-DD --end YYYY-MM-DD --output table
+```
+
+### 优化前后对比
+
+```bash
+# macOS / Linux
+python3 scripts/compare_adaptive_configs.py --start YYYY-MM-DD --end YYYY-MM-DD --output table
+
+# Windows
+python scripts/compare_adaptive_configs.py --start YYYY-MM-DD --end YYYY-MM-DD --output table
+```
+
+### 空仓时看观察池
+
+```bash
+# macOS / Linux
+python3 -m app.main recommend-opportunity --date YYYY-MM-DD
+
+# Windows
+python -m app.main recommend-opportunity --date YYYY-MM-DD
+```
+
+### 解释单只股票为什么入选或被过滤
+
+```bash
+# macOS / Linux
+python3 -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal
+
+# Windows
+python -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal
+```
+
+## 命令总览
+
+### 推荐类命令
+
+| 命令 | 用途 | 说明 |
+| --- | --- | --- |
+| `recommend-adaptive` | 日常主入口 | 按市场状态自动选择策略 |
+| `recommend-opportunity` | 观察池 | 给人工复核更宽的候选集 |
+| `recommend` | 默认趋势策略 | 历史默认入口，现偏研究用途 |
+| `recommend-pullback` | 回踩确认策略 | 当前主流程的核心策略 |
+| `recommend-oversold` | 超跌反弹策略 | 弱市补充策略 |
+| `recommend-all` | 顺序跑多套推荐 | 依次执行默认、回踩、超跌 |
+| `recommend-bull` | 强市研究策略 | 研究用途，不建议接入主流程 |
+| `recommend-relative` | 相对强度研究策略 | 研究用途，不建议接入主流程 |
+
+推荐类命令的常见参数：
 
 - `--date YYYY-MM-DD`
-  - 目标日期
-  - 不传时，默认使用“下一个交易日”
-  - 注意：程序内部会结合交易日逻辑解析“信号日”，并不是简单按自然日生搬硬套
 - `--count N`
-  - 本次输出推荐数量
-  - 不传时，默认使用 `config/default.yaml` 里的 `strategy.pick_count`
 - `--output table|json`
-  - `table`：适合终端阅读
-  - `json`：适合脚本集成、自动化处理或接口对接
 
-输出特点：
-
-- 终端会输出默认 `recommend` 结果
-- 若使用 `--output json`，输出单组推荐结果数组
-- 若 `reporting.enabled: true`，还会额外写入：
-  - `reports/recommendations.csv`
-  - `reports/recommendations.md`
-  - `reports/recommendations.txt`
-  - `reports/{signal_date}.log`
-
-常见场景：
-
-- 每天开盘前跑一次，生成候选名单
-- 调整 `strategy.enabled_modes` 后观察候选数量变化
-- 如果 `recommend` 太慢，可提高 `strategy.scan_workers` 做并发扫描
-- 配合 `explain` 深挖某只股票为何入选
-
-示例：
-
-```bash
-# Windows
-python -m app.main recommend
-python -m app.main recommend --date 2026-03-06
-python -m app.main recommend --date 2026-03-06 --count 5
-python -m app.main recommend --date 2026-03-06 --output json
-
-# macOS / Linux
-python3 -m app.main recommend
-python3 -m app.main recommend --date 2026-03-06
-python3 -m app.main recommend --date 2026-03-06 --count 5
-python3 -m app.main recommend --date 2026-03-06 --output json
-```
-
-### 2) `explain`
-
-用途：
-
-- 解释某只股票在指定日期的评分结果
-- 适合回答“为什么这只股票被选中/没被选中”
-- 常用于调参数、排查过滤条件过严、查看分项得分结构
-
-命令：
-
-```bash
-# Windows
-python -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]
-
-# macOS / Linux
-python3 -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal [--output table|json]
-```
-
-参数说明：
-
-- `--symbol 000001`
-  - 必填，股票代码
-- `--date YYYY-MM-DD`
-  - 目标日期，不传时默认今天
-- `--mode normal|relaxed|force`
-  - `normal`：正常/严格模式
-  - `relaxed`：放宽筛选条件
-  - `force`：尽量给结果的兜底模式
-- `--output table|json`
-  - `table`：人读更直观
-  - `json`：便于对接脚本或保存结构化结果
-
-输出内容：
-
-- 总分 `score_total`
-- 各分项得分 `score_breakdown`
-- 关键指标 `key_metrics`
-- 推荐/解释理由 `reason`
-
-常见场景：
-
-- 想知道推荐股票是靠趋势分高，还是靠动量分高
-- 想排查某只股票在 `normal` 模式下为何被过滤
-- 对比 `normal` 与 `relaxed` 模式下的差异
-
-示例：
-
-```bash
-# Windows
-python -m app.main explain --symbol 000001 --date 2026-03-06 --mode normal
-python -m app.main explain --symbol 600519 --date 2026-03-06 --mode relaxed --output json
-
-# macOS / Linux
-python3 -m app.main explain --symbol 000001 --date 2026-03-06 --mode normal
-python3 -m app.main explain --symbol 600519 --date 2026-03-06 --mode relaxed --output json
-```
-
-### 2.3) `recommend-all`
-
-用途：
-
-- 顺序执行 `recommend`、`recommend-pullback` 和 `recommend-oversold`
-- 适合你想一次拿到“默认趋势策略”、“回踩策略”和“超跌反弹策略”三套名单
-- 不用手动连续执行两次命令
-
-命令：
-
-```bash
-# Windows
-python -m app.main recommend-all --date YYYY-MM-DD [--count N] [--output table|json]
-
-# macOS / Linux
-python3 -m app.main recommend-all --date YYYY-MM-DD [--count N] [--output table|json]
-```
-
-参数说明：
-
-- `--date YYYY-MM-DD`
-  - 目标日期
-  - 不传时，默认使用“下一个交易日”
-- `--count N`
-  - 每套策略各自输出的推荐数量
-- `--output table|json`
-  - `table`：依次输出 `recommend`、`recommend-pullback`、`recommend-oversold`
-  - `json`：输出一个对象，包含 `recommend`、`recommend-pullback`、`recommend-oversold` 三组结果
-
-示例：
-
-```bash
-# Windows
-python -m app.main recommend-all
-python -m app.main recommend-all --date 2026-03-06
-
-# macOS / Linux
-python3 -m app.main recommend-all
-python3 -m app.main recommend-all --date 2026-03-06
-```
-
-### 2.5) `recommend-pullback`
-
-用途：
-
-- 运行一套独立的“回踩确认 / 不追高”策略
-- 保留原 `recommend` 默认策略不变
-- 更偏好贴近 `MA20`、短期不过热、仍保持中期上升结构的股票
-
-命令：
-
-```bash
-# Windows
-python -m app.main recommend-pullback --date YYYY-MM-DD [--count N] [--output table|json]
-
-# macOS / Linux
-python3 -m app.main recommend-pullback --date YYYY-MM-DD [--count N] [--output table|json]
-```
-
-参数说明：
-
-- `--date YYYY-MM-DD`
-  - 目标日期
-  - 不传时，默认使用“下一个交易日”
-- `--count N`
-  - 本次输出推荐数量
-  - 不传时，默认使用 `config/default.yaml` 里 pullback 配置下的 `strategy.pick_count`
-- `--output table|json`
-  - `table`：适合终端阅读
-  - `json`：适合脚本集成、自动化处理或接口对接
-
-特点：
-
-- 使用配置里的 `strategy_profiles.pullback_confirm`
-- 会输出到独立报表文件：
-  - `reports/pullback_recommendations.csv`
-  - `reports/pullback_recommendations.md`
-  - `reports/pullback_recommendations.txt`
-  - `reports/pullback/{signal_date}.log`
-
-适合场景：
-
-- 你觉得默认策略更像右侧追强，想减少“追高接盘”感
-- 想优先看“趋势还在，但位置更克制”的票
-
-示例：
-
-```bash
-# Windows
-python -m app.main recommend-pullback
-python -m app.main recommend-pullback --date 2026-03-06
-
-# macOS / Linux
-python3 -m app.main recommend-pullback
-python3 -m app.main recommend-pullback --date 2026-03-06
-```
-
-### 2.6) `recommend-oversold`
-
-用途：
-
-- 运行一套独立的“超跌反弹 / 不硬追”策略
-- 保留原 `recommend` 和 `recommend-pullback` 两条链路不变
-- 更偏好短期急跌、明显跌离 `MA20`、并伴随放量恐慌释放的股票
-
-命令：
-
-```bash
-# Windows
-python -m app.main recommend-oversold --date YYYY-MM-DD [--count N] [--output table|json]
-
-# macOS / Linux
-python3 -m app.main recommend-oversold --date YYYY-MM-DD [--count N] [--output table|json]
-```
-
-参数说明：
-
-- `--date YYYY-MM-DD`
-  - 目标日期
-  - 不传时，默认使用“下一个交易日”
-- `--count N`
-  - 本次输出推荐数量
-  - 不传时，默认使用 `config/default.yaml` 里 oversold profile 下的 `strategy.pick_count`
-- `--output table|json`
-  - `table`：适合终端阅读
-  - `json`：适合脚本集成、自动化处理或接口对接
-
-特点：
-
-- 使用配置里的 `strategy_profiles.oversold_rebound`
-- 更关注：
-  - `5日快速回撤`
-  - `收盘明显低于 MA20`
-  - `当日继续走弱`
-  - `成交量相对 20 日均量放大`
-- 会输出到独立报表文件：
-  - `reports/oversold_recommendations.csv`
-  - `reports/oversold_recommendations.md`
-  - `reports/oversold_recommendations.txt`
-  - `reports/oversold/{signal_date}.log`
-
-适合场景：
-
-- 想单独研究“恐慌超跌后的短线修复”
-- 不想把超跌逻辑混进原趋势策略里
-- 想在 `recommend-all` 里顺带拿到一组反弹候选
-
-示例：
-
-```bash
-# Windows
-python -m app.main recommend-oversold
-python -m app.main recommend-oversold --date 2026-03-06
-
-# macOS / Linux
-python3 -m app.main recommend-oversold
-python3 -m app.main recommend-oversold --date 2026-03-06
-```
-
-### 2.7) `recommend-adaptive`
-
-用途：
-
-- 先判断当前市场属于 `bull / neutral / bear`
-- 再按配置顺序自动选择更适合的策略
-- 如果候选策略都没有信号，就明确返回空仓
-
-命令：
-
-```bash
-# Windows
-python -m app.main recommend-adaptive --date YYYY-MM-DD [--count N] [--output table|json]
-
-# macOS / Linux
-python3 -m app.main recommend-adaptive --date YYYY-MM-DD [--count N] [--output table|json]
-```
-
-参数说明：
-
-- `--date YYYY-MM-DD`
-  - 目标日期
-  - 不传时，默认使用“下一个交易日”
-- `--count N`
-  - 选中策略本次输出的推荐数量
-- `--output table|json`
-  - `table`：终端直接看结果
-  - `json`：返回市场状态、尝试过的策略、最终采用的策略和推荐列表
-
-当前默认自适应顺序：
-
-- `bull`：先 `recommend-pullback`，再 `recommend`
-- `neutral`：先 `recommend-pullback`，再 `recommend`
-- `bear`：只尝试 `recommend-oversold`
-- 如果都没有候选：建议空仓
-
-配置位置：
-
-- `config/default.yaml` 里的 `adaptive_strategy.regime_orders`
-
-适合场景：
-
-- 不想每天手动决定今天该看哪套策略
-- 想把“没信号就空仓”也纳入固定流程
-- 想把三套策略变成一个更接近实盘的统一入口
-
-示例：
-
-```bash
-# Windows
-python -m app.main recommend-adaptive
-python -m app.main recommend-adaptive --date 2026-03-23 --count 1
-
-# macOS / Linux
-python3 -m app.main recommend-adaptive
-python3 -m app.main recommend-adaptive --date 2026-03-23 --count 1
-```
-
-### 2.8) `recommend-bull`
-
-用途：
-
-- 这是给 `recommend` 单独开的强市研究入口
-- 只用于研究“强趋势策略在 bull 市里是否值得重新进入主流程”
-- 不建议直接替代当前主入口 `recommend-adaptive`
-
-命令：
-
-```bash
-# Windows
-python -m app.main recommend-bull --date YYYY-MM-DD [--count N] [--output table|json]
-
-# macOS / Linux
-python3 -m app.main recommend-bull --date YYYY-MM-DD [--count N] [--output table|json]
-```
-
-适合场景：
-
-- 想单独看强市趋势票而不影响主配置
-- 想验证 `recommend` 是否有资格回到 adaptive 主流程
-
-### 3) `backtest`
-
-用途：
-
-- 按历史区间回测策略表现
-- 检查策略在过去一段时间内的胜率、平均收益、最大回撤代理等指标
-- 适合用来比较不同配置参数的效果
-
-命令：
-
-```bash
-# Windows
-python -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]
-
-# macOS / Linux
-python3 -m app.main backtest --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]
-```
-
-参数说明：
+### 回测类命令
+
+| 命令 | 用途 | 说明 |
+| --- | --- | --- |
+| `backtest-adaptive` | 主回测入口 | 验证当前正式流程 |
+| `backtest-adaptive-rules` | 规则退出回测 | 第一版规则退出实验 |
+| `backtest` | 默认趋势策略回测 | 对应 `recommend` |
+| `backtest-pullback` | 回踩策略回测 | 对应 `recommend-pullback` |
+| `backtest-bull` | 强市研究回测 | 对应 `recommend-bull` |
+| `backtest-relative` | 相对强度研究回测 | 对应 `recommend-relative` |
+
+回测类命令的常见参数：
 
 - `--start YYYY-MM-DD`
-  - 必填，回测起始日期
 - `--end YYYY-MM-DD`
-  - 必填，回测结束日期
 - `--count N`
-  - 每个交易日选几只股票
-  - 不传时，默认使用 `strategy.pick_count`
 - `--output table|json|json-cn`
-  - `table`：终端表格式阅读
-  - `json`：英文 key 的 JSON
-  - `json-cn`：中文 key 的 JSON，适合直接给中文环境脚本/报表消费
 
-输出指标示例：
+### 诊断与工具命令
 
-- 回测区间
-- 尝试交易日 / 跳过交易日
-- 交易次数
-- 1 日 / 3 日胜率（毛、净）
-- 1 日 / 3 日 / 5 日平均收益（毛、净）
-- 最大回撤代理
-- 模式分布、错误统计、错误示例
+| 命令 | 用途 |
+| --- | --- |
+| `explain` | 解释单只股票的评分、过滤和关键指标 |
+| `doctor` | 检查网络、数据源连通性和基础环境 |
+| `check-kline` | 检查单只股票在指定区间的 K 线抓取 |
+| `check-sector-map` | 校验本地板块映射文件覆盖率 |
+| `export-dashboard-data` | 生成 `index.html` 使用的汇总数据 |
 
-说明：
+### 新鲜度检查脚本
 
-- 回测净收益会考虑 `execution_cost` 里的佣金、印花税、滑点等参数
-- 如果区间太短，可能出现“交易日不足”类报错
-- 如果某些日期没有足够候选，会记录跳过原因或降级模式结果
+| 脚本 | 用途 |
+| --- | --- |
+| `scripts/check_today_update.sh` | 表格方式检查当日数据是否更新 |
+| `scripts/check_today_update_json.sh` | JSON 方式检查当日数据是否更新 |
+| `scripts/check_today_update_multi.sh` | 多探针股票联合检查 |
+| `scripts/check_data_freshness.py` | 通用新鲜度检查脚本 |
 
-示例：
+`scripts/check_data_freshness.py` 常用参数：
 
-```bash
-# Windows
-python -m app.main backtest --start 2026-02-01 --end 2026-03-01
-python -m app.main backtest --start 2026-02-01 --end 2026-03-01 --count 5
-python -m app.main backtest --start 2026-02-01 --end 2026-03-01 --output json-cn
-
-# macOS / Linux
-python3 -m app.main backtest --start 2026-02-01 --end 2026-03-01
-python3 -m app.main backtest --start 2026-02-01 --end 2026-03-01 --count 5
-python3 -m app.main backtest --start 2026-02-01 --end 2026-03-01 --output json-cn
-```
-
-### 3.5) `backtest-pullback`
-
-用途：
-
-- 回测 `recommend-pullback` 使用的独立“回踩确认 / 不追高”策略
-- 用同一套成本模型和统计口径，对比原趋势策略和回踩策略
-
-命令：
-
-```bash
-# Windows
-python -m app.main backtest-pullback --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]
-
-# macOS / Linux
-python3 -m app.main backtest-pullback --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]
-```
-
-适合场景：
-
-- 想确认“减少追高”以后，胜率、平均收益和回撤有没有改善
-- 想直接比较 `backtest` 和 `backtest-pullback` 在同一区间的差异
-
-### 3.6) `backtest-bull`
-
-用途：
-
-- 回测 `recommend-bull` 这套强市研究版趋势策略
-- 只用于验证它是否值得重新并入 adaptive 主流程
-
-命令：
-
-```bash
-# Windows
-python -m app.main backtest-bull --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]
-
-# macOS / Linux
-python3 -m app.main backtest-bull --start YYYY-MM-DD --end YYYY-MM-DD [--count N] [--output table|json|json-cn]
-```
-
-建议：
-
-- 先和 `backtest-adaptive` 做对比
-- 如果它没有明显优于当前主流程，就继续只保留为研究策略
-
-### 4) `doctor`
-
-用途：
-
-- 诊断数据源连通性与基础网络问题
-- 适合在“突然跑不动”“拉不到数据”“怀疑被代理污染”时先做自检
-
-命令：
-
-```bash
-# Windows
-python -m app.main doctor [--output table|json]
-
-# macOS / Linux
-python3 -m app.main doctor [--output table|json]
-```
-
-参数说明：
-
+- `--date YYYY-MM-DD`
+- `--probe-symbol 000001`
+- `--require any|all`
 - `--output table|json`
-  - `table`：终端查看
-  - `json`：便于自动采集结果
-
-会检查的方向通常包括：
-
-- DNS 是否可解析
-- HTTP 请求是否可访问
-- 数据源是否能正常连通
-- 当前网络环境是否存在明显异常
-
-示例：
-
-```bash
-# Windows
-python -m app.main doctor
-python -m app.main doctor --output json
-
-# macOS / Linux
-python3 -m app.main doctor
-python3 -m app.main doctor --output json
-```
-
-### 5) `check-kline`
-
-用途：
-
-- 检查某只股票在指定区间内的日线数据是否能正常抓取
-- 适合单点排查：到底是全局网络问题，还是个股/日期区间问题
-
-命令：
-
-```bash
-# Windows
-python -m app.main check-kline --symbol 000001 --start YYYY-MM-DD --end YYYY-MM-DD [--output table|json]
-
-# macOS / Linux
-python3 -m app.main check-kline --symbol 000001 --start YYYY-MM-DD --end YYYY-MM-DD [--output table|json]
-```
-
-参数说明：
-
-- `--symbol`
-  - 必填，股票代码
-- `--start`
-  - 必填，起始日期
-- `--end`
-  - 必填，结束日期
-- `--output table|json`
-  - `table`：显示抓到多少条数据、首尾日期
-  - `json`：结构化输出，便于调试脚本
-
-输出内容：
-
-- 股票代码
-- 查询区间
-- 返回行数
-- 首条日期
-- 末条日期
-
-示例：
-
-```bash
-# Windows
-python -m app.main check-kline --symbol 000001 --start 2026-02-01 --end 2026-03-01
-python -m app.main check-kline --symbol 600519 --start 2026-02-01 --end 2026-03-01 --output json
-
-# macOS / Linux
-python3 -m app.main check-kline --symbol 000001 --start 2026-02-01 --end 2026-03-01
-python3 -m app.main check-kline --symbol 600519 --start 2026-02-01 --end 2026-03-01 --output json
-```
-
-## Freshness Scripts
-
-### `scripts/check_today_update.sh`
-
-用途：
-
-- 用表格方式检查“今天交易日”的数据是否已更新
-- 适合手动在终端快速确认
-
-### `scripts/check_today_update_json.sh`
-
-用途：
-
-- 与上面相同，但输出 JSON
-- 适合脚本、定时任务、CI 或自动监控接入
-
-### `scripts/check_today_update_multi.sh`
-
-用途：
-
-- 用多只探针股票联合检查数据是否更新
-- 适合对单一探针不放心时使用
-
-### `scripts/check_data_freshness.py`
-
-用途：
-
-- 通用数据新鲜度检查脚本
-- 可手动指定日期、探针股票、通过规则和输出格式
-
-常用参数：
-
-- `--date YYYY-MM-DD`：检查指定日期，默认今天
-- `--probe-symbol 000001`：指定探针股票，可重复传参
-- `--require any|all`：多个探针采用任一通过或全部通过规则
-- `--output table|json`：输出格式
 
 退出码：
 
@@ -680,27 +193,185 @@ python3 -m app.main check-kline --symbol 600519 --start 2026-02-01 --end 2026-03
 - `2`：数据未更新
 - `1`：脚本执行异常
 
-## 配置与运行建议
+## 常用命令示例
 
-- 默认配置文件：`config/default.yaml`
-- 本地缓存默认开启，缓存目录为 `.cache/akshare`
-- 每次 `recommend` 会把结构化结果写入 `reports/` 目录
-- `reports/*.log` 属于运行日志，通常不建议提交到代码仓库
-- 如果你网络环境里代理比较乱，建议保留：
-  - `network.disable_env_proxy: true`
-  - `network.force_no_proxy_all: true`
+### 主推荐
 
-## 中文注意事项
+```bash
+# macOS / Linux
+python3 -m app.main recommend-adaptive
+python3 -m app.main recommend-adaptive --date 2026-03-23 --count 1
+python3 -m app.main recommend-adaptive --date 2026-03-23 --output json
+
+# Windows
+python -m app.main recommend-adaptive
+python -m app.main recommend-adaptive --date 2026-03-23 --count 1
+python -m app.main recommend-adaptive --date 2026-03-23 --output json
+```
+
+### 主回测
+
+```bash
+# macOS / Linux
+python3 -m app.main backtest-adaptive --start 2025-09-01 --end 2026-03-23 --output table
+python3 -m app.main backtest-adaptive --start 2025-09-01 --end 2026-03-23 --output json-cn
+
+# Windows
+python -m app.main backtest-adaptive --start 2025-09-01 --end 2026-03-23 --output table
+python -m app.main backtest-adaptive --start 2025-09-01 --end 2026-03-23 --output json-cn
+```
+
+### 研究对比
+
+```bash
+# macOS / Linux
+python3 -m app.main backtest-pullback --start 2025-09-01 --end 2026-03-23 --output table
+python3 -m app.main backtest-bull --start 2025-09-01 --end 2026-03-23 --output table
+python3 -m app.main backtest-relative --start 2025-09-01 --end 2026-03-23 --output table
+
+# Windows
+python -m app.main backtest-pullback --start 2025-09-01 --end 2026-03-23 --output table
+python -m app.main backtest-bull --start 2025-09-01 --end 2026-03-23 --output table
+python -m app.main backtest-relative --start 2025-09-01 --end 2026-03-23 --output table
+```
+
+### 单点排查
+
+```bash
+# macOS / Linux
+python3 -m app.main doctor
+python3 -m app.main check-kline --symbol 000001 --start 2026-02-01 --end 2026-03-01
+python3 -m app.main check-sector-map --path data/sector_map.csv
+
+# Windows
+python -m app.main doctor
+python -m app.main check-kline --symbol 000001 --start 2026-02-01 --end 2026-03-01
+python -m app.main check-sector-map --path data/sector_map.csv
+```
+
+## 输出文件
+
+常见输出目录是 `reports/`。
+
+推荐命令通常会写入：
+
+- `reports/recommendations.csv`
+- `reports/recommendations.md`
+- `reports/recommendations.txt`
+- `reports/pullback_recommendations.csv`
+- `reports/oversold_recommendations.csv`
+- `reports/opportunity_recommendations.csv`
+- `reports/{signal_date}.log`
+- `reports/dashboard-data.js`
+
+自适应回测通常会写入：
+
+- `reports/backtests/adaptive/{period_key}.json`
+- `reports/backtests/adaptive/latest.json`
+- `reports/backtests/adaptive_compare/{period_key}.txt`
+
+其中：
+
+- `index.html` 读取 `reports/dashboard-data.js`
+- `reports/*.log` 属于运行日志，通常不建议提交
+- `.cache/akshare` 是本地缓存目录，通常也不建议提交
+
+## 配置说明
+
+默认配置文件是 `config/default.yaml`，主要控制这些内容：
+
+- 网络代理处理
+- 数据源超时、重试与本地缓存
+- 股票池与基础过滤器
+- 市场状态过滤
+- 个股风险过滤
+- 评分逻辑与策略 profile
+- 报表与日志输出
+- 回测成本模型
+
+常见相关配置文件：
+
+- `config/default.yaml`：当前正式主配置
+- `config/default.stable.yaml`：稳定快照
+- `config/default.baseline.yaml`：历史基线
+- `config/default.aggressive.yaml`：更激进版本
+- `config/default.oversold-neutral.yaml`：偏超跌 / 中性环境变体
+- `config/default.oversold-fallback.yaml`：超跌兜底变体
+
+切换配置文件时：
+
+```bash
+# macOS / Linux
+python3 -m app.main --config config/default.stable.yaml recommend-adaptive --date YYYY-MM-DD
+
+# Windows
+python -m app.main --config config/default.stable.yaml recommend-adaptive --date YYYY-MM-DD
+```
+
+## 板块映射
+
+板块映射文件默认是 `data/sector_map.csv`，最小格式如下：
+
+```csv
+symbol,sector
+000001,银行
+600519,白酒
+```
+
+用途：
+
+- 提供 `股票 -> 板块/行业` 映射
+- 支持板块覆盖率检查
+- 给相关研究策略提供板块上下文
+
+检查方式：
+
+```bash
+# macOS / Linux
+python3 -m app.main check-sector-map --path data/sector_map.csv
+
+# Windows
+python -m app.main check-sector-map --path data/sector_map.csv
+```
+
+补充说明见 `data/sector_map.README.md`。
+
+## 目录结构
+
+```text
+app/                    核心代码
+  backtest/             回测逻辑
+  data_source/          数据源封装
+  engine/               推荐引擎
+  features/             技术指标
+  strategy/             打分、持有期、风险目标
+  universe/             股票池过滤
+config/                 YAML 配置
+data/                   本地静态数据
+reports/                推荐结果、回测结果、仪表盘数据
+scripts/                辅助脚本
+tests/                  测试
+index.html              静态仪表盘页面
+FINAL_STRATEGY_SUMMARY.md  策略阶段性结论
+```
+
+## 注意事项
 
 - 本项目用于策略研究，不构成投资建议。
-- `recommend` 输出的是“候选/研究结果”，不是保证收益的交易信号。
-- 若 `signal_date` 对应数据尚未更新，程序可能会告警或直接停止，取决于 `data_freshness.stop_on_stale` 与 `market_filter.stop_on_stale` 设置。
-- 默认启用本地缓存，重复运行会更快；若怀疑缓存有问题，可临时关闭 `data_source.cache_enabled` 排查。
-- 若 `normal` 模式候选为 0，可考虑查看 `strategy.enabled_modes`、`fallback.mode`、`risk_filter` 和 `market_filter`。
+- `recommend-*` 输出的是候选结果，不等于保证收益的交易信号。
+- 如果数据源还没更新到目标 `signal_date`，程序可能告警或停止，取决于 `data_freshness` 和 `market_filter` 设置。
+- 若网络环境代理混乱，通常建议保留：
+  - `network.disable_env_proxy: true`
+  - `network.force_no_proxy_all: true`
+- 若 `normal` 模式候选为 0，可优先检查：
+  - `strategy.enabled_modes`
+  - `fallback.mode`
+  - `risk_filter`
+  - `market_filter`
 
-## 中文常见问题
+## 常见问题
 
-- 回测报错“交易日不足”：`backtest` 至少需要足够交易日样本，需扩大 `--start/--end` 区间。
-- 回测里 `normal candidates=0`：常见于熊市拦截、阈值过严、板块过滤过多或历史数据不完整。
-- 终端出现 `NotOpenSSLWarning`：这是 Python/urllib3 环境告警，不是本项目核心逻辑错误。
-- 运行后生成很多日志：这是 `reporting.recommendation_log` 在工作，默认写到 `reports/{signal_date}.log`。
+- 回测报错“交易日不足”：扩大 `--start` / `--end` 区间。
+- 回测里出现 `normal candidates=0`：常见原因是熊市过滤、阈值过严、板块过滤过多或历史数据不完整。
+- 终端出现 `NotOpenSSLWarning`：通常是 Python / urllib3 环境告警，不是项目核心逻辑错误。
+- 运行后生成很多日志：这是 `reporting.recommendation_log` 在工作，默认会写到 `reports/{signal_date}.log`。
