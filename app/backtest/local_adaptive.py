@@ -90,6 +90,7 @@ def run_local_adaptive_backtest(base_cfg: dict, start_date: date, end_date: date
         "recommend-pullback": apply_strategy_profile(base_cfg, "pullback_confirm"),
         "recommend-oversold": apply_strategy_profile(base_cfg, "oversold_rebound"),
         "recommend-bull": apply_strategy_profile(base_cfg, "bull_trend_research"),
+        "recommend-relative": apply_strategy_profile(base_cfg, "relative_strength"),
     }
     for cfg in profiles.values():
         cfg.setdefault("data_freshness", {})["enabled"] = False
@@ -140,16 +141,17 @@ def run_local_adaptive_backtest(base_cfg: dict, start_date: date, end_date: date
             continue
         for row in df.itertuples(index=False):
             latest_dict = row._asdict()
-            latest = pd.Series(latest_dict)
             signal_date = latest_dict["trade_date"]
             for name, cfg in profiles.items():
                 if symbol not in universe_by_profile[name]:
                     continue
-                if not passes_threshold(latest, "normal", cfg):
+                latest_view = dict(latest_dict)
+                latest_view["market_mom20"] = market_states_by_profile[name][signal_date].mom20
+                if not passes_threshold(latest_view, "normal", cfg):
                     continue
-                if not passes_risk_filter(latest, market_states_by_profile[name][signal_date], "normal", cfg):
+                if not passes_risk_filter(latest_view, market_states_by_profile[name][signal_date], "normal", cfg):
                     continue
-                score_total, _ = compute_score(latest, cfg)
+                score_total, _ = compute_score(latest_view, cfg)
                 candidates[name][signal_date].append(
                     AdaptiveCandidate(
                         score=score_total,

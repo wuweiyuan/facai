@@ -11,6 +11,7 @@ from pathlib import Path
 
 from app.backtest.runner import BacktestRunner
 from app.backtest.local_adaptive import run_local_adaptive_backtest
+from app.backtest.local_rule_adaptive import run_local_rule_adaptive_backtest
 from app.backtest.local_single import run_local_single_backtest
 from app.config import apply_strategy_profile, load_config
 from app.dashboard import export_dashboard_data
@@ -22,21 +23,24 @@ from app.models import BacktestRecord
 from app.network import clear_proxy_env, disable_requests_env_proxy, force_no_proxy_all
 from app.reporting import (
     append_adaptive_run_csv,
+    append_opportunity_pool_csv,
     append_recommendation_csv,
     append_recommendation_md,
     append_recommendation_txt,
     resolve_recommendation_output_log_path,
 )
+from app.sector_map import summarize_sector_map
 
 
-def _resolve_dashboard_export_args(base_cfg: dict) -> tuple[str, str, str, str]:
+def _resolve_dashboard_export_args(base_cfg: dict) -> tuple[str, str, str, str, str]:
     default_csv = str(base_cfg.get("reporting", {}).get("recommendation_csv", "reports/recommendations.csv"))
     pullback_cfg = apply_strategy_profile(base_cfg, "pullback_confirm")
     pullback_csv = str(pullback_cfg.get("reporting", {}).get("recommendation_csv", "reports/pullback_recommendations.csv"))
     oversold_cfg = apply_strategy_profile(base_cfg, "oversold_rebound")
     oversold_csv = str(oversold_cfg.get("reporting", {}).get("recommendation_csv", "reports/oversold_recommendations.csv"))
+    opportunity_csv = str(base_cfg.get("reporting", {}).get("opportunity_recommendation_csv", "reports/opportunity_recommendations.csv"))
     dashboard_js = str(base_cfg.get("reporting", {}).get("dashboard_data_js", "reports/dashboard-data.js"))
-    return default_csv, pullback_csv, oversold_csv, dashboard_js
+    return default_csv, pullback_csv, oversold_csv, opportunity_csv, dashboard_js
 
 
 METRIC_LABELS_ZH = {
@@ -47,6 +51,8 @@ METRIC_LABELS_ZH = {
     "mom20": "20日动量",
     "market_mom20": "市场20日动量",
     "mom20_excess_vs_market": "相对市场20日超额动量",
+    "sector_mom20": "板块20日动量",
+    "mom20_excess_vs_sector": "相对板块20日超额动量",
     "rsi14": "RSI14",
     "atr14": "ATR14",
     "stop_loss_price": "止损价",
@@ -132,6 +138,119 @@ def _resolve_adaptive_strategy_specs(base_cfg: dict, market_label: str) -> list[
         if spec and spec not in out:
             out.append(spec)
     return out or [known["recommend-pullback"]]
+
+
+def _resolve_opportunity_pool_specs(base_cfg: dict, market_label: str) -> list[tuple[str, str | None, str]]:
+    pool_cfg = base_cfg.get("opportunity_pool", {})
+    regime_orders = pool_cfg.get("regime_orders", {})
+    profile_overrides = pool_cfg.get("profile_overrides", {})
+    raw_order = regime_orders.get(market_label) or regime_orders.get("unknown") or ["recommend-pullback", "recommend-oversold"]
+    known = {
+        "recommend": ("recommend", None, "默认策略 recommend"),
+        "recommend-pullback": ("recommend-pullback", "pullback_confirm", "回踩策略 recommend-pullback"),
+        "recommend-oversold": ("recommend-oversold", "oversold_rebound", "超跌反弹策略 recommend-oversold"),
+        "recommend-bull": ("recommend-bull", "bull_trend_research", "强市趋势研究策略 recommend-bull"),
+        "recommend-relative": ("recommend-relative", "relative_strength", "相对强弱研究策略 recommend-relative"),
+    }
+    out: list[tuple[str, str | None, str]] = []
+    for item in raw_order:
+        key = str(item).strip()
+        spec = known.get(key)
+        if not spec:
+            continue
+        profile_name = spec[1]
+        if isinstance(profile_overrides, dict):
+            override_name = profile_overrides.get(key)
+            if override_name is not None:
+                profile_name = str(override_name).strip() or None
+        resolved_spec = (spec[0], profile_name, spec[2])
+        if resolved_spec not in out:
+            out.append(resolved_spec)
+    return out or [known["recommend-pullback"], known["recommend-oversold"]]
+
+
+def _resolve_opportunity_pick_count(base_cfg: dict, cmd_name: str, override_total: int | None) -> int | None:
+    if override_total is None:
+        counts_cfg = base_cfg.get("opportunity_pool", {}).get("strategy_pick_counts", {})
+        raw = counts_cfg.get(cmd_name)
+        if raw is None:
+            return 2
+        try:
+            return max(int(raw), 1)
+        except (TypeError, ValueError):
+            return 2
+    return max(min(int(override_total), 10), 1)
+
+
+def _build_opportunity_pool(base_cfg: dict, ds, target_date: date, total_count: int | None) -> dict:
+    base_engine = Recommender(ds, base_cfg)
+    signal_date = base_engine.resolve_signal_date(target_date)
+    market_state, market_reason = base_engine._resolve_market_state(signal_date)
+    run_specs = _resolve_opportunity_pool_specs(base_cfg, market_state.label)
+    seen_symbols: set[str] = set()
+    pool: list[dict] = []
+    total_limit = max(int(total_count), 1) if total_count is not None else int(base_cfg.get("opportunity_pool", {}).get("max_total", 6))
+    total_limit = max(total_limit, 1)
+
+    for cmd_name, profile_name, section_title in run_specs:
+        cfg = apply_strategy_profile(base_cfg, profile_name)
+        engine = Recommender(ds, cfg)
+        per_strategy_count = _resolve_opportunity_pick_count(base_cfg, cmd_name, None if total_count is None else total_limit)
+        try:
+            recs = engine.recommend_many(target_date, count=per_strategy_count)
+        except RuntimeError as exc:
+            if "No candidate found in enabled modes:" not in str(exc):
+                raise
+            continue
+        for rec in recs:
+            if rec.symbol in seen_symbols:
+                continue
+            seen_symbols.add(rec.symbol)
+            item = rec.as_dict()
+            item["source_strategy"] = cmd_name
+            item["source_label"] = section_title
+            pool.append(item)
+            if len(pool) >= total_limit:
+                break
+        if len(pool) >= total_limit:
+            break
+
+    return {
+        "target_date": target_date.isoformat(),
+        "signal_date": signal_date.isoformat(),
+        "market_state": market_state.label,
+        "market_reason": market_reason,
+        "pool": pool,
+    }
+
+
+def _save_opportunity_pool_csv(base_cfg: dict, payload: dict) -> str | None:
+    if not bool(base_cfg.get("reporting", {}).get("enabled", True)):
+        return None
+    return append_opportunity_pool_csv(
+        payload,
+        str(base_cfg.get("reporting", {}).get("opportunity_recommendation_csv", "reports/opportunity_recommendations.csv")),
+    )
+
+
+def _print_opportunity_pool(payload: dict) -> None:
+    print(
+        f"[机会池] 目标日={payload['target_date']} 信号日={payload['signal_date']} "
+        f"市场={payload['market_state']} 原因={payload['market_reason']}"
+    )
+    if not payload["pool"]:
+        print("[机会池] 当前没有额外候选。")
+        return
+    print(f"[机会池] 候选数量: {len(payload['pool'])}")
+    for idx, item in enumerate(payload["pool"], start=1):
+        print(f"\n[{idx}] {item['symbol']} {item['name']}")
+        print(f"来源策略: {item['source_label']}")
+        print(f"总分: {item['score_total']:.2f}")
+        print(f"收盘价: {item['key_metrics'].get('close', '-')}")
+        print(f"建议持股天数: {item['key_metrics'].get('suggested_holding_days', '-')}")
+        exit_plan = item["key_metrics"].get("exit_plan", "")
+        if exit_plan:
+            print(f"退出规则: {exit_plan}")
 
 
 def _resolve_adaptive_pick_count(base_cfg: dict, cmd_name: str, override_count: int | None) -> int | None:
@@ -594,6 +713,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_rec_ad.add_argument("--count", type=int, default=None, help="How many stocks to pick for the chosen strategy")
     p_rec_ad.add_argument("--output", choices=["table", "json"], default="table")
 
+    p_rec_pool = sub.add_parser("recommend-opportunity", help="Build a wider opportunity pool for discretionary review")
+    p_rec_pool.add_argument("--date", default=None, help="Target date YYYY-MM-DD")
+    p_rec_pool.add_argument("--count", type=int, default=None, help="Total number of opportunity names to show")
+    p_rec_pool.add_argument("--output", choices=["table", "json"], default="table")
+
     p_exp = sub.add_parser("explain", help="Explain one stock score on target date")
     p_exp.add_argument("--symbol", required=True, help="Stock code like 000001")
     p_exp.add_argument("--date", default=None, help="Target date YYYY-MM-DD")
@@ -646,6 +770,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_bt_ad.add_argument("--output", choices=["table", "json", "json-cn"], default="json-cn")
     p_bt_ad.add_argument("--no-save-report", action="store_true", help="Do not save adaptive backtest report files")
 
+    p_bt_ad_rules = sub.add_parser("backtest-adaptive-rules", help="Backtest the adaptive strategy with rule-based exits")
+    p_bt_ad_rules.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
+    p_bt_ad_rules.add_argument("--end", required=True, help="End date YYYY-MM-DD")
+    p_bt_ad_rules.add_argument("--count", type=int, default=None, help="Optional override for per-strategy adaptive pick count")
+    p_bt_ad_rules.add_argument("--output", choices=["table", "json", "json-cn"], default="json-cn")
+
     p_doc = sub.add_parser("doctor", help="Run connectivity diagnostics for data sources")
     p_doc.add_argument("--output", choices=["table", "json"], default="table")
 
@@ -654,6 +784,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_ck.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
     p_ck.add_argument("--end", required=True, help="End date YYYY-MM-DD")
     p_ck.add_argument("--output", choices=["table", "json"], default="table")
+
+    p_sector = sub.add_parser("check-sector-map", help="Validate local sector map coverage")
+    p_sector.add_argument("--path", default=None, help="Path to sector map CSV; defaults to config sector_map.path")
+    p_sector.add_argument("--output", choices=["table", "json"], default="table")
 
     p_dash = sub.add_parser("export-dashboard-data", help="Export merged recommendation data for index.html")
     p_dash.add_argument("--default-csv", default="reports/recommendations.csv", help="Path to recommend CSV")
@@ -667,6 +801,11 @@ def build_parser() -> argparse.ArgumentParser:
         default="reports/oversold_recommendations.csv",
         help="Path to recommend-oversold CSV",
     )
+    p_dash.add_argument(
+        "--opportunity-csv",
+        default="reports/opportunity_recommendations.csv",
+        help="Path to recommend-opportunity CSV",
+    )
     p_dash.add_argument("--output", default="reports/dashboard-data.js", help="Path to generated dashboard data")
     return p
 
@@ -676,7 +815,14 @@ def main() -> None:
     args = parser.parse_args()
     base_cfg = load_config(args.config)
     if args.cmd == "export-dashboard-data":
-        saved = export_dashboard_data(args.default_csv, args.pullback_csv, args.oversold_csv, args.output, base_cfg)
+        saved = export_dashboard_data(
+            default_csv=args.default_csv,
+            pullback_csv=args.pullback_csv,
+            oversold_csv=args.oversold_csv,
+            output_path=args.output,
+            cfg=base_cfg,
+            opportunity_csv=args.opportunity_csv,
+        )
         print(f"Dashboard data exported to {saved}")
         return
 
@@ -694,6 +840,8 @@ def main() -> None:
         tried_commands: list[str] = []
         adaptive_reporting_enabled = bool(base_cfg.get("reporting", {}).get("enabled", True))
         chosen_count: int | None = None
+        opportunity_payload: dict | None = None
+        saved_opportunity_csv: str | None = None
 
         if args.output != "json":
             print(
@@ -743,15 +891,21 @@ def main() -> None:
             )
             if args.output != "json":
                 print(f"已写入文档: {saved_adaptive_csv}")
+        if not chosen_cmd:
+            opportunity_payload = _build_opportunity_pool(base_cfg, ds, target_date, args.count)
+            saved_opportunity_csv = _save_opportunity_pool_csv(base_cfg, opportunity_payload)
+            if saved_opportunity_csv and args.output != "json":
+                print(f"已写入文档: {saved_opportunity_csv}")
 
-        if any_reporting_enabled or adaptive_reporting_enabled:
-            dashboard_default_csv, dashboard_pullback_csv, dashboard_oversold_csv, dashboard_output = _resolve_dashboard_export_args(base_cfg)
+        if any_reporting_enabled or adaptive_reporting_enabled or saved_opportunity_csv:
+            dashboard_default_csv, dashboard_pullback_csv, dashboard_oversold_csv, dashboard_opportunity_csv, dashboard_output = _resolve_dashboard_export_args(base_cfg)
             saved_dashboard = export_dashboard_data(
-                dashboard_default_csv,
-                dashboard_pullback_csv,
-                dashboard_oversold_csv,
-                dashboard_output,
-                base_cfg,
+                default_csv=dashboard_default_csv,
+                pullback_csv=dashboard_pullback_csv,
+                oversold_csv=dashboard_oversold_csv,
+                output_path=dashboard_output,
+                cfg=base_cfg,
+                opportunity_csv=dashboard_opportunity_csv,
             )
             if args.output != "json":
                 print(f"已写入文档: {saved_dashboard}")
@@ -766,13 +920,41 @@ def main() -> None:
                 "chosen_strategy": chosen_cmd,
                 "chosen_count": chosen_count,
                 "recommendations": [item.as_dict() for item in chosen_recs],
+                "opportunity_pool": opportunity_payload,
             }
             print(json.dumps(payload, ensure_ascii=False, indent=2))
         elif not chosen_cmd:
             print("[自适应] 当前市场下所有候选策略都无信号，建议空仓。")
+            print("[自适应] 已自动生成机会池供人工复核。")
+            _print_opportunity_pool(opportunity_payload or {"target_date": target_date.isoformat(), "signal_date": signal_date.isoformat(), "market_state": market_state.label, "market_reason": market_reason, "pool": []})
         else:
             count_note = f"；采用数量: {chosen_count}" if chosen_count else ""
             print(f"[自适应] 已采用策略: {chosen_cmd}{count_note}")
+        return
+
+    if args.cmd == "recommend-opportunity":
+        _configure_network(base_cfg)
+        ds = _build_data_source(base_cfg)
+        target_date = _resolve_recommend_target_date(ds, args.date)
+        payload = _build_opportunity_pool(base_cfg, ds, target_date, args.count)
+        saved_opportunity_csv = _save_opportunity_pool_csv(base_cfg, payload)
+        if saved_opportunity_csv:
+            dashboard_default_csv, dashboard_pullback_csv, dashboard_oversold_csv, dashboard_opportunity_csv, dashboard_output = _resolve_dashboard_export_args(base_cfg)
+            saved_dashboard = export_dashboard_data(
+                default_csv=dashboard_default_csv,
+                pullback_csv=dashboard_pullback_csv,
+                oversold_csv=dashboard_oversold_csv,
+                output_path=dashboard_output,
+                cfg=base_cfg,
+                opportunity_csv=dashboard_opportunity_csv,
+            )
+            if args.output != "json":
+                print(f"已写入文档: {saved_opportunity_csv}")
+                print(f"已写入文档: {saved_dashboard}")
+        if args.output == "json":
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            return
+        _print_opportunity_pool(payload)
         return
 
     if args.cmd in {"recommend", "recommend-all", "recommend-pullback", "recommend-oversold", "recommend-bull", "recommend-relative"}:
@@ -793,13 +975,14 @@ def main() -> None:
             any_reporting_enabled = any_reporting_enabled or reporting_enabled
             json_payload[cmd_name] = [item.as_dict() for item in recs]
         if any_reporting_enabled:
-            dashboard_default_csv, dashboard_pullback_csv, dashboard_oversold_csv, dashboard_output = _resolve_dashboard_export_args(base_cfg)
+            dashboard_default_csv, dashboard_pullback_csv, dashboard_oversold_csv, dashboard_opportunity_csv, dashboard_output = _resolve_dashboard_export_args(base_cfg)
             saved_dashboard = export_dashboard_data(
-                dashboard_default_csv,
-                dashboard_pullback_csv,
-                dashboard_oversold_csv,
-                dashboard_output,
-                base_cfg,
+                default_csv=dashboard_default_csv,
+                pullback_csv=dashboard_pullback_csv,
+                oversold_csv=dashboard_oversold_csv,
+                output_path=dashboard_output,
+                cfg=base_cfg,
+                opportunity_csv=dashboard_opportunity_csv,
             )
             if args.output != "json":
                 print(f"已写入文档: {saved_dashboard}")
@@ -836,6 +1019,15 @@ def main() -> None:
             if saved_paths:
                 for path in saved_paths:
                     print(f"已写入文档: {path}")
+        return
+
+    if args.cmd == "backtest-adaptive-rules":
+        cfg = base_cfg
+        _configure_network(cfg)
+        start = _parse_date(args.start)
+        end = _parse_date(args.end)
+        summary = run_local_rule_adaptive_backtest(base_cfg, start, end, args.count)
+        _print_backtest(summary, args.output)
         return
 
     cfg = base_cfg
@@ -930,6 +1122,23 @@ def main() -> None:
         print(f"rows: {payload['rows']}")
         print(f"first_date: {payload['first_date']}")
         print(f"last_date: {payload['last_date']}")
+        return
+
+    if args.cmd == "check-sector-map":
+        sector_path = args.path or str(base_cfg.get("sector_map", {}).get("path", "data/sector_map.csv"))
+        cache_dir = str(base_cfg.get("data_source", {}).get("cache_dir", ".cache/akshare"))
+        payload = summarize_sector_map(sector_path, cache_dir)
+        if args.output == "json":
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            return
+        print(f"path: {payload['path']}")
+        print(f"rows: {payload['rows']}")
+        print(f"unique_sectors: {payload['unique_sectors']}")
+        print(f"matched_cached_symbols: {payload['matched_cached_symbols']}")
+        print(f"unmatched_symbols: {payload['unmatched_symbols']}")
+        print(f"top_sectors: {payload['top_sectors']}")
+        print(f"sample_matches: {payload['sample_matches']}")
+        print(f"sample_unmatched: {payload['sample_unmatched']}")
         return
 
     raise RuntimeError(f"Unsupported command: {args.cmd}")

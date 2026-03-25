@@ -76,6 +76,17 @@ data_source:
   # 这是典型的“运行产物”目录，通常不建议提交到 Git 仓库。
   cache_dir: .cache/akshare
 
+# 本地板块/行业映射文件。
+# 格式要求：CSV，至少包含两列：
+# - symbol: 6位股票代码
+# - sector: 板块/行业名称
+# 例如：
+# symbol,sector
+# 000001,银行
+# 600519,白酒
+sector_map:
+  path: data/sector_map.csv
+
 # 数据新鲜度检查。
 # 目的是避免“明明以为拿到今天数据，实际还是昨天甚至更早的数据”这种情况。
 # 主要在 recommend 命令里最重要，因为开盘前选股对日期非常敏感。
@@ -352,6 +363,10 @@ fallback:
 # 用于在不改动默认 recommend 行为的前提下，给某些命令挂一套单独参数。
 # 例如 recommend-pullback 会套用 pullback_confirm 这组覆盖配置。
 strategy_profiles:
+  recommend_opportunity:
+    strategy:
+      name: recommend_opportunity_v1
+      enabled_modes: [normal, relaxed]
   pullback_confirm:
     strategy:
       name: pullback_confirm_v1
@@ -379,6 +394,28 @@ strategy_profiles:
       recommendation_md: reports/pullback_recommendations.md
       recommendation_txt: reports/pullback_recommendations.txt
       recommendation_log: reports/pullback/{signal_date}.log
+  pullback_opportunity:
+    strategy:
+      name: pullback_opportunity_v1
+      enabled_modes: [normal, relaxed, force]
+      weights:
+        trend: 0.20
+        momentum: 0.15
+        stability: 0.20
+        volume: 0.10
+        pullback: 0.35
+    risk_filter:
+      pullback:
+        enabled: true
+        min_close_above_ma20_pct: 0.0
+        max_close_above_ma20_pct: 0.08
+        min_mom20: -0.01
+        max_mom20: 0.22
+        min_mom5: -0.06
+        max_mom5: 0.06
+        min_rsi14: 35.0
+        max_rsi14: 80.0
+        max_volume_zscore20: 2.2
   oversold_rebound:
     strategy:
       name: oversold_rebound_v1
@@ -406,6 +443,28 @@ strategy_profiles:
       recommendation_md: reports/oversold_recommendations.md
       recommendation_txt: reports/oversold_recommendations.txt
       recommendation_log: reports/oversold/{signal_date}.log
+  oversold_opportunity:
+    strategy:
+      name: oversold_opportunity_v1
+      threshold_profile: oversold_rebound
+      enabled_modes: [normal]
+      weights:
+        trend: 0.0
+        momentum: 0.0
+        stability: 0.15
+        volume: 0.20
+        oversold: 0.65
+    risk_filter:
+      oversold:
+        enabled: true
+        min_close_below_ma20_pct: 0.10
+        max_mom5: -0.10
+        max_ret_1d: -0.025
+        min_volume_ratio_1_20: 1.2
+    risk_targets:
+      method: percent
+      stop_loss_pct: 0.06
+      take_profit_pct: 0.08
   bull_trend_research:
     strategy:
       name: bull_trend_research_v1
@@ -436,6 +495,31 @@ strategy_profiles:
       recommendation_md: reports/bull_recommendations.md
       recommendation_txt: reports/bull_recommendations.txt
       recommendation_log: reports/bull/{signal_date}.log
+  bull_opportunity:
+    strategy:
+      name: bull_opportunity_v1
+      enabled_modes: [normal, relaxed]
+      weights:
+        trend: 0.40
+        momentum: 0.15
+        stability: 0.20
+        volume: 0.10
+        relative_strength: 0.15
+    market_filter:
+      block_on_bear: true
+    risk_filter:
+      max_vol20_std: 0.065
+      rsi_upper: 80.0
+      min_vol_ratio_5_20: 0.75
+      relative_strength:
+        enabled: true
+        min_excess_mom20: 0.02
+        min_mom5: -0.01
+        min_close_above_ma20_pct: 0.0
+      weak_market:
+        enabled: true
+        max_vol20_std: 0.055
+        require_mom20_positive: false
   relative_strength:
     strategy:
       name: relative_strength_v1
@@ -469,6 +553,34 @@ strategy_profiles:
       recommendation_md: reports/relative_recommendations.md
       recommendation_txt: reports/relative_recommendations.txt
       recommendation_log: reports/relative/{signal_date}.log
+  relative_opportunity:
+    strategy:
+      name: relative_opportunity_v1
+      enabled_modes: [normal, relaxed]
+      weights:
+        trend: 0.25
+        momentum: 0.15
+        stability: 0.15
+        volume: 0.10
+        pullback: 0.10
+        relative_strength: 0.25
+    risk_filter:
+      relative_strength:
+        enabled: true
+        min_excess_mom20: 0.02
+        min_mom5: -0.02
+        min_close_above_ma20_pct: -0.01
+      pullback:
+        enabled: true
+        min_close_above_ma20_pct: -0.01
+        max_close_above_ma20_pct: 0.10
+        min_mom20: 0.0
+        max_mom20: 0.30
+        min_mom5: -0.03
+        max_mom5: 0.10
+        min_rsi14: 40.0
+        max_rsi14: 80.0
+        max_volume_zscore20: 2.5
 
 # 自适应策略编排。
 # 先判断市场状态，再决定优先尝试哪套策略；如果全部无信号，就接受空仓。
@@ -482,6 +594,30 @@ adaptive_strategy:
     recommend: 1
     recommend-pullback: 1
     recommend-oversold: 3
+
+# 机会池：
+# 当你觉得 adaptive 空仓太多时，可以额外生成一份宽一点的候选列表供人工复核。
+# 这不是正式交易信号，只是观察池。
+opportunity_pool:
+  max_total: 4
+  regime_orders:
+    bull: [recommend-relative, recommend-pullback, recommend-bull, recommend]
+    neutral: [recommend-relative, recommend-pullback, recommend-oversold, recommend]
+    bear: [recommend-oversold, recommend-relative, recommend-pullback]
+    unknown: [recommend-pullback, recommend-oversold]
+  # 机会池允许单独绑定更宽松的 profile，不影响正式 recommend / adaptive。
+  profile_overrides:
+    recommend: recommend_opportunity
+    recommend-pullback: pullback_opportunity
+    recommend-oversold: oversold_opportunity
+    recommend-bull: bull_opportunity
+    recommend-relative: relative_opportunity
+  strategy_pick_counts:
+    recommend: 2
+    recommend-pullback: 2
+    recommend-oversold: 1
+    recommend-bull: 2
+    recommend-relative: 2
 
 # 输入输出相关配置。
 io:
@@ -536,6 +672,10 @@ reporting:
   # recommend-adaptive 的日度运行摘要。
   # 即使当天没有选出股票，也会写入一条记录，供 dashboard 展示“空仓”状态。
   adaptive_run_csv: reports/adaptive_runs.csv
+
+  # recommend-opportunity 输出的机会池结果。
+  # 用于在 dashboard 中展示“额外可观察候选”。
+  opportunity_recommendation_csv: reports/opportunity_recommendations.csv
 
 # ------------------------------------------------------------
 # 调参参考模板（以下内容全部为注释，不会参与实际配置）

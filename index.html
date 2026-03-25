@@ -180,6 +180,11 @@
       border: 1px solid rgba(31, 42, 31, 0.08);
     }
 
+    .playbook.highlight {
+      border-color: rgba(31, 92, 74, 0.28);
+      box-shadow: 0 0 0 3px rgba(31, 92, 74, 0.08);
+    }
+
     .playbook h3 {
       font-size: 18px;
       margin-bottom: 8px;
@@ -403,6 +408,30 @@
           </table>
           <div class="empty" id="emptyState" hidden>当前策略在所选日期下没有记录。</div>
         </div>
+
+        <div class="playbook" style="margin-top: 18px;">
+          <div id="opportunityPanel">
+          <h3>机会池</h3>
+          <p>当正式信号较少或空仓时，这里展示更宽一点的备选名单，只供人工复核，不等于正式交易信号。</p>
+          <div class="status warn" style="margin-top: 10px;">机会池股票仅作观察参考，谨慎操作，不建议直接按列表机械买入。</div>
+          <div class="table-wrap" style="margin-top: 12px;">
+            <table>
+              <thead>
+                <tr>
+                  <th class="stock-col">股票</th>
+                  <th class="strategy-col">来源</th>
+                  <th>总分</th>
+                  <th>收盘价</th>
+                  <th>建议持有天数</th>
+                  <th>退出规则</th>
+                </tr>
+              </thead>
+              <tbody id="opportunityBody"></tbody>
+            </table>
+            <div class="empty" id="opportunityEmpty" hidden>当前日期没有机会池记录。</div>
+          </div>
+          </div>
+        </div>
     </section>
   </div>
 
@@ -488,6 +517,9 @@
       const dataStatus = document.getElementById("dataStatus");
       const tableBody = document.getElementById("tableBody");
       const emptyState = document.getElementById("emptyState");
+      const opportunityBody = document.getElementById("opportunityBody");
+      const opportunityEmpty = document.getElementById("opportunityEmpty");
+      const opportunityPanel = document.getElementById("opportunityPanel");
       const metricStrategy = document.getElementById("metricStrategy");
       const metricCount = document.getElementById("metricCount");
       const metricRunTime = document.getElementById("metricRunTime");
@@ -524,6 +556,7 @@
 
         const strategyData = getStrategyData(state.strategy);
         const records = getVisibleRecords();
+        const opportunityRecords = getOpportunityRecords();
         const dateSummary = getDateSummary(strategyData, state.selectedDate);
         const latestRunTime = records.length ? records[0].run_time || "-" : (strategyData.latest_run_time || "-");
         const selectedSource = resolveSelectedSourceStrategy(records, dateSummary);
@@ -535,6 +568,8 @@
         setStatus(buildStatusText(selectedSource, dateSummary, records), !records.length);
 
         renderTable(records);
+        renderOpportunityTable(opportunityRecords);
+        opportunityPanel.classList.toggle("highlight", !records.length && opportunityRecords.length > 0);
       }
 
       function resolveSelectedSourceStrategy(records, dateSummary) {
@@ -642,6 +677,17 @@
         });
       }
 
+      function getOpportunityRecords() {
+        const strategyData = getStrategyData("opportunity");
+        const targetDate = state.selectedDate;
+        if (!targetDate) {
+          return [];
+        }
+        return (strategyData.records || []).filter(function (record) {
+          return record.trade_date === targetDate;
+        });
+      }
+
       function getVisibleDates(strategyData) {
         return (strategyData.available_dates || []).slice(0, MAX_VISIBLE_DATES);
       }
@@ -670,6 +716,28 @@
             "<td>" + escapeHtml(record.run_time || "-") + "</td>"
           ].join("");
           tableBody.appendChild(tr);
+        });
+      }
+
+      function renderOpportunityTable(records) {
+        opportunityBody.innerHTML = "";
+        if (!records.length) {
+          opportunityEmpty.hidden = false;
+          return;
+        }
+        opportunityEmpty.hidden = true;
+        records.forEach(function (record) {
+          const sourceStrategy = normalizeSourceStrategy(record.source_strategy);
+          const tr = document.createElement("tr");
+          tr.innerHTML = [
+            "<td class=\"stock-col\"><div class=\"stock-cell\"><strong>" + escapeHtml(record.name || "-") + "</strong><span class=\"stock-code\">" + escapeHtml(record.symbol || "-") + "</span></div></td>",
+            "<td class=\"strategy-col\"><span class=\"badge\">" + escapeHtml(sourceStrategy.label) + "</span></td>",
+            "<td>" + formatNumber(record.score_total, 2) + "</td>",
+            "<td>" + formatNumber(record.close, 4) + "</td>",
+            "<td>" + formatInteger(record.suggested_holding_days) + "</td>",
+            "<td>" + escapeHtml(record.exit_plan || "-") + "</td>",
+          ].join("");
+          opportunityBody.appendChild(tr);
         });
       }
 
