@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-03-24 20:03:54",
+  "generated_at": "2026-03-25 20:19:07",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-03-26",
         "2026-03-25",
         "2026-03-24",
         "2026-03-23",
@@ -28,8 +29,22 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-03-24 20:03:54",
+      "latest_run_time": "2026-03-25 20:19:07",
       "records": [
+        {
+          "run_time": "2026-03-25 20:19:07",
+          "trade_date": "2026-03-26",
+          "symbol": "600025",
+          "name": "华能水电",
+          "threshold_mode": "normal",
+          "score_total": 74.98,
+          "close": 10.23,
+          "stop_loss_price": 9.87,
+          "take_profit_price": 10.93,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend-pullback"
+        },
         {
           "run_time": "2026-03-24 20:03:54",
           "trade_date": "2026-03-25",
@@ -611,6 +626,16 @@ window.STOCK_DASHBOARD_DATA = {
           "has_recommendations": true,
           "chosen_count": 1
         },
+        "2026-03-26": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -783,9 +808,18 @@ window.STOCK_DASHBOARD_DATA = {
           "has_recommendations": true
         }
       }
+    },
+    "opportunity": {
+      "key": "opportunity",
+      "label": "机会池",
+      "source_file": "reports/opportunity_recommendations.csv",
+      "available_dates": [],
+      "latest_run_time": null,
+      "records": []
     }
   },
   "all_dates": [
+    "2026-03-26",
     "2026-03-25",
     "2026-03-24",
     "2026-03-23",
