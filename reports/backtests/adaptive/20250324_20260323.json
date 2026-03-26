@@ -1,5 +1,7 @@
 {
   "period": "2025-03-24 -> 2026-03-23",
+  "entry_price_mode": "close",
+  "entry_price_desc": "信号日收盘买入",
   "attempted_days": 237,
   "total_trades": 178,
   "skipped_days": 59,

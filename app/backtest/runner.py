@@ -6,6 +6,12 @@ from statistics import mean
 from collections import Counter
 import sys
 
+from app.backtest.entry_price import (
+    ENTRY_PRICE_CLOSE,
+    calc_target_forward_return,
+    entry_price_mode_description,
+    normalize_entry_price_mode,
+)
 from app.engine.recommender import Recommender
 from app.error_messages import friendly_error_message
 from app.models import BacktestRecord
@@ -29,7 +35,14 @@ class BacktestRunner:
         self.progress_to_stderr = bool(backtest_cfg.get("progress_to_stderr", True))
         self.progress_every_days = max(int(backtest_cfg.get("progress_every_days", 5)), 1)
 
-    def run(self, start_date: date, end_date: date, count: int | None = None) -> dict:
+    def run(
+        self,
+        start_date: date,
+        end_date: date,
+        count: int | None = None,
+        entry_price_mode: str = ENTRY_PRICE_CLOSE,
+    ) -> dict:
+        entry_price_mode = normalize_entry_price_mode(entry_price_mode)
         trade_dates = self.ds.get_trade_dates(start_date, end_date)
         if len(trade_dates) < 8:
             raise RuntimeError("Not enough trade dates for backtest")
@@ -76,13 +89,13 @@ class BacktestRunner:
                 )
             mode_counts[recs[0].threshold_mode] += 1
             symbol_name_pairs = [(r.symbol, r.name) for r in recs]
-            close_maps: dict[str, dict] = {}
+            bar_maps: dict[str, dict] = {}
             for symbol, _name in symbol_name_pairs:
                 bars = self.ds.get_daily_bars(symbol, dt, trade_dates[-1])
-                close_maps[symbol] = {b.trade_date: b.close for b in bars}
-            ret_1d_gross = self._calc_basket_forward_return(close_maps, dt, trade_dates, 1)
-            ret_3d_gross = self._calc_basket_forward_return(close_maps, dt, trade_dates, 3)
-            ret_5d_gross = self._calc_basket_forward_return(close_maps, dt, trade_dates, 5)
+                bar_maps[symbol] = {b.trade_date: b for b in bars}
+            ret_1d_gross = self._calc_basket_forward_return(bar_maps, dt, trade_dates, 1, entry_price_mode)
+            ret_3d_gross = self._calc_basket_forward_return(bar_maps, dt, trade_dates, 3, entry_price_mode)
+            ret_5d_gross = self._calc_basket_forward_return(bar_maps, dt, trade_dates, 5, entry_price_mode)
             ret_1d_net = self._apply_round_trip_cost(ret_1d_gross)
             ret_3d_net = self._apply_round_trip_cost(ret_3d_gross)
             ret_5d_net = self._apply_round_trip_cost(ret_5d_gross)
@@ -110,7 +123,16 @@ class BacktestRunner:
                 file=sys.stderr,
                 flush=True,
             )
-        return self._summary(records, start_date, end_date, len(attempted_dates), dict(error_counts), error_examples, dict(mode_counts))
+        return self._summary(
+            records,
+            start_date,
+            end_date,
+            len(attempted_dates),
+            dict(error_counts),
+            error_examples,
+            dict(mode_counts),
+            entry_price_mode,
+        )
 
     def _print_progress(self, completed: int, total: int, trades: int, error_counts: Counter[str]) -> None:
         if not self.progress_to_stderr:
@@ -145,28 +167,18 @@ class BacktestRunner:
         net_factor = gross_factor * sell_slip_factor * (1.0 - sell_fee) / (buy_slip_factor * (1.0 + buy_fee))
         return net_factor - 1.0
 
-    @staticmethod
-    def _calc_forward_return(close_map: dict, dt: date, trade_dates: list[date], step: int) -> float | None:
-        if dt not in trade_dates:
-            return None
-        idx = trade_dates.index(dt)
-        if idx + step >= len(trade_dates):
-            return None
-        d1 = dt
-        d2 = trade_dates[idx + step]
-        c1 = close_map.get(d1)
-        c2 = close_map.get(d2)
-        if c1 is None or c2 is None or c1 <= 0:
-            return None
-        return c2 / c1 - 1.0
-
     @classmethod
     def _calc_basket_forward_return(
-        cls, close_maps: dict[str, dict], dt: date, trade_dates: list[date], step: int
+        cls,
+        bar_maps: dict[str, dict],
+        dt: date,
+        trade_dates: list[date],
+        step: int,
+        entry_price_mode: str,
     ) -> float | None:
         rets = []
-        for close_map in close_maps.values():
-            r = cls._calc_forward_return(close_map, dt, trade_dates, step)
+        for bar_map in bar_maps.values():
+            r = calc_target_forward_return(bar_map, dt, trade_dates, step, entry_price_mode)
             if r is not None:
                 rets.append(r)
         if not rets:
@@ -182,6 +194,7 @@ class BacktestRunner:
         error_counts: dict[str, int],
         error_examples: list[dict],
         mode_counts: dict[str, int],
+        entry_price_mode: str,
     ) -> dict:
         one_gross = [r.ret_1d_gross for r in records if r.ret_1d_gross is not None]
         three_gross = [r.ret_3d_gross for r in records if r.ret_3d_gross is not None]
@@ -207,6 +220,8 @@ class BacktestRunner:
 
         return {
             "period": f"{start_date.isoformat()} -> {end_date.isoformat()}",
+            "entry_price_mode": entry_price_mode,
+            "entry_price_desc": entry_price_mode_description(entry_price_mode),
             "attempted_days": attempted_days,
             "total_trades": len(records),
             "skipped_days": max(attempted_days - len(records), 0),

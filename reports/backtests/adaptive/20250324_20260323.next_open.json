@@ -1,0 +1,29 @@
+{
+  "period": "2025-03-24 -> 2026-03-23",
+  "entry_price_mode": "next-open",
+  "entry_price_desc": "信号次日开盘买入",
+  "attempted_days": 236,
+  "total_trades": 177,
+  "skipped_days": 59,
+  "win_rate_gross_1d": 0.5141242937853108,
+  "win_rate_gross_3d": 0.559322033898305,
+  "win_rate_net_1d": 0.4915254237288136,
+  "win_rate_net_3d": 0.519774011299435,
+  "avg_return_1d_gross": 0.008071078076789218,
+  "avg_return_3d_gross": 0.011095316899812599,
+  "avg_return_5d_gross": 0.009035011585743059,
+  "avg_return_1d_net": 0.006157334857840466,
+  "avg_return_3d_net": 0.009175832402628691,
+  "avg_return_5d_net": 0.0071194384152597455,
+  "max_drawdown_proxy": 0.2313301070042297,
+  "threshold_mode_counts": {
+    "normal": 177
+  },
+  "error_counts": {},
+  "error_examples": [],
+  "records": [],
+  "adaptive_strategy_counts": {
+    "recommend-pullback": 176,
+    "recommend-oversold": 1
+  }
+}

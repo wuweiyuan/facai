@@ -216,6 +216,9 @@ python -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal
 - `--end YYYY-MM-DD`
 - `--count N`
 - `--output table|json|json-cn`
+- `--entry-price close|next-open`
+  - `close`：信号日收盘买入，保持当前默认口径
+  - `next-open`：信号次日开盘买入，更贴近开盘前选股场景
 
 ### 诊断与工具命令
 
@@ -271,10 +274,12 @@ python -m app.main recommend-adaptive --date 2026-03-23 --output json
 # macOS / Linux
 python3 -m app.main backtest-adaptive --start 2025-09-01 --end 2026-03-23 --output table
 python3 -m app.main backtest-adaptive --start 2025-09-01 --end 2026-03-23 --output json-cn
+python3 -m app.main backtest-adaptive --start 2025-09-01 --end 2026-03-23 --entry-price next-open --output table
 
 # Windows
 python -m app.main backtest-adaptive --start 2025-09-01 --end 2026-03-23 --output table
 python -m app.main backtest-adaptive --start 2025-09-01 --end 2026-03-23 --output json-cn
+python -m app.main backtest-adaptive --start 2025-09-01 --end 2026-03-23 --entry-price next-open --output table
 ```
 
 ### 研究对比

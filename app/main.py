@@ -479,6 +479,8 @@ def _print_backtest(summary: dict, output: str) -> None:
     if output == "json-cn":
         key_map = {
             "period": "回测区间",
+            "entry_price_mode": "入场价格口径",
+            "entry_price_desc": "入场价格说明",
             "attempted_days": "尝试交易日",
             "total_trades": "交易次数",
             "skipped_days": "跳过交易日",
@@ -535,6 +537,8 @@ def _print_backtest(summary: dict, output: str) -> None:
         print(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
         return
     print(f"回测区间: {summary['period']}")
+    if summary.get("entry_price_desc"):
+        print(f"入场价格: {summary['entry_price_desc']} ({summary.get('entry_price_mode', 'close')})")
     print(f"尝试交易日: {summary.get('attempted_days', 0)}")
     print(f"跳过交易日: {summary.get('skipped_days', 0)}")
     print(f"交易次数: {summary['total_trades']}")
@@ -572,7 +576,21 @@ def _format_backtest_output(summary: dict, output: str) -> str:
     return buf.getvalue()
 
 
-def _resolve_adaptive_backtest_report_paths(base_cfg: dict, start_date: date, end_date: date) -> tuple[str, str]:
+def _insert_path_token(path: str, token: str | None) -> str:
+    if not token:
+        return path
+    file_path = Path(path)
+    if file_path.suffix:
+        return str(file_path.with_name(f"{file_path.stem}.{token}{file_path.suffix}"))
+    return f"{path}.{token}"
+
+
+def _resolve_adaptive_backtest_report_paths(
+    base_cfg: dict,
+    start_date: date,
+    end_date: date,
+    entry_price_mode: str,
+) -> tuple[str, str]:
     reporting_cfg = base_cfg.get("reporting", {})
     period_key = f"{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}"
     period_template = str(
@@ -582,7 +600,8 @@ def _resolve_adaptive_backtest_report_paths(base_cfg: dict, start_date: date, en
         )
     )
     latest_path = str(reporting_cfg.get("adaptive_backtest_latest", "reports/backtests/adaptive/latest.json"))
-    return period_template.format(period_key=period_key), latest_path
+    token = None if entry_price_mode == "close" else entry_price_mode.replace("-", "_")
+    return _insert_path_token(period_template.format(period_key=period_key), token), _insert_path_token(latest_path, token)
 
 
 def _load_json_file(path: str) -> dict | None:
@@ -604,6 +623,8 @@ def _save_json_file(path: str, payload: dict) -> str:
 
 def _build_backtest_delta(current: dict, previous: dict | None) -> dict | None:
     if not previous or previous.get("period") != current.get("period"):
+        return None
+    if previous.get("entry_price_mode", "close") != current.get("entry_price_mode", "close"):
         return None
     keys = [
         "total_trades",
@@ -729,6 +750,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_bt.add_argument("--end", required=True, help="End date YYYY-MM-DD")
     p_bt.add_argument("--count", type=int, default=None, help="How many stocks per day; defaults to strategy.pick_count")
     p_bt.add_argument("--output", choices=["table", "json", "json-cn"], default="json-cn")
+    p_bt.add_argument("--entry-price", choices=["close", "next-open"], default="close", help="Entry price mode")
 
     p_bt_pb = sub.add_parser("backtest-pullback", help="Backtest the pullback-confirmation strategy over period")
     p_bt_pb.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
@@ -740,6 +762,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="How many stocks per day; defaults to strategy.pick_count in pullback profile",
     )
     p_bt_pb.add_argument("--output", choices=["table", "json", "json-cn"], default="json-cn")
+    p_bt_pb.add_argument("--entry-price", choices=["close", "next-open"], default="close", help="Entry price mode")
 
     p_bt_bull = sub.add_parser("backtest-bull", help="Backtest the bull-trend research strategy over period")
     p_bt_bull.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
@@ -751,6 +774,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="How many stocks per day; defaults to strategy.pick_count in bull research profile",
     )
     p_bt_bull.add_argument("--output", choices=["table", "json", "json-cn"], default="json-cn")
+    p_bt_bull.add_argument("--entry-price", choices=["close", "next-open"], default="close", help="Entry price mode")
 
     p_bt_rel = sub.add_parser("backtest-relative", help="Backtest the relative-strength research strategy over period")
     p_bt_rel.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
@@ -762,6 +786,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="How many stocks per day; defaults to strategy.pick_count in relative-strength profile",
     )
     p_bt_rel.add_argument("--output", choices=["table", "json", "json-cn"], default="json-cn")
+    p_bt_rel.add_argument("--entry-price", choices=["close", "next-open"], default="close", help="Entry price mode")
 
     p_bt_ad = sub.add_parser("backtest-adaptive", help="Backtest the adaptive strategy over period")
     p_bt_ad.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
@@ -769,12 +794,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_bt_ad.add_argument("--count", type=int, default=None, help="Optional override for per-strategy adaptive pick count")
     p_bt_ad.add_argument("--output", choices=["table", "json", "json-cn"], default="json-cn")
     p_bt_ad.add_argument("--no-save-report", action="store_true", help="Do not save adaptive backtest report files")
+    p_bt_ad.add_argument("--entry-price", choices=["close", "next-open"], default="close", help="Entry price mode")
 
     p_bt_ad_rules = sub.add_parser("backtest-adaptive-rules", help="Backtest the adaptive strategy with rule-based exits")
     p_bt_ad_rules.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
     p_bt_ad_rules.add_argument("--end", required=True, help="End date YYYY-MM-DD")
     p_bt_ad_rules.add_argument("--count", type=int, default=None, help="Optional override for per-strategy adaptive pick count")
     p_bt_ad_rules.add_argument("--output", choices=["table", "json", "json-cn"], default="json-cn")
+    p_bt_ad_rules.add_argument("--entry-price", choices=["close", "next-open"], default="close", help="Entry price mode")
 
     p_doc = sub.add_parser("doctor", help="Run connectivity diagnostics for data sources")
     p_doc.add_argument("--output", choices=["table", "json"], default="table")
@@ -998,11 +1025,11 @@ def main() -> None:
         _configure_network(cfg)
         start = _parse_date(args.start)
         end = _parse_date(args.end)
-        summary = run_local_adaptive_backtest(base_cfg, start, end, args.count)
+        summary = run_local_adaptive_backtest(base_cfg, start, end, args.count, args.entry_price)
         previous_summary = None
         saved_paths: list[str] = []
         if not args.no_save_report:
-            period_path, latest_path = _resolve_adaptive_backtest_report_paths(base_cfg, start, end)
+            period_path, latest_path = _resolve_adaptive_backtest_report_paths(base_cfg, start, end, args.entry_price)
             previous_summary = _load_json_file(period_path)
             saved_paths.append(_save_json_file(period_path, summary))
             saved_paths.append(_save_json_file(latest_path, summary))
@@ -1026,7 +1053,7 @@ def main() -> None:
         _configure_network(cfg)
         start = _parse_date(args.start)
         end = _parse_date(args.end)
-        summary = run_local_rule_adaptive_backtest(base_cfg, start, end, args.count)
+        summary = run_local_rule_adaptive_backtest(base_cfg, start, end, args.count, args.entry_price)
         _print_backtest(summary, args.output)
         return
 
@@ -1072,14 +1099,14 @@ def main() -> None:
     if args.cmd == "backtest-bull":
         start = _parse_date(args.start)
         end = _parse_date(args.end)
-        summary = run_local_single_backtest(base_cfg, "bull_trend_research", start, end, args.count)
+        summary = run_local_single_backtest(base_cfg, "bull_trend_research", start, end, args.count, args.entry_price)
         _print_backtest(summary, args.output)
         return
 
     if args.cmd == "backtest-relative":
         start = _parse_date(args.start)
         end = _parse_date(args.end)
-        summary = run_local_single_backtest(base_cfg, "relative_strength", start, end, args.count)
+        summary = run_local_single_backtest(base_cfg, "relative_strength", start, end, args.count, args.entry_price)
         _print_backtest(summary, args.output)
         return
 
@@ -1088,9 +1115,19 @@ def main() -> None:
         # When emitting JSON, suppress verbose runtime logs and keep only final payload.
         if args.output in {"json", "json-cn"}:
             with contextlib.redirect_stdout(io.StringIO()):
-                summary = runner.run(_parse_date(args.start), _parse_date(args.end), count=args.count)
+                summary = runner.run(
+                    _parse_date(args.start),
+                    _parse_date(args.end),
+                    count=args.count,
+                    entry_price_mode=args.entry_price,
+                )
         else:
-            summary = runner.run(_parse_date(args.start), _parse_date(args.end), count=args.count)
+            summary = runner.run(
+                _parse_date(args.start),
+                _parse_date(args.end),
+                count=args.count,
+                entry_price_mode=args.entry_price,
+            )
         _print_backtest(summary, args.output)
         return
 

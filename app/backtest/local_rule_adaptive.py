@@ -10,6 +10,12 @@ from statistics import mean
 
 import pandas as pd
 
+from app.backtest.entry_price import (
+    ENTRY_PRICE_CLOSE,
+    entry_price_mode_description,
+    normalize_entry_price_mode,
+    signal_attempted_dates,
+)
 from app.config import apply_strategy_profile
 from app.features.indicators import add_indicators
 from app.models import BacktestRecord, StockInfo
@@ -21,11 +27,19 @@ from app.universe.filtering import filter_universe
 @dataclass(frozen=True)
 class SymbolPath:
     dates: tuple[date, ...]
+    opens: tuple[float, ...]
     closes: tuple[float, ...]
     date_to_idx: dict[date, int]
 
 
-def run_local_rule_adaptive_backtest(base_cfg: dict, start_date: date, end_date: date, count_override: int | None = None) -> dict:
+def run_local_rule_adaptive_backtest(
+    base_cfg: dict,
+    start_date: date,
+    end_date: date,
+    count_override: int | None = None,
+    entry_price_mode: str = ENTRY_PRICE_CLOSE,
+) -> dict:
+    entry_price_mode = normalize_entry_price_mode(entry_price_mode)
     cache_dir = Path(str(base_cfg.get("data_source", {}).get("cache_dir", ".cache/akshare")))
     bars_dir = cache_dir / "bars"
     meta_dir = cache_dir / "meta"
@@ -63,7 +77,9 @@ def run_local_rule_adaptive_backtest(base_cfg: dict, start_date: date, end_date:
     trade_dates.sort()
     if len(trade_dates) < 8:
         raise RuntimeError("Not enough trade dates for backtest")
-    attempted_dates = trade_dates[:-5]
+    attempted_dates = signal_attempted_dates(trade_dates, entry_price_mode)
+    if not attempted_dates:
+        raise RuntimeError("Not enough trade dates for backtest")
     attempted_set = set(attempted_dates)
 
     index_closes = {}
@@ -104,9 +120,11 @@ def run_local_rule_adaptive_backtest(base_cfg: dict, start_date: date, end_date:
             continue
         df = add_indicators(df)
         dates = tuple(df["trade_date"].tolist())
+        opens = tuple(float(v) for v in df["open"].tolist())
         closes = tuple(float(v) for v in df["close"].tolist())
         bars_cache[symbol] = SymbolPath(
             dates=dates,
+            opens=opens,
             closes=closes,
             date_to_idx={trade_date: idx for idx, trade_date in enumerate(dates)},
         )
@@ -166,7 +184,7 @@ def run_local_rule_adaptive_backtest(base_cfg: dict, start_date: date, end_date:
         basket_5d = []
         for item in picked:
             symbol = item["symbol"]
-            rule_ret = _simulate_rule_exit(dt, bars_cache[symbol], chosen_cmd)
+            rule_ret = _simulate_rule_exit(dt, bars_cache[symbol], chosen_cmd, entry_price_mode)
             basket_1d.append(rule_ret["ret_1d_net"])
             basket_3d.append(rule_ret["ret_3d_net"])
             basket_5d.append(rule_ret["ret_5d_net"])
@@ -188,31 +206,52 @@ def run_local_rule_adaptive_backtest(base_cfg: dict, start_date: date, end_date:
             )
         )
 
-    return _build_summary(records, start_date, end_date, len(attempted_dates), dict(strategy_counts), dict(mode_counts))
+    return _build_summary(
+        records,
+        start_date,
+        end_date,
+        len(attempted_dates),
+        dict(strategy_counts),
+        dict(mode_counts),
+        entry_price_mode,
+    )
 
 
-def _simulate_rule_exit(signal_date: date, symbol_path: SymbolPath, strategy_name: str) -> dict[str, float | None]:
+def _simulate_rule_exit(
+    signal_date: date,
+    symbol_path: SymbolPath,
+    strategy_name: str,
+    entry_price_mode: str,
+) -> dict[str, float | None]:
+    entry_price_mode = normalize_entry_price_mode(entry_price_mode)
     if signal_date not in symbol_path.date_to_idx:
         return {"ret_1d_net": None, "ret_3d_net": None, "ret_5d_net": None}
-    start_idx = symbol_path.date_to_idx[signal_date]
-    path_len = len(symbol_path.closes) - start_idx
-    if path_len < 2:
+    signal_idx = symbol_path.date_to_idx[signal_date]
+    if entry_price_mode == ENTRY_PRICE_CLOSE:
+        entry_idx = signal_idx
+        entry = symbol_path.closes[entry_idx]
+    else:
+        entry_idx = signal_idx + 1
+        if entry_idx >= len(symbol_path.opens):
+            return {"ret_1d_net": None, "ret_3d_net": None, "ret_5d_net": None}
+        entry = symbol_path.opens[entry_idx]
+    forward_closes = len(symbol_path.closes) - entry_idx - 1
+    if forward_closes < 1 or entry <= 0:
         return {"ret_1d_net": None, "ret_3d_net": None, "ret_5d_net": None}
-    entry = symbol_path.closes[start_idx]
-    one_day = symbol_path.closes[start_idx + 1] / entry - 1.0 if path_len > 1 else None
+    one_day = symbol_path.closes[entry_idx + 1] / entry - 1.0 if forward_closes >= 1 else None
 
     if strategy_name == "recommend-oversold":
-        max_hold = min(3, path_len - 1)
+        max_hold = min(3, forward_closes)
         take_profit = 0.06
         stop_loss = -0.055
         idle_day_limit = 2
     elif strategy_name == "recommend-pullback":
-        max_hold = min(4, path_len - 1)
+        max_hold = min(4, forward_closes)
         take_profit = 0.07
         stop_loss = -0.04
         idle_day_limit = 3
     else:
-        max_hold = min(3, path_len - 1)
+        max_hold = min(3, forward_closes)
         take_profit = 0.06
         stop_loss = -0.045
         idle_day_limit = 2
@@ -220,7 +259,7 @@ def _simulate_rule_exit(signal_date: date, symbol_path: SymbolPath, strategy_nam
     exit_ret = None
     best_seen = -1.0
     for day_idx in range(1, max_hold + 1):
-        ret = symbol_path.closes[start_idx + day_idx] / entry - 1.0
+        ret = symbol_path.closes[entry_idx + day_idx] / entry - 1.0
         best_seen = max(best_seen, ret)
         if ret <= stop_loss:
             exit_ret = ret
@@ -232,7 +271,7 @@ def _simulate_rule_exit(signal_date: date, symbol_path: SymbolPath, strategy_nam
             exit_ret = ret
             break
     if exit_ret is None:
-        exit_ret = symbol_path.closes[start_idx + max_hold] / entry - 1.0
+        exit_ret = symbol_path.closes[entry_idx + max_hold] / entry - 1.0
 
     three_day = exit_ret if max_hold >= 3 else exit_ret
     five_day = exit_ret
@@ -250,6 +289,7 @@ def _build_summary(
     attempted_days: int,
     strategy_counts: dict[str, int],
     mode_counts: dict[str, int],
+    entry_price_mode: str,
 ) -> dict:
     one_net = [r.ret_1d_net for r in records if r.ret_1d_net is not None]
     three_net = [r.ret_3d_net for r in records if r.ret_3d_net is not None]
@@ -267,6 +307,8 @@ def _build_summary(
         max_dd = max(max_dd, dd)
     return {
         "period": f"{start_date.isoformat()} -> {end_date.isoformat()}",
+        "entry_price_mode": entry_price_mode,
+        "entry_price_desc": entry_price_mode_description(entry_price_mode),
         "attempted_days": attempted_days,
         "total_trades": len(records),
         "skipped_days": max(attempted_days - len(records), 0),

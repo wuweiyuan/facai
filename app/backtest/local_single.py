@@ -10,6 +10,13 @@ from statistics import mean
 
 import pandas as pd
 
+from app.backtest.entry_price import (
+    ENTRY_PRICE_CLOSE,
+    add_signal_forward_returns,
+    entry_price_mode_description,
+    normalize_entry_price_mode,
+    signal_attempted_dates,
+)
 from app.config import apply_strategy_profile
 from app.features.indicators import add_indicators
 from app.models import BacktestRecord, StockInfo
@@ -19,7 +26,15 @@ from app.strategy.scoring import compute_score, passes_threshold
 from app.universe.filtering import filter_universe
 
 
-def run_local_single_backtest(base_cfg: dict, profile_name: str | None, start_date: date, end_date: date, count: int | None = None) -> dict:
+def run_local_single_backtest(
+    base_cfg: dict,
+    profile_name: str | None,
+    start_date: date,
+    end_date: date,
+    count: int | None = None,
+    entry_price_mode: str = ENTRY_PRICE_CLOSE,
+) -> dict:
+    entry_price_mode = normalize_entry_price_mode(entry_price_mode)
     cfg = apply_strategy_profile(base_cfg, profile_name)
     cfg.setdefault("data_freshness", {})["enabled"] = False
     cache_dir = Path(str(cfg.get("data_source", {}).get("cache_dir", ".cache/akshare")))
@@ -52,7 +67,9 @@ def run_local_single_backtest(base_cfg: dict, profile_name: str | None, start_da
     trade_dates.sort()
     if len(trade_dates) < 8:
         raise RuntimeError("Not enough trade dates for backtest")
-    attempted_dates = trade_dates[:-5]
+    attempted_dates = signal_attempted_dates(trade_dates, entry_price_mode)
+    if not attempted_dates:
+        raise RuntimeError("Not enough trade dates for backtest")
     attempted_set = set(attempted_dates)
 
     index_closes = {}
@@ -84,9 +101,7 @@ def run_local_single_backtest(base_cfg: dict, profile_name: str | None, start_da
         if df.empty:
             continue
         df = add_indicators(df)
-        df["ret_fwd_1"] = df["close"].shift(-1) / df["close"] - 1.0
-        df["ret_fwd_3"] = df["close"].shift(-3) / df["close"] - 1.0
-        df["ret_fwd_5"] = df["close"].shift(-5) / df["close"] - 1.0
+        df = add_signal_forward_returns(df, entry_price_mode)
         df = df[df["trade_date"].isin(attempted_set)]
         if df.empty:
             continue
@@ -158,6 +173,8 @@ def run_local_single_backtest(base_cfg: dict, profile_name: str | None, start_da
         max_dd = max(max_dd, dd)
     return {
         "period": f"{start_date.isoformat()} -> {end_date.isoformat()}",
+        "entry_price_mode": entry_price_mode,
+        "entry_price_desc": entry_price_mode_description(entry_price_mode),
         "attempted_days": len(attempted_dates),
         "total_trades": len(records),
         "skipped_days": max(len(attempted_dates) - len(records), 0),
