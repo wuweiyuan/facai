@@ -10,6 +10,13 @@ from statistics import mean
 
 import pandas as pd
 
+from app.backtest.entry_price import (
+    ENTRY_PRICE_CLOSE,
+    add_signal_forward_returns,
+    entry_price_mode_description,
+    normalize_entry_price_mode,
+    signal_attempted_dates,
+)
 from app.config import apply_strategy_profile
 from app.features.indicators import add_indicators
 from app.models import BacktestRecord, StockInfo
@@ -78,7 +85,14 @@ class LocalAdaptiveCache:
         yield from self.bars_dir.glob("*.csv")
 
 
-def run_local_adaptive_backtest(base_cfg: dict, start_date: date, end_date: date, count_override: int | None = None) -> dict:
+def run_local_adaptive_backtest(
+    base_cfg: dict,
+    start_date: date,
+    end_date: date,
+    count_override: int | None = None,
+    entry_price_mode: str = ENTRY_PRICE_CLOSE,
+) -> dict:
+    entry_price_mode = normalize_entry_price_mode(entry_price_mode)
     index_symbol = str(base_cfg.get("market_filter", {}).get("index_symbol", "000300"))
     cache_dir = str(base_cfg.get("data_source", {}).get("cache_dir", ".cache/akshare"))
     cache = LocalAdaptiveCache(cache_dir)
@@ -99,7 +113,9 @@ def run_local_adaptive_backtest(base_cfg: dict, start_date: date, end_date: date
     trade_dates = [dt for dt in cache.load_trade_dates() if start_date <= dt <= end_date]
     if len(trade_dates) < 8:
         raise RuntimeError("Not enough trade dates for backtest")
-    attempted_dates = trade_dates[:-5]
+    attempted_dates = signal_attempted_dates(trade_dates, entry_price_mode)
+    if not attempted_dates:
+        raise RuntimeError("Not enough trade dates for backtest")
     attempted_set = set(attempted_dates)
     available_symbols = {path.stem for path in cache.iter_bar_files()}
     universe_by_profile: dict[str, set[str]] = {}
@@ -133,9 +149,7 @@ def run_local_adaptive_backtest(base_cfg: dict, start_date: date, end_date: date
         if df.empty:
             continue
         df = add_indicators(df)
-        df["ret_fwd_1"] = df["close"].shift(-1) / df["close"] - 1.0
-        df["ret_fwd_3"] = df["close"].shift(-3) / df["close"] - 1.0
-        df["ret_fwd_5"] = df["close"].shift(-5) / df["close"] - 1.0
+        df = add_signal_forward_returns(df, entry_price_mode)
         df = df[df["trade_date"].isin(attempted_set)]
         if df.empty:
             continue
@@ -202,7 +216,16 @@ def run_local_adaptive_backtest(base_cfg: dict, start_date: date, end_date: date
             )
         )
 
-    summary = _build_summary(records, start_date, end_date, len(attempted_dates), dict(error_counts), [], dict(mode_counts))
+    summary = _build_summary(
+        records,
+        start_date,
+        end_date,
+        len(attempted_dates),
+        dict(error_counts),
+        [],
+        dict(mode_counts),
+        entry_price_mode,
+    )
     summary["adaptive_strategy_counts"] = dict(strategy_counts)
     return summary
 
@@ -215,6 +238,7 @@ def _build_summary(
     error_counts: dict[str, int],
     error_examples: list[dict],
     mode_counts: dict[str, int],
+    entry_price_mode: str,
 ) -> dict:
     one_gross = [r.ret_1d_gross for r in records if r.ret_1d_gross is not None]
     three_gross = [r.ret_3d_gross for r in records if r.ret_3d_gross is not None]
@@ -235,6 +259,8 @@ def _build_summary(
         max_dd = max(max_dd, dd)
     return {
         "period": f"{start_date.isoformat()} -> {end_date.isoformat()}",
+        "entry_price_mode": entry_price_mode,
+        "entry_price_desc": entry_price_mode_description(entry_price_mode),
         "attempted_days": attempted_days,
         "total_trades": len(records),
         "skipped_days": max(attempted_days - len(records), 0),
