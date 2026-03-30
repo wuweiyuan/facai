@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-03-26 20:45:46",
+  "generated_at": "2026-03-30 08:48:59",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-03-30",
         "2026-03-27",
         "2026-03-26",
         "2026-03-25",
@@ -30,8 +31,22 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-03-26 20:45:46",
+      "latest_run_time": "2026-03-30 08:48:59",
       "records": [
+        {
+          "run_time": "2026-03-30 08:48:59",
+          "trade_date": "2026-03-30",
+          "symbol": "001289",
+          "name": "龙源电力",
+          "threshold_mode": "normal",
+          "score_total": 73.79,
+          "close": 18.29,
+          "stop_loss_price": 17.27,
+          "take_profit_price": 20.32,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend-pullback"
+        },
         {
           "run_time": "2026-03-26 20:45:46",
           "trade_date": "2026-03-27",
@@ -661,6 +676,16 @@ window.STOCK_DASHBOARD_DATA = {
           "has_recommendations": true,
           "chosen_count": 1
         },
+        "2026-03-30": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -844,6 +869,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-03-30",
     "2026-03-27",
     "2026-03-26",
     "2026-03-25",
