@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-03-30 08:48:59",
+  "generated_at": "2026-03-30 20:52:47",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-03-31",
         "2026-03-30",
         "2026-03-27",
         "2026-03-26",
@@ -31,8 +32,22 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-03-30 08:48:59",
+      "latest_run_time": "2026-03-30 20:52:47",
       "records": [
+        {
+          "run_time": "2026-03-30 20:52:47",
+          "trade_date": "2026-03-31",
+          "symbol": "600575",
+          "name": "淮河能源",
+          "threshold_mode": "normal",
+          "score_total": 70.8,
+          "close": 4.0,
+          "stop_loss_price": 3.76,
+          "take_profit_price": 4.46,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend-pullback"
+        },
         {
           "run_time": "2026-03-30 08:48:59",
           "trade_date": "2026-03-30",
@@ -686,6 +701,16 @@ window.STOCK_DASHBOARD_DATA = {
           "has_recommendations": true,
           "chosen_count": 1
         },
+        "2026-03-31": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -869,6 +894,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-03-31",
     "2026-03-30",
     "2026-03-27",
     "2026-03-26",
