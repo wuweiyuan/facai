@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-03-30 20:52:47",
+  "generated_at": "2026-03-31 21:15:40",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-04-01",
         "2026-03-31",
         "2026-03-30",
         "2026-03-27",
@@ -32,8 +33,22 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-03-30 20:52:47",
+      "latest_run_time": "2026-03-31 21:15:40",
       "records": [
+        {
+          "run_time": "2026-03-31 21:15:40",
+          "trade_date": "2026-04-01",
+          "symbol": "600719",
+          "name": "大连热电",
+          "threshold_mode": "normal",
+          "score_total": 69.8,
+          "close": 6.96,
+          "stop_loss_price": 6.32,
+          "take_profit_price": 8.22,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend-pullback"
+        },
         {
           "run_time": "2026-03-30 20:52:47",
           "trade_date": "2026-03-31",
@@ -711,6 +726,16 @@ window.STOCK_DASHBOARD_DATA = {
           "has_recommendations": true,
           "chosen_count": 1
         },
+        "2026-04-01": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -894,6 +919,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-04-01",
     "2026-03-31",
     "2026-03-30",
     "2026-03-27",
