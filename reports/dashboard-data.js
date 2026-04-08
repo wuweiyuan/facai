@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-04-07 20:07:32",
+  "generated_at": "2026-04-08 20:08:02",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-04-09",
         "2026-04-08",
         "2026-04-07",
         "2026-04-03",
@@ -37,8 +38,22 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-04-07 20:07:32",
+      "latest_run_time": "2026-04-08 20:08:02",
       "records": [
+        {
+          "run_time": "2026-04-08 20:08:02",
+          "trade_date": "2026-04-09",
+          "symbol": "600750",
+          "name": "华润江中",
+          "threshold_mode": "normal",
+          "score_total": 66.62,
+          "close": 26.35,
+          "stop_loss_price": 25.1,
+          "take_profit_price": 28.84,
+          "suggested_holding_days": 2,
+          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend-pullback"
+        },
         {
           "run_time": "2026-04-07 20:07:32",
           "trade_date": "2026-04-08",
@@ -836,6 +851,15 @@ window.STOCK_DASHBOARD_DATA = {
           "has_recommendations": true,
           "chosen_count": 1
         },
+        "2026-04-09": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -1019,6 +1043,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-04-09",
     "2026-04-08",
     "2026-04-07",
     "2026-04-03",
