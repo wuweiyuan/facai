@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-04-11 09:54:03",
+  "generated_at": "2026-04-13 23:03:44",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-04-14",
         "2026-04-13",
         "2026-04-10",
         "2026-04-09",
@@ -40,8 +41,22 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-04-11 09:54:03",
+      "latest_run_time": "2026-04-13 23:03:44",
       "records": [
+        {
+          "run_time": "2026-04-13 23:03:44",
+          "trade_date": "2026-04-14",
+          "symbol": "600429",
+          "name": "三元股份",
+          "threshold_mode": "normal",
+          "score_total": 60.92,
+          "close": 6.0,
+          "stop_loss_price": 5.67,
+          "take_profit_price": 6.65,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend-pullback"
+        },
         {
           "run_time": "2026-04-11 09:54:03",
           "trade_date": "2026-04-13",
@@ -908,6 +923,15 @@ window.STOCK_DASHBOARD_DATA = {
           "has_recommendations": true,
           "chosen_count": 1
         },
+        "2026-04-14": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -1091,6 +1115,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-04-14",
     "2026-04-13",
     "2026-04-10",
     "2026-04-09",
