@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-04-18 19:22:50",
+  "generated_at": "2026-04-20 21:06:03",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-04-21",
         "2026-04-20",
         "2026-04-17",
         "2026-04-16",
@@ -45,8 +46,22 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-04-18 19:22:50",
+      "latest_run_time": "2026-04-20 21:06:03",
       "records": [
+        {
+          "run_time": "2026-04-20 21:06:03",
+          "trade_date": "2026-04-21",
+          "symbol": "601825",
+          "name": "沪农商行",
+          "threshold_mode": "normal",
+          "score_total": 68.3,
+          "close": 9.14,
+          "stop_loss_price": 8.85,
+          "take_profit_price": 9.71,
+          "suggested_holding_days": 2,
+          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend-pullback"
+        },
         {
           "run_time": "2026-04-18 19:22:50",
           "trade_date": "2026-04-20",
@@ -1028,6 +1043,15 @@ window.STOCK_DASHBOARD_DATA = {
           "has_recommendations": true,
           "chosen_count": 1
         },
+        "2026-04-21": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -1211,6 +1235,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-04-21",
     "2026-04-20",
     "2026-04-17",
     "2026-04-16",
