@@ -22,3 +22,4 @@ run_time,target_date,signal_date,market_state,market_reason,tried_strategies,cho
 2026-04-18 19:22:50,2026-04-20,2026-04-17,neutral,ok,recommend-pullback,recommend-pullback,true,1
 2026-04-20 21:06:03,2026-04-21,2026-04-20,neutral,ok,recommend-pullback,recommend-pullback,true,1
 2026-04-21 20:14:48,2026-04-22,2026-04-21,neutral,ok,recommend-pullback,recommend-pullback,true,1
+2026-04-22 21:22:30,2026-04-23,2026-04-22,neutral,ok,recommend-pullback,recommend-pullback,true,1
