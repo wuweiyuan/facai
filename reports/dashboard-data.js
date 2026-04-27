@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-04-25 11:29:13",
+  "generated_at": "2026-04-27 20:17:59",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-04-28",
         "2026-04-27",
         "2026-04-24",
         "2026-04-23",
@@ -50,8 +51,22 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-04-25 11:29:13",
+      "latest_run_time": "2026-04-27 20:17:59",
       "records": [
+        {
+          "run_time": "2026-04-27 20:17:59",
+          "trade_date": "2026-04-28",
+          "symbol": "605319",
+          "name": "无锡振华",
+          "threshold_mode": "normal",
+          "score_total": 71.21,
+          "close": 27.55,
+          "stop_loss_price": 25.45,
+          "take_profit_price": 31.74,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend-pullback"
+        },
         {
           "run_time": "2026-04-25 11:29:13",
           "trade_date": "2026-04-27",
@@ -1148,6 +1163,15 @@ window.STOCK_DASHBOARD_DATA = {
           "has_recommendations": true,
           "chosen_count": 1
         },
+        "2026-04-28": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -1331,6 +1355,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-04-28",
     "2026-04-27",
     "2026-04-24",
     "2026-04-23",
