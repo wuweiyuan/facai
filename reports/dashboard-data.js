@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-04-28 20:08:42",
+  "generated_at": "2026-04-29 20:02:33",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-04-30",
         "2026-04-29",
         "2026-04-28",
         "2026-04-27",
@@ -52,8 +53,22 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-04-28 20:08:42",
+      "latest_run_time": "2026-04-29 20:02:33",
       "records": [
+        {
+          "run_time": "2026-04-29 20:02:33",
+          "trade_date": "2026-04-30",
+          "symbol": "601998",
+          "name": "中信银行",
+          "threshold_mode": "normal",
+          "score_total": 74.78,
+          "close": 8.4,
+          "stop_loss_price": 8.13,
+          "take_profit_price": 8.93,
+          "suggested_holding_days": 2,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend-pullback"
+        },
         {
           "run_time": "2026-04-28 20:08:42",
           "trade_date": "2026-04-29",
@@ -1196,6 +1211,15 @@ window.STOCK_DASHBOARD_DATA = {
           "has_recommendations": true,
           "chosen_count": 1
         },
+        "2026-04-30": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -1379,6 +1403,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-04-30",
     "2026-04-29",
     "2026-04-28",
     "2026-04-27",
