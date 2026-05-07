@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-05-06 20:04:29",
+  "generated_at": "2026-05-07 20:54:00",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-05-08",
         "2026-05-07",
         "2026-05-06",
         "2026-04-30",
@@ -55,8 +56,22 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-05-06 20:04:29",
+      "latest_run_time": "2026-05-07 20:54:00",
       "records": [
+        {
+          "run_time": "2026-05-07 20:54:00",
+          "trade_date": "2026-05-08",
+          "symbol": "600007",
+          "name": "中国国贸",
+          "threshold_mode": "normal",
+          "score_total": 69.07,
+          "close": 21.6,
+          "stop_loss_price": 20.88,
+          "take_profit_price": 23.02,
+          "suggested_holding_days": 2,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend-pullback"
+        },
         {
           "run_time": "2026-05-06 20:04:29",
           "trade_date": "2026-05-07",
@@ -1268,6 +1283,15 @@ window.STOCK_DASHBOARD_DATA = {
           "has_recommendations": true,
           "chosen_count": 1
         },
+        "2026-05-08": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -1451,6 +1475,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-05-08",
     "2026-05-07",
     "2026-05-06",
     "2026-04-30",
