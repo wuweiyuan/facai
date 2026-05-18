@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-05-15 20:07:01",
+  "generated_at": "2026-05-18 22:28:54",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-05-19",
         "2026-05-18",
         "2026-05-15",
         "2026-05-14",
@@ -62,8 +63,22 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-05-15 20:07:01",
+      "latest_run_time": "2026-05-18 22:28:54",
       "records": [
+        {
+          "run_time": "2026-05-18 22:28:54",
+          "trade_date": "2026-05-19",
+          "symbol": "600642",
+          "name": "申能股份",
+          "threshold_mode": "normal",
+          "score_total": 69.27,
+          "close": 9.41,
+          "stop_loss_price": 8.94,
+          "take_profit_price": 10.33,
+          "suggested_holding_days": 2,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend-pullback"
+        },
         {
           "run_time": "2026-05-15 20:07:01",
           "trade_date": "2026-05-18",
@@ -1436,6 +1451,15 @@ window.STOCK_DASHBOARD_DATA = {
           "has_recommendations": true,
           "chosen_count": 1
         },
+        "2026-05-19": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -1619,6 +1643,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-05-19",
     "2026-05-18",
     "2026-05-15",
     "2026-05-14",
