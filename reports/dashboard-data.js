@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-05-21 19:53:14",
+  "generated_at": "2026-05-22 19:38:36",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-05-25",
         "2026-05-22",
         "2026-05-21",
         "2026-05-20",
@@ -66,8 +67,22 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-05-21 19:53:14",
+      "latest_run_time": "2026-05-22 19:38:36",
       "records": [
+        {
+          "run_time": "2026-05-22 19:38:36",
+          "trade_date": "2026-05-25",
+          "symbol": "603197",
+          "name": "保隆科技",
+          "threshold_mode": "normal",
+          "score_total": 69.52,
+          "close": 34.73,
+          "stop_loss_price": 33.32,
+          "take_profit_price": 37.54,
+          "suggested_holding_days": 2,
+          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend-pullback"
+        },
         {
           "run_time": "2026-05-21 19:53:14",
           "trade_date": "2026-05-22",
@@ -1532,6 +1547,15 @@ window.STOCK_DASHBOARD_DATA = {
           "has_recommendations": true,
           "chosen_count": 1
         },
+        "2026-05-25": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -1715,6 +1739,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-05-25",
     "2026-05-22",
     "2026-05-21",
     "2026-05-20",
