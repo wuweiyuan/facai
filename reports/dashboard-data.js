@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-05-25 20:07:08",
+  "generated_at": "2026-05-26 20:03:05",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-05-27",
         "2026-05-26",
         "2026-05-25",
         "2026-05-22",
@@ -68,8 +69,22 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-05-25 20:07:08",
+      "latest_run_time": "2026-05-26 20:03:05",
       "records": [
+        {
+          "run_time": "2026-05-26 20:03:05",
+          "trade_date": "2026-05-27",
+          "symbol": "605077",
+          "name": "华康股份",
+          "threshold_mode": "normal",
+          "score_total": 70.46,
+          "close": 18.29,
+          "stop_loss_price": 16.88,
+          "take_profit_price": 21.1,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend-pullback"
+        },
         {
           "run_time": "2026-05-25 20:07:08",
           "trade_date": "2026-05-26",
@@ -1580,6 +1595,15 @@ window.STOCK_DASHBOARD_DATA = {
           "has_recommendations": true,
           "chosen_count": 1
         },
+        "2026-05-27": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -1763,6 +1787,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-05-27",
     "2026-05-26",
     "2026-05-25",
     "2026-05-22",
