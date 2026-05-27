@@ -9,15 +9,16 @@
 - 正式主入口：`recommend-adaptive`
 - 正式主回测：`backtest-adaptive`
 - 正式主配置：`config/default.yaml`
-- 稳定快照：`config/default.stable.yaml`
+- 稳健快照：`config/default.stable-v2.yaml`
 - 历史基线：`config/default.baseline.yaml`
 - 研究总结：`FINAL_STRATEGY_SUMMARY.md`
 
 当前默认思路：
 
-- `bull / neutral` 市场优先走 `recommend-pullback`
-- `bear` 市场优先走 `recommend-oversold`
-- 没有合格信号时允许空仓
+- `bull` 市场优先走 `recommend-pullback`，再看 `recommend`
+- `neutral / unknown` 市场直接空仓
+- `bear` 市场只先尝试 `recommend-oversold`，没有合格信号就空仓
+- 强市判定更严格：指数需明确站上 MA20，且 20 日动量足够强
 
 ## 收益与持有期口径
 
@@ -25,26 +26,30 @@
 
 ### 收益率怎么理解
 
-以当前最新主回测 `2025-03-24 -> 2026-03-23` 为例：
+以当前最新主回测 `2025-03-24 -> 2026-05-27` 为例：
 
-- 可尝试交易日：`237`
-- 实际成交：`178`
-- 平均 `3日净收益`：`0.7319%`
-- 平均 `5日净收益`：`0.7119%`
-- `最大回撤代理`：`25.60%`
+- 实际成交：`50`
+- 空仓/跳过交易日：`230`
+- `1日净胜率`：`56.00%`
+- `3日净胜率`：`56.00%`
+- 平均 `1日净收益`：`0.65%`
+- 平均 `3日净收益`：`1.57%`
+- 平均 `5日净收益`：`1.32%`
+- `最大回撤代理`：`9.09%`
 
 如果用 `4 万元`本金、按当前策略信号滚动执行，粗略可理解为：
 
-- 年收益率大致在 `33% ~ 55%`
-- 执行非常贴近回测时，偏理想上限可到 `78%` 左右
-- 对应盈利大致是 `1.3 万 ~ 2.2 万`
-- 偏理想上限约 `3.1 万`
+- 单次信号按 `3日净收益` 均值估算：`40000 * 1.57% ≈ 628 元`
+- 单次信号按 `5日净收益` 均值估算：`40000 * 1.32% ≈ 528 元`
+- 若 50 次信号都用满 `4 万元`并接近回测均值，`3日口径`简单累计约 `3.14 万元`
+- 若按 `5日口径`简单累计，约 `2.64 万元`
 
 注意：
 
-- 这里的数字是基于单笔平均净收益做的近似换算，不是完整实盘资金曲线
-- 实际结果会受仓位、滑点、节奏、连续亏损、空仓天数影响
-- `最大回撤代理 25.60%` 也意味着 `4 万元`本金中途可能出现约 `1 万元`级别回撤
+- 这里的数字是基于单笔平均净收益做的近似换算，不是完整实盘资金曲线，也不是收益承诺
+- 实际结果会受仓位、滑点、买卖点、是否满仓、连续亏损、空仓天数影响
+- `最大回撤代理 9.09%` 意味着 `4 万元`本金中途可能出现约 `3600 元`级别回撤
+- 现在策略比旧版更少出手，收益主要来自少数强环境信号，不适合每天都强行交易
 
 ### 持有 `3` 天 / `5` 天怎么数
 
@@ -83,6 +88,8 @@
 - 看到 `python3 scripts/xxx.py ...` 时，Windows 直接替换为 `python scripts/xxx.py ...`
 
 ## 快速开始
+
+如果你要在多台电脑之间共享股票缓存数据，先看 [OneDrive 股票缓存设置](docs/onedrive-cache-setup.md)。代码用 Git 同步，`.cache/akshare` 的真实数据用 OneDrive 同步。
 
 ### 1. 安装依赖
 
@@ -353,7 +360,8 @@ python -m app.main check-sector-map --path data/sector_map.csv
 常见相关配置文件：
 
 - `config/default.yaml`：当前正式主配置
-- `config/default.stable.yaml`：稳定快照
+- `config/default.stable-v2.yaml`：当前稳健快照
+- `config/default.defensive.yaml`：近期防守实验配置，不替代主配置
 - `config/default.baseline.yaml`：历史基线
 - `config/default.aggressive.yaml`：更激进版本
 - `config/default.oversold-neutral.yaml`：偏超跌 / 中性环境变体
@@ -363,10 +371,10 @@ python -m app.main check-sector-map --path data/sector_map.csv
 
 ```bash
 # macOS / Linux
-python3 -m app.main --config config/default.stable.yaml recommend-adaptive --date YYYY-MM-DD
+python3 -m app.main --config config/default.stable-v2.yaml recommend-adaptive --date YYYY-MM-DD
 
 # Windows
-python -m app.main --config config/default.stable.yaml recommend-adaptive --date YYYY-MM-DD
+python -m app.main --config config/default.stable-v2.yaml recommend-adaptive --date YYYY-MM-DD
 ```
 
 ## 板块映射
