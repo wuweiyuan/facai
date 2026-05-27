@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import csv
-import json
 from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass
 from datetime import date, datetime
@@ -46,12 +45,7 @@ def run_local_rule_adaptive_backtest(
     index_dir = cache_dir / "index"
     index_symbol = str(base_cfg.get("market_filter", {}).get("index_symbol", "000300"))
 
-    profiles = {
-        "recommend": json.loads(json.dumps(base_cfg)),
-        "recommend-pullback": apply_strategy_profile(base_cfg, "pullback_confirm"),
-        "recommend-oversold": apply_strategy_profile(base_cfg, "oversold_rebound"),
-        "recommend-relative": apply_strategy_profile(base_cfg, "relative_strength"),
-    }
+    profiles = _build_adaptive_profiles(base_cfg)
     for cfg in profiles.values():
         cfg.setdefault("data_freshness", {})["enabled"] = False
 
@@ -168,6 +162,8 @@ def run_local_rule_adaptive_backtest(
         chosen_cmd: str | None = None
         picked: list[dict] = []
         for cmd_name in ordered:
+            if cmd_name == "cash":
+                break
             day = sorted(candidates[cmd_name].get(dt, []), key=lambda item: item["score"], reverse=True)
             if not day:
                 continue
@@ -280,6 +276,23 @@ def _simulate_rule_exit(
         "ret_3d_net": _apply_round_trip_cost(three_day),
         "ret_5d_net": _apply_round_trip_cost(five_day),
     }
+
+
+def _build_adaptive_profiles(base_cfg: dict) -> dict[str, dict]:
+    profile_names = {
+        "recommend": None,
+        "recommend-pullback": "pullback_confirm",
+        "recommend-oversold": "oversold_rebound",
+        "recommend-relative": "relative_strength",
+    }
+    overrides = base_cfg.get("adaptive_strategy", {}).get("profile_overrides", {})
+    if not isinstance(overrides, dict):
+        overrides = {}
+    profiles = {}
+    for name, default_profile in profile_names.items():
+        profile_name = overrides.get(name, default_profile)
+        profiles[name] = apply_strategy_profile(base_cfg, profile_name)
+    return profiles
 
 
 def _build_summary(

@@ -1,5 +1,5 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-05-26 20:03:05",
+  "generated_at": "2026-05-27 09:39:25",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
@@ -96,7 +96,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 19.57,
           "take_profit_price": 22.5,
           "suggested_holding_days": 2,
-          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "exit_plan": "默认持有2天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -166,7 +166,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 8.94,
           "take_profit_price": 10.33,
           "suggested_holding_days": 2,
-          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "exit_plan": "默认持有2天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -180,7 +180,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 7.83,
           "take_profit_price": 9.82,
           "suggested_holding_days": 2,
-          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "exit_plan": "默认持有2天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -250,7 +250,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 20.98,
           "take_profit_price": 23.12,
           "suggested_holding_days": 2,
-          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "exit_plan": "默认持有2天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -264,7 +264,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 20.88,
           "take_profit_price": 23.02,
           "suggested_holding_days": 2,
-          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "exit_plan": "默认持有2天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -278,7 +278,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 35.01,
           "take_profit_price": 42.61,
           "suggested_holding_days": 5,
-          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "exit_plan": "默认持有5天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -306,7 +306,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 8.13,
           "take_profit_price": 8.93,
           "suggested_holding_days": 2,
-          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "exit_plan": "默认持有2天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -334,7 +334,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 25.45,
           "take_profit_price": 31.74,
           "suggested_holding_days": 3,
-          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "exit_plan": "默认持有3天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -348,7 +348,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 20.92,
           "take_profit_price": 22.73,
           "suggested_holding_days": 3,
-          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "exit_plan": "默认持有3天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -376,7 +376,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 89.96,
           "take_profit_price": 103.86,
           "suggested_holding_days": 3,
-          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "exit_plan": "默认持有3天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -390,7 +390,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 8.17,
           "take_profit_price": 8.97,
           "suggested_holding_days": 3,
-          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "exit_plan": "默认持有3天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -418,7 +418,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 50.8,
           "take_profit_price": 66.45,
           "suggested_holding_days": 3,
-          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "exit_plan": "默认持有3天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -446,7 +446,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 25.62,
           "take_profit_price": 32.51,
           "suggested_holding_days": 3,
-          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "exit_plan": "默认持有3天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -474,7 +474,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 5.67,
           "take_profit_price": 6.65,
           "suggested_holding_days": 3,
-          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "exit_plan": "默认持有3天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -502,7 +502,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 7.08,
           "take_profit_price": 7.78,
           "suggested_holding_days": 3,
-          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "exit_plan": "默认持有3天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -530,7 +530,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 8.74,
           "take_profit_price": 9.6,
           "suggested_holding_days": 1,
-          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -544,7 +544,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 9.1,
           "take_profit_price": 9.98,
           "suggested_holding_days": 1,
-          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -558,7 +558,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 10.56,
           "take_profit_price": 11.51,
           "suggested_holding_days": 1,
-          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -572,7 +572,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 10.49,
           "take_profit_price": 11.47,
           "suggested_holding_days": 1,
-          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -586,7 +586,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 6.32,
           "take_profit_price": 8.22,
           "suggested_holding_days": 1,
-          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -600,7 +600,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 3.76,
           "take_profit_price": 4.46,
           "suggested_holding_days": 1,
-          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -614,7 +614,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 17.27,
           "take_profit_price": 20.32,
           "suggested_holding_days": 1,
-          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -628,7 +628,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 9.92,
           "take_profit_price": 10.95,
           "suggested_holding_days": 1,
-          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -642,7 +642,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 9.87,
           "take_profit_price": 10.93,
           "suggested_holding_days": 1,
-          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
           "source_strategy": "recommend-pullback"
         },
         {
@@ -656,7 +656,7 @@ window.STOCK_DASHBOARD_DATA = {
           "stop_loss_price": 4.7,
           "take_profit_price": 5.22,
           "suggested_holding_days": 1,
-          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
           "source_strategy": "recommend-pullback"
         },
         {

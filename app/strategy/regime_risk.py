@@ -29,7 +29,10 @@ def detect_market_state(index_closes: dict, signal_date, cfg: dict) -> MarketSta
     ma20 = float(series.rolling(20).mean().iloc[-1]) if len(series) >= 20 else close
     ma60 = float(series.rolling(60).mean().iloc[-1]) if len(series) >= 60 else ma20
     mom20 = float(series.iloc[-1] / series.iloc[-21] - 1.0) if len(series) >= 21 else 0.0
-    if close > ma20 > ma60 and mom20 > 0:
+    bull_min_close_above_ma20_pct = float(mcfg.get("bull_min_close_above_ma20_pct", 0.0))
+    bull_min_mom20 = float(mcfg.get("bull_min_mom20", 0.0))
+    close_above_ma20_pct = close / ma20 - 1.0 if ma20 > 0 else 0.0
+    if close > ma20 > ma60 and mom20 > bull_min_mom20 and close_above_ma20_pct > bull_min_close_above_ma20_pct:
         label = "bull"
     elif close < ma20 and mom20 < 0:
         label = "bear"
@@ -130,6 +133,9 @@ def passes_risk_filter(latest: pd.Series, market: MarketState, mode: str, cfg: d
             return False
         min_volume_zscore20 = pullback_cfg.get("min_volume_zscore20")
         if min_volume_zscore20 is not None and volume_zscore20 < float(min_volume_zscore20):
+            return False
+        min_ret_1d = pullback_cfg.get("min_ret_1d")
+        if min_ret_1d is not None and ret_1d < float(min_ret_1d):
             return False
     oversold_cfg = rcfg.get("oversold", {})
     if bool(oversold_cfg.get("enabled", False)):
