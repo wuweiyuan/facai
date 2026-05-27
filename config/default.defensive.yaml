@@ -1,10 +1,11 @@
-# 当前正式主配置
+# 当前保守候选配置
 #
 # 说明：
-# - 这是当前建议用于日常运行 `recommend-adaptive` / `backtest-adaptive` 的主配置。
-# - 它已提升为 stable-v2 稳健默认：强市才做回踩/趋势，弱环境优先空仓。
-# - 2025-03-24 到 2026-05-27 对比中，stable-v2 降低交易频率并改善 3/5 日净收益与回撤代理。
-# - 如果后续要继续做实验，建议复制出新的实验配置，不要直接覆盖这份文件。
+# - 这是用于对比试跑的保守候选配置，不替代 `config/default.yaml`。
+# - 重点是让 adaptive 优先使用 `pullback_defensive`，减少弱势回头信号。
+# - 通过 `--config config/default.defensive.yaml` 显式启用。
+# - 2025-03-24 到 2026-05-27 长窗口 A/B 暂不支持它替换主配置；
+#   更适合作为近期市场转弱时的人工防守参考。
 #
 # 项目默认配置文件
 #
@@ -170,6 +171,11 @@ market_filter:
   # 数值越小：更灵敏，但也更容易受短期波动干扰。
   lookback_days: 120
 
+  # 保守候选版：只有指数明显站上 MA20 且 20 日动量足够时才视为 bull。
+  # 贴近 MA20 的“弱牛”会降级为 neutral，从而减少回头策略出手。
+  bull_min_close_above_ma20_pct: 0.01
+  bull_min_mom20: 0.04
+
   # 若市场过滤在计算中发生错误，是否直接视为失败。
   # true：宁可终止，也不要在市场状态不明时继续运行。
   # false：计算失败时忽略市场过滤，继续往下执行。
@@ -186,10 +192,6 @@ market_filter:
 
   # 如果你的风格非常保守，可取消下面这行注释，直接在熊市阻断策略。
   # block_on_bear: true
-
-  # stable-v2 默认：只有指数明确站上 MA20 且 20 日动量足够强，才视为 bull。
-  bull_min_close_above_ma20_pct: 0.01
-  bull_min_mom20: 0.04
 
 # 个股风险过滤。
 # 作用是在评分前先把“价格不合适、波动太大、量能异常、指标过热”的股票剔除掉。
@@ -621,9 +623,9 @@ strategy_profiles:
 adaptive_strategy:
   regime_orders:
     bull: [recommend-pullback, recommend]
-    neutral: [cash]
-    bear: [recommend-oversold, cash]
-    unknown: [cash]
+    neutral: [recommend]
+    bear: [recommend-oversold]
+    unknown: [recommend]
   strategy_pick_counts:
     recommend: 1
     recommend-pullback: 1

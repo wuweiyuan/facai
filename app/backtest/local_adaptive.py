@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import csv
-import json
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -99,13 +98,7 @@ def run_local_adaptive_backtest(
     if not cache.is_available(index_symbol):
         raise RuntimeError("Local adaptive cache is unavailable")
 
-    profiles = {
-        "recommend": json.loads(json.dumps(base_cfg)),
-        "recommend-pullback": apply_strategy_profile(base_cfg, "pullback_confirm"),
-        "recommend-oversold": apply_strategy_profile(base_cfg, "oversold_rebound"),
-        "recommend-bull": apply_strategy_profile(base_cfg, "bull_trend_research"),
-        "recommend-relative": apply_strategy_profile(base_cfg, "relative_strength"),
-    }
+    profiles = _build_adaptive_profiles(base_cfg)
     for cfg in profiles.values():
         cfg.setdefault("data_freshness", {})["enabled"] = False
 
@@ -189,6 +182,8 @@ def run_local_adaptive_backtest(
         chosen_name: str | None = None
         picked: list[AdaptiveCandidate] = []
         for cmd_name in ordered:
+            if cmd_name == "cash":
+                break
             day = sorted(candidates[cmd_name].get(dt, []), key=lambda item: item.score, reverse=True)
             if not day:
                 continue
@@ -228,6 +223,24 @@ def run_local_adaptive_backtest(
     )
     summary["adaptive_strategy_counts"] = dict(strategy_counts)
     return summary
+
+
+def _build_adaptive_profiles(base_cfg: dict) -> dict[str, dict]:
+    profile_names = {
+        "recommend": None,
+        "recommend-pullback": "pullback_confirm",
+        "recommend-oversold": "oversold_rebound",
+        "recommend-bull": "bull_trend_research",
+        "recommend-relative": "relative_strength",
+    }
+    overrides = base_cfg.get("adaptive_strategy", {}).get("profile_overrides", {})
+    if not isinstance(overrides, dict):
+        overrides = {}
+    profiles = {}
+    for name, default_profile in profile_names.items():
+        profile_name = overrides.get(name, default_profile)
+        profiles[name] = apply_strategy_profile(base_cfg, profile_name)
+    return profiles
 
 
 def _build_summary(

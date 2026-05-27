@@ -447,9 +447,10 @@
           playbookHtml: [
             "<p>这页只显示 <code>recommend-adaptive</code> 的结果。系统会先判断市场状态，再决定优先尝试哪套策略；如果没有合适信号，就建议空仓。你可以把它理解成“先决定今天该打哪种仗，再决定买哪只票”。</p>",
             "<ul>",
-            "<li><strong>牛市 / 震荡市：</strong>优先尝试 <code>recommend-pullback</code>，再看 <code>recommend</code>。思路是先做位置更克制、回踩确认的票，再考虑强趋势延续票。</li>",
-            "<li><strong>熊市：</strong>优先只尝试 <code>recommend-oversold</code>。思路是弱市更少追趋势，多做超跌修复。</li>",
-            "<li><strong>空仓原则：</strong>如果对应策略没有候选，就直接空仓，而不是为了出手硬选股票。</li>",
+            "<li><strong>牛市：</strong>优先尝试 <code>recommend-pullback</code>，再看 <code>recommend</code>。思路是只在市场明确偏强时做回踩确认和趋势延续。</li>",
+            "<li><strong>震荡市 / 未知环境：</strong>直接空仓，不再为了凑结果硬选回踩票。</li>",
+            "<li><strong>熊市：</strong>优先只尝试 <code>recommend-oversold</code>，如果没有合格超跌修复信号就空仓。</li>",
+            "<li><strong>空仓原则：</strong>弱环境下空仓是正式策略结果，不是页面异常。</li>",
             "<li><strong>看盘方式：</strong>先看页面告诉你当天采用哪套策略，再按下方对应规则执行，不需要自己临时切换思路。</li>",
             "<li><strong>数据范围：</strong>页面仍然只保留最近 20 个交易日的数据。</li>",
             "</ul>"

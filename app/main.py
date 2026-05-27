@@ -123,8 +123,10 @@ def _resolve_recommend_run_specs(cmd: str) -> list[tuple[str, str | None, str]]:
 def _resolve_adaptive_strategy_specs(base_cfg: dict, market_label: str) -> list[tuple[str, str | None, str]]:
     adaptive_cfg = base_cfg.get("adaptive_strategy", {})
     regime_orders = adaptive_cfg.get("regime_orders", {})
+    profile_overrides = adaptive_cfg.get("profile_overrides", {})
     raw_order = regime_orders.get(market_label) or regime_orders.get("unknown") or ["recommend-pullback"]
     known = {
+        "cash": ("cash", None, "空仓 cash"),
         "recommend": ("recommend", None, "默认策略 recommend"),
         "recommend-pullback": ("recommend-pullback", "pullback_confirm", "回踩策略 recommend-pullback"),
         "recommend-oversold": ("recommend-oversold", "oversold_rebound", "超跌反弹策略 recommend-oversold"),
@@ -135,8 +137,18 @@ def _resolve_adaptive_strategy_specs(base_cfg: dict, market_label: str) -> list[
     for item in raw_order:
         key = str(item).strip()
         spec = known.get(key)
-        if spec and spec not in out:
-            out.append(spec)
+        if not spec:
+            continue
+        profile_name = spec[1]
+        if isinstance(profile_overrides, dict):
+            override_name = profile_overrides.get(key)
+            if override_name is not None:
+                profile_name = str(override_name).strip() or None
+        resolved_spec = (spec[0], profile_name, spec[2])
+        if resolved_spec not in out:
+            out.append(resolved_spec)
+        if key == "cash":
+            break
     return out or [known["recommend-pullback"]]
 
 
@@ -285,6 +297,11 @@ def _choose_adaptive_recommendations(
 
     for cmd_name, profile_name, _section_title in run_specs:
         tried_commands.append(cmd_name)
+        if cmd_name == "cash":
+            chosen_cmd = "cash"
+            chosen_count = 0
+            chosen_profile_name = None
+            break
         resolved_count = _resolve_adaptive_pick_count(base_cfg, cmd_name, override_count)
         cfg = apply_strategy_profile(base_cfg, profile_name)
         engine = Recommender(ds, cfg)

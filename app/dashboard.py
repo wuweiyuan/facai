@@ -246,9 +246,9 @@ def _group_records_by_date(records: list[dict]) -> dict[str, list[dict]]:
 def _resolve_adaptive_regime_orders(cfg: dict | None) -> dict[str, list[str]]:
     defaults = {
         "bull": ["recommend-pullback", "recommend"],
-        "neutral": ["recommend-pullback", "recommend"],
-        "bear": ["recommend-oversold"],
-        "unknown": ["recommend-pullback"],
+        "neutral": ["cash"],
+        "bear": ["recommend-oversold", "cash"],
+        "unknown": ["cash"],
     }
     if not cfg:
         return defaults
@@ -333,6 +333,8 @@ def _load_adaptive_run_summaries(cfg: dict | None) -> dict[str, dict]:
 
 
 def _row_to_record(row: pd.Series) -> dict:
+    suggested_days = _to_int(row.get("suggested_holding_days", ""))
+    exit_plan = _normalize_exit_plan_days(_clean_text(row.get("exit_plan", "")), suggested_days)
     return {
         "run_time": _clean_text(row.get("run_time", "")),
         "trade_date": _clean_text(row.get("trade_date", "")),
@@ -343,10 +345,16 @@ def _row_to_record(row: pd.Series) -> dict:
         "close": _to_float(row.get("close", "")),
         "stop_loss_price": _to_float(row.get("stop_loss_price", "")),
         "take_profit_price": _to_float(row.get("take_profit_price", "")),
-        "suggested_holding_days": _to_int(row.get("suggested_holding_days", "")),
-        "exit_plan": _clean_text(row.get("exit_plan", "")),
+        "suggested_holding_days": suggested_days,
+        "exit_plan": exit_plan,
         "source_strategy": _clean_text(row.get("source_strategy", "")),
     }
+
+
+def _normalize_exit_plan_days(exit_plan: str, suggested_days: int | None) -> str:
+    if suggested_days is None or not exit_plan:
+        return exit_plan
+    return re.sub(r"^默认持有\d+天", f"默认持有{suggested_days}天", exit_plan, count=1)
 
 
 def _clean_text(value: object) -> str:

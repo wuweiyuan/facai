@@ -12,7 +12,7 @@ from unittest import TestCase
 from unittest.mock import Mock, patch
 
 import app.main as main_module
-from app.config import apply_strategy_profile
+from app.config import apply_strategy_profile, load_config
 from app.engine.recommender import Recommender
 from app.main import (
     _resolve_adaptive_strategy_specs,
@@ -335,6 +335,41 @@ class TestRecommender(TestCase):
             [("recommend-pullback", "pullback_confirm", "回踩策略 recommend-pullback")],
         )
 
+    def test_resolve_adaptive_strategy_specs_applies_profile_overrides(self):
+        cfg = {
+            "adaptive_strategy": {
+                "regime_orders": {
+                    "bull": ["recommend-pullback", "recommend"],
+                },
+                "profile_overrides": {
+                    "recommend-pullback": "pullback_defensive",
+                },
+            }
+        }
+
+        specs = _resolve_adaptive_strategy_specs(cfg, "bull")
+
+        self.assertEqual(
+            specs,
+            [
+                ("recommend-pullback", "pullback_defensive", "回踩策略 recommend-pullback"),
+                ("recommend", None, "默认策略 recommend"),
+            ],
+        )
+
+    def test_resolve_adaptive_strategy_specs_stops_at_cash(self):
+        cfg = {
+            "adaptive_strategy": {
+                "regime_orders": {
+                    "neutral": ["cash", "recommend-pullback"],
+                }
+            }
+        }
+
+        specs = _resolve_adaptive_strategy_specs(cfg, "neutral")
+
+        self.assertEqual(specs, [("cash", None, "空仓 cash")])
+
     def test_resolve_adaptive_pick_count_uses_strategy_defaults_and_allows_override(self):
         cfg = {
             "adaptive_strategy": {
@@ -608,6 +643,37 @@ class TestRecommender(TestCase):
 
         self.assertNotIn("pullback", cfg["strategy"]["weights"])
         self.assertEqual(merged["strategy"]["weights"]["pullback"], 0.35)
+
+    def test_default_config_defines_pullback_defensive_profile(self):
+        cfg = load_config("config/default.yaml")
+
+        merged = apply_strategy_profile(cfg, "pullback_defensive")
+        pullback_cfg = merged["risk_filter"]["pullback"]
+
+        self.assertTrue(pullback_cfg["enabled"])
+        self.assertEqual(pullback_cfg["max_volume_zscore20"], 1.0)
+        self.assertEqual(pullback_cfg["min_ret_1d"], -0.04)
+        self.assertEqual(merged["risk_filter"]["max_vol20_std"], 0.06)
+
+    def test_default_config_promotes_stable_v2_adaptive_rules(self):
+        cfg = load_config("config/default.yaml")
+
+        self.assertEqual(cfg["adaptive_strategy"]["regime_orders"]["bull"], ["recommend-pullback", "recommend"])
+        self.assertEqual(cfg["adaptive_strategy"]["regime_orders"]["neutral"], ["cash"])
+        self.assertEqual(cfg["adaptive_strategy"]["regime_orders"]["bear"], ["recommend-oversold", "cash"])
+        self.assertEqual(cfg["adaptive_strategy"]["regime_orders"]["unknown"], ["cash"])
+        self.assertEqual(cfg["market_filter"]["bull_min_close_above_ma20_pct"], 0.01)
+        self.assertEqual(cfg["market_filter"]["bull_min_mom20"], 0.04)
+
+    def test_stable_v2_config_uses_cash_in_weak_regimes(self):
+        cfg = load_config("config/default.stable-v2.yaml")
+
+        self.assertEqual(cfg["adaptive_strategy"]["regime_orders"]["bull"], ["recommend-pullback", "recommend"])
+        self.assertEqual(cfg["adaptive_strategy"]["regime_orders"]["neutral"], ["cash"])
+        self.assertEqual(cfg["adaptive_strategy"]["regime_orders"]["bear"], ["recommend-oversold", "cash"])
+        self.assertEqual(cfg["adaptive_strategy"]["regime_orders"]["unknown"], ["cash"])
+        self.assertEqual(cfg["market_filter"]["bull_min_close_above_ma20_pct"], 0.01)
+        self.assertEqual(cfg["market_filter"]["bull_min_mom20"], 0.04)
 
     def test_parser_accepts_recommend_pullback(self):
         args = build_parser().parse_args(["recommend-pullback", "--date", "2025-03-20"])

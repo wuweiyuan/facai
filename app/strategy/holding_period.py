@@ -47,6 +47,12 @@ def build_exit_plan(latest: pd.Series, market_state: MarketState, cfg: dict | No
         return "默认持有2到3天；2天内不修复或亏损5%到6%止损；快速反弹5%到8%止盈。"
     if style == "pullback_confirm":
         return "默认持有3到4天；跌回关键均线或2到3天不走强就退出；到压力位滞涨可分批止盈。"
-    if market_state.label == "bull":
+
+    days = suggest_holding_days(latest, market_state, cfg)
+    if days <= 1:
+        return "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。"
+    if days == 2:
+        return "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。"
+    if days == 3:
         return "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。"
-    return "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。"
+    return f"默认持有{days}天；买后2天内跌回MA20附近转弱就退出；加速放量冲高回落可分批止盈。"

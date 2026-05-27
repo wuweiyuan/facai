@@ -56,9 +56,9 @@ class TestDashboard(TestCase):
                 "adaptive_strategy": {
                     "regime_orders": {
                         "bull": ["recommend-pullback", "recommend"],
-                        "neutral": ["recommend-pullback", "recommend"],
-                        "bear": ["recommend-oversold"],
-                        "unknown": ["recommend-pullback"],
+                        "neutral": ["cash"],
+                        "bear": ["recommend-oversold", "cash"],
+                        "unknown": ["cash"],
                     }
                 },
             }
@@ -107,6 +107,34 @@ class TestDashboard(TestCase):
 
             self.assertEqual(payload["strategies"]["adaptive"]["records"], [])
             self.assertEqual(payload["all_dates"], [])
+
+    def test_build_dashboard_payload_normalizes_exit_plan_default_days(self):
+        with TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            default_csv = base / "recommendations.csv"
+            default_csv.write_text(
+                "\n".join(
+                    [
+                        "run_time,trade_date,symbol,name,threshold_mode,score_total,close,stop_loss_price,take_profit_price,suggested_holding_days,exit_plan",
+                        "2026-05-26 20:00:00,2026-05-27,000001,Alpha,normal,70.1,10.0,9.5,11.0,2,默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            payload = build_dashboard_payload(
+                default_csv,
+                base / "missing-pullback.csv",
+                base / "missing-oversold.csv",
+                {
+                    "data_source": {"cache_dir": str(base)},
+                    "adaptive_strategy": {"regime_orders": {"unknown": ["recommend"]}},
+                },
+            )
+
+            record = payload["strategies"]["adaptive"]["records"][0]
+            self.assertIn("默认持有2天", record["exit_plan"])
+            self.assertNotIn("默认持有3天", record["exit_plan"])
 
     def test_export_dashboard_data_writes_assignable_javascript(self):
         with TemporaryDirectory() as tmp:
