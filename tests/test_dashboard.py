@@ -108,6 +108,106 @@ class TestDashboard(TestCase):
             self.assertEqual(payload["strategies"]["adaptive"]["records"], [])
             self.assertEqual(payload["all_dates"], [])
 
+    def test_cash_adaptive_day_keeps_opportunity_context(self):
+        with TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            default_csv = base / "recommendations.csv"
+            pullback_csv = base / "pullback_recommendations.csv"
+            oversold_csv = base / "oversold_recommendations.csv"
+            opportunity_csv = base / "opportunity_recommendations.csv"
+            for path in [default_csv, pullback_csv, oversold_csv]:
+                path.write_text(
+                    "run_time,trade_date,symbol,name,threshold_mode,score_total,close,stop_loss_price,take_profit_price,suggested_holding_days\n",
+                    encoding="utf-8",
+                )
+            opportunity_csv.write_text(
+                "\n".join(
+                    [
+                        "run_time,trade_date,symbol,name,threshold_mode,score_total,close,stop_loss_price,take_profit_price,suggested_holding_days,exit_plan,source_strategy",
+                        "2026-03-17 21:05:00,2026-03-18,600000,浦发银行,normal,70.5,9.2,8.9,9.9,2,默认持有2天；买后不强就退出。,recommend-pullback",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            (base / "adaptive_runs.csv").write_text(
+                "\n".join(
+                    [
+                        "run_time,target_date,signal_date,market_state,market_reason,tried_strategies,chosen_strategy,has_recommendations,chosen_count",
+                        "2026-03-17 21:00:00,2026-03-18,2026-03-17,neutral,ok,cash,cash,true,3",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            payload = build_dashboard_payload(
+                default_csv,
+                pullback_csv,
+                oversold_csv,
+                {
+                    "data_source": {"cache_dir": str(base)},
+                    "reporting": {"adaptive_run_csv": str(base / "adaptive_runs.csv")},
+                    "adaptive_strategy": {"regime_orders": {"neutral": ["cash"], "unknown": ["cash"]}},
+                },
+                opportunity_csv=opportunity_csv,
+            )
+
+            summary = payload["strategies"]["adaptive"]["date_summaries"]["2026-03-18"]
+            self.assertEqual(summary["formal_action"], "cash")
+            self.assertFalse(summary["has_recommendations"])
+            self.assertEqual(summary["chosen_count"], 0)
+            self.assertTrue(summary["has_observation_candidates"])
+            self.assertEqual(summary["opportunity_count"], 1)
+
+    def test_cash_adaptive_day_uses_default_records_as_observation_candidates_when_opportunity_csv_missing(self):
+        with TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            default_csv = base / "recommendations.csv"
+            pullback_csv = base / "pullback_recommendations.csv"
+            oversold_csv = base / "oversold_recommendations.csv"
+            default_csv.write_text(
+                "\n".join(
+                    [
+                        "run_time,trade_date,symbol,name,threshold_mode,score_total,close,stop_loss_price,take_profit_price,suggested_holding_days,exit_plan",
+                        "2026-05-28 09:29:15,2026-05-28,603725,天安新材,normal,91.58,12.2,11.12,14.34,3,默认持有3天；买后不强就退出。",
+                        "2026-05-28 09:29:16,2026-05-28,003019,宸展光电,normal,88.72,44.17,40.74,51.01,3,默认持有3天；买后不强就退出。",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            for path in [pullback_csv, oversold_csv]:
+                path.write_text(
+                    "run_time,trade_date,symbol,name,threshold_mode,score_total,close,stop_loss_price,take_profit_price,suggested_holding_days\n",
+                    encoding="utf-8",
+                )
+            (base / "adaptive_runs.csv").write_text(
+                "\n".join(
+                    [
+                        "run_time,target_date,signal_date,market_state,market_reason,tried_strategies,chosen_strategy,has_recommendations,chosen_count",
+                        "2026-05-28 09:29:16,2026-05-28,2026-05-27,neutral,ok,cash,cash,true,0",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            payload = build_dashboard_payload(
+                default_csv,
+                pullback_csv,
+                oversold_csv,
+                {
+                    "data_source": {"cache_dir": str(base)},
+                    "reporting": {"adaptive_run_csv": str(base / "adaptive_runs.csv")},
+                    "adaptive_strategy": {"regime_orders": {"neutral": ["cash"], "unknown": ["cash"]}},
+                },
+                opportunity_csv=base / "missing-opportunity.csv",
+            )
+
+            opportunity_records = payload["strategies"]["opportunity"]["records"]
+            summary = payload["strategies"]["adaptive"]["date_summaries"]["2026-05-28"]
+            self.assertEqual(summary["formal_action"], "cash")
+            self.assertEqual(summary["opportunity_count"], 2)
+            self.assertEqual([record["symbol"] for record in opportunity_records], ["603725", "003019"])
+            self.assertEqual({record["source_strategy"] for record in opportunity_records}, {"recommend"})
+
     def test_build_dashboard_payload_normalizes_exit_plan_default_days(self):
         with TemporaryDirectory() as tmp:
             base = Path(tmp)

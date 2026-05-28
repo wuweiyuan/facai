@@ -172,6 +172,12 @@
       color: var(--danger);
     }
 
+    .status.cash-watch {
+      background: rgba(138, 59, 46, 0.08);
+      border-color: rgba(31, 92, 74, 0.20);
+      color: var(--accent-strong);
+    }
+
     .playbook {
       margin-top: 16px;
       padding: 18px 20px;
@@ -374,7 +380,7 @@
             <div class="value" id="metricStrategy">默认战法</div>
           </div>
           <div class="metric">
-            <div class="label">当日股票数</div>
+            <div class="label">正式信号数</div>
             <div class="value" id="metricCount">0</div>
           </div>
           <div class="metric">
@@ -412,9 +418,9 @@
 
         <div class="playbook" style="margin-top: 18px;">
           <div id="opportunityPanel">
-          <h3>机会池</h3>
-          <p>当正式信号较少或空仓时，这里展示更宽一点的备选名单，只供人工复核，不等于正式交易信号。</p>
-          <div class="status warn" style="margin-top: 10px;">机会池股票仅作观察参考，谨慎操作，不建议直接按列表机械买入。</div>
+          <h3 id="opportunityTitle">观察候选</h3>
+          <p id="opportunityIntro">当正式信号较少或空仓时，这里展示更宽一点的备选名单，只供人工复核，不等于正式交易信号。</p>
+          <div class="status warn" id="opportunityWarning" style="margin-top: 10px;">机会池股票仅作观察参考，谨慎操作，不建议直接按列表机械买入。</div>
           <div class="table-wrap" style="margin-top: 12px;">
             <table>
               <thead>
@@ -522,6 +528,9 @@
       const opportunityBody = document.getElementById("opportunityBody");
       const opportunityEmpty = document.getElementById("opportunityEmpty");
       const opportunityPanel = document.getElementById("opportunityPanel");
+      const opportunityTitle = document.getElementById("opportunityTitle");
+      const opportunityIntro = document.getElementById("opportunityIntro");
+      const opportunityWarning = document.getElementById("opportunityWarning");
       const metricStrategy = document.getElementById("metricStrategy");
       const metricCount = document.getElementById("metricCount");
       const metricRunTime = document.getElementById("metricRunTime");
@@ -562,16 +571,19 @@
         const dateSummary = getDateSummary(strategyData, state.selectedDate);
         const latestRunTime = records.length ? records[0].run_time || "-" : (strategyData.latest_run_time || "-");
         const selectedSource = resolveSelectedSourceStrategy(records, dateSummary);
+        const isFormalCash = isCashAction(dateSummary, records);
+        const observationCount = resolveObservationCount(dateSummary, opportunityRecords);
 
-        metricStrategy.textContent = strategyData.label;
+        metricStrategy.textContent = isFormalCash ? "建议空仓" : strategyData.label;
         applyPlaybook(selectedSource);
         metricCount.textContent = String(records.length);
         metricRunTime.textContent = latestRunTime;
-        setStatus(buildStatusText(selectedSource, dateSummary, records), !records.length);
+        setStatus(buildStatusText(selectedSource, dateSummary, records, observationCount), !records.length, isFormalCash && observationCount > 0);
 
         renderTable(records);
-        renderOpportunityTable(opportunityRecords);
-        opportunityPanel.classList.toggle("highlight", !records.length && opportunityRecords.length > 0);
+        renderOpportunityTable(opportunityRecords, isFormalCash);
+        renderOpportunityCopy(isFormalCash, observationCount);
+        opportunityPanel.classList.toggle("highlight", isFormalCash && observationCount > 0);
       }
 
       function resolveSelectedSourceStrategy(records, dateSummary) {
@@ -592,8 +604,14 @@
         playbookBody.innerHTML = STRATEGY_META[state.strategy].playbookHtml;
       }
 
-      function buildStatusText(sourceStrategy, dateSummary, records) {
+      function buildStatusText(sourceStrategy, dateSummary, records, observationCount) {
         if (!sourceStrategy || !SOURCE_RULES[sourceStrategy]) {
+          if (dateSummary && dateSummary.formal_action === "cash" && observationCount > 0) {
+            return "正式建议: 空仓；但有 " + observationCount + " 只观察候选可人工复核。市场状态: " + (dateSummary.market_state || "-");
+          }
+          if (dateSummary && dateSummary.formal_action === "cash") {
+            return "正式建议: 空仓。当前市场状态下不升级为正式买入信号；市场状态: " + (dateSummary.market_state || "-");
+          }
           if (dateSummary && dateSummary.market_state) {
             return "本日无候选，建议空仓；市场状态: " + dateSummary.market_state;
           }
@@ -607,6 +625,20 @@
           ? "；默认持有: " + firstRecord.suggested_holding_days + "天"
           : "";
         return "本日实际采用策略: " + SOURCE_RULES[sourceStrategy].label + holdDays + exitPlan;
+      }
+
+      function isCashAction(dateSummary, records) {
+        if (dateSummary && dateSummary.formal_action === "cash") {
+          return true;
+        }
+        return !records.length;
+      }
+
+      function resolveObservationCount(dateSummary, opportunityRecords) {
+        if (dateSummary && typeof dateSummary.opportunity_count === "number") {
+          return dateSummary.opportunity_count;
+        }
+        return opportunityRecords.length;
       }
 
       function ensureSelectedDate() {
@@ -723,10 +755,11 @@
         });
       }
 
-      function renderOpportunityTable(records) {
+      function renderOpportunityTable(records, isFormalCash) {
         opportunityBody.innerHTML = "";
         if (!records.length) {
           opportunityEmpty.hidden = false;
+          opportunityEmpty.textContent = isFormalCash ? "正式建议空仓，当前日期也没有观察候选。" : "当前日期没有机会池记录。";
           return;
         }
         opportunityEmpty.hidden = true;
@@ -745,9 +778,22 @@
         });
       }
 
-      function setStatus(text, isWarn) {
+      function renderOpportunityCopy(isFormalCash, observationCount) {
+        if (isFormalCash && observationCount > 0) {
+          opportunityTitle.textContent = "观察候选，不是正式信号";
+          opportunityIntro.textContent = "正式策略建议空仓；下面这些股票只是宽口径筛出的观察名单，可用于复盘和人工复核。";
+          opportunityWarning.textContent = "这些股票没有升级为正式买入信号。除非盘中重新确认市场和个股强度，否则按空仓处理。";
+          return;
+        }
+        opportunityTitle.textContent = "观察候选";
+        opportunityIntro.textContent = "当正式信号较少或空仓时，这里展示更宽一点的备选名单，只供人工复核，不等于正式交易信号。";
+        opportunityWarning.textContent = "机会池股票仅作观察参考，谨慎操作，不建议直接按列表机械买入。";
+      }
+
+      function setStatus(text, isWarn, isCashWatch) {
         dataStatus.textContent = text;
         dataStatus.classList.toggle("warn", Boolean(isWarn));
+        dataStatus.classList.toggle("cash-watch", Boolean(isCashWatch));
       }
 
       function normalizeSourceStrategy(sourceStrategy) {

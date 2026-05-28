@@ -896,6 +896,10 @@ def main() -> None:
 
         for cmd_name, profile_name, section_title in run_specs:
             tried_commands.append(cmd_name)
+            if cmd_name == "cash":
+                chosen_cmd = "cash"
+                chosen_count = 0
+                break
             resolved_count = _resolve_adaptive_pick_count(base_cfg, cmd_name, args.count)
             try:
                 recs, reporting_enabled = _run_recommend_profile(
@@ -935,7 +939,7 @@ def main() -> None:
             )
             if args.output != "json":
                 print(f"已写入文档: {saved_adaptive_csv}")
-        if not chosen_cmd:
+        if not chosen_recs:
             opportunity_payload = _build_opportunity_pool(base_cfg, ds, target_date, args.count)
             saved_opportunity_csv = _save_opportunity_pool_csv(base_cfg, opportunity_payload)
             if saved_opportunity_csv and args.output != "json":
@@ -967,7 +971,7 @@ def main() -> None:
                 "opportunity_pool": opportunity_payload,
             }
             print(json.dumps(payload, ensure_ascii=False, indent=2))
-        elif not chosen_cmd:
+        elif not chosen_recs:
             print("[自适应] 当前市场下所有候选策略都无信号，建议空仓。")
             print("[自适应] 已自动生成机会池供人工复核。")
             _print_opportunity_pool(opportunity_payload or {"target_date": target_date.isoformat(), "signal_date": signal_date.isoformat(), "market_state": market_state.label, "market_reason": market_reason, "pool": []})

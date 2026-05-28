@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-05-27 09:39:25",
+  "generated_at": "2026-05-28 09:44:32",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-05-28",
         "2026-05-27",
         "2026-05-26",
         "2026-05-25",
@@ -69,7 +70,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-05-26 20:03:05",
+      "latest_run_time": "2026-05-28 09:29:16",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -700,6 +701,879 @@ window.STOCK_DASHBOARD_DATA = {
           "suggested_holding_days": 4,
           "exit_plan": "",
           "source_strategy": "recommend-oversold"
+        }
+      ],
+      "date_summaries": {
+        "2026-03-24": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false,
+          "chosen_count": null,
+          "formal_action": "cash",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-03-25": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-03-26": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-03-27": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-03-30": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-03-31": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-01": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-02": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-03": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-07": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-08": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-09": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-10": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-13": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-14": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-15": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-16": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-17": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-20": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-21": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-22": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-23": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-24": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-27": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-28": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-29": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-04-30": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-05-06": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-05-07": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-05-08": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-05-11": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-05-12": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-05-13": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-05-14": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-05-15": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-05-18": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-05-19": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-05-20": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-05-21": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-05-22": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-05-25": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-05-26": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-05-27": {
+          "market_state": "bull",
+          "tried_strategies": [
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 1,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-05-28": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "cash"
+          ],
+          "chosen_strategy": "cash",
+          "has_recommendations": false,
+          "chosen_count": 0,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
+        "2026-03-23": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "cash"
+          ],
+          "chosen_strategy": "recommend-oversold",
+          "has_recommendations": true,
+          "formal_action": "trade",
+          "opportunity_count": 0,
+          "has_observation_candidates": false
+        },
+        "2026-03-20": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "cash"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false,
+          "formal_action": "cash",
+          "opportunity_count": 6,
+          "has_observation_candidates": true
+        },
+        "2026-03-19": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "cash"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false,
+          "formal_action": "cash",
+          "opportunity_count": 6,
+          "has_observation_candidates": true
+        },
+        "2026-03-18": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "cash"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false,
+          "formal_action": "cash",
+          "opportunity_count": 6,
+          "has_observation_candidates": true
+        },
+        "2026-03-17": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "cash"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false,
+          "formal_action": "cash",
+          "opportunity_count": 6,
+          "has_observation_candidates": true
+        },
+        "2026-03-16": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "cash"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false,
+          "formal_action": "cash",
+          "opportunity_count": 6,
+          "has_observation_candidates": true
+        },
+        "2026-03-13": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "cash"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false,
+          "formal_action": "cash",
+          "opportunity_count": 6,
+          "has_observation_candidates": true
+        },
+        "2026-03-12": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "cash"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
+        "2026-03-11": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "cash"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
+        "2026-03-10": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "cash"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false,
+          "formal_action": "cash",
+          "opportunity_count": 5,
+          "has_observation_candidates": true
+        },
+        "2026-03-09": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "cash"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
+        "2026-03-06": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "cash"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
+        "2026-03-05": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "cash"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false,
+          "formal_action": "cash",
+          "opportunity_count": 6,
+          "has_observation_candidates": true
+        },
+        "2026-03-04": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "cash"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false,
+          "formal_action": "cash",
+          "opportunity_count": 6,
+          "has_observation_candidates": true
+        },
+        "2026-03-03": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "cash"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
+        "2026-03-02": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "cash"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
+        "2026-02-27": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "cash"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false,
+          "formal_action": "cash",
+          "opportunity_count": 1,
+          "has_observation_candidates": true
+        },
+        "2026-02-26": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "cash"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false,
+          "formal_action": "cash",
+          "opportunity_count": 1,
+          "has_observation_candidates": true
+        },
+        "2026-02-25": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "cash"
+          ],
+          "chosen_strategy": null,
+          "has_recommendations": false,
+          "formal_action": "cash",
+          "opportunity_count": 2,
+          "has_observation_candidates": true
+        }
+      }
+    },
+    "opportunity": {
+      "key": "opportunity",
+      "label": "机会池",
+      "source_file": "reports/opportunity_recommendations.csv",
+      "available_dates": [
+        "2026-05-28",
+        "2026-03-20",
+        "2026-03-19",
+        "2026-03-18",
+        "2026-03-17",
+        "2026-03-16",
+        "2026-03-13",
+        "2026-03-12",
+        "2026-03-11",
+        "2026-03-10",
+        "2026-03-09",
+        "2026-03-06",
+        "2026-03-05",
+        "2026-03-04",
+        "2026-03-03",
+        "2026-03-02",
+        "2026-02-27",
+        "2026-02-26",
+        "2026-02-25"
+      ],
+      "latest_run_time": "2026-05-28 09:29:16",
+      "records": [
+        {
+          "run_time": "2026-05-28 09:29:15",
+          "trade_date": "2026-05-28",
+          "symbol": "603725",
+          "name": "天安新材",
+          "threshold_mode": "normal",
+          "score_total": 91.58,
+          "close": 12.2,
+          "stop_loss_price": 11.12,
+          "take_profit_price": 14.34,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-05-28 09:29:15",
+          "trade_date": "2026-05-28",
+          "symbol": "600226",
+          "name": "亨通股份",
+          "threshold_mode": "normal",
+          "score_total": 89.79,
+          "close": 6.63,
+          "stop_loss_price": 6.16,
+          "take_profit_price": 7.56,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-05-28 09:29:16",
+          "trade_date": "2026-05-28",
+          "symbol": "003019",
+          "name": "宸展光电",
+          "threshold_mode": "normal",
+          "score_total": 88.72,
+          "close": 44.17,
+          "stop_loss_price": 40.74,
+          "take_profit_price": 51.01,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-19 20:41:23",
+          "trade_date": "2026-03-20",
+          "symbol": "600307",
+          "name": "酒钢宏兴",
+          "threshold_mode": "normal",
+          "score_total": 88.22,
+          "close": 2.28,
+          "stop_loss_price": 2.07,
+          "take_profit_price": 2.69,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-19 20:41:23",
+          "trade_date": "2026-03-20",
+          "symbol": "603175",
+          "name": "超颖电子",
+          "threshold_mode": "normal",
+          "score_total": 86.02,
+          "close": 91.65,
+          "stop_loss_price": 82.37,
+          "take_profit_price": 110.2,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-19 20:41:23",
+          "trade_date": "2026-03-20",
+          "symbol": "603421",
+          "name": "鼎信通讯",
+          "threshold_mode": "normal",
+          "score_total": 84.95,
+          "close": 10.33,
+          "stop_loss_price": 9.31,
+          "take_profit_price": 12.36,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
         },
         {
           "run_time": "2026-03-19 21:51:54",
@@ -744,6 +1618,48 @@ window.STOCK_DASHBOARD_DATA = {
           "source_strategy": "recommend-pullback"
         },
         {
+          "run_time": "2026-03-18 21:15:08",
+          "trade_date": "2026-03-19",
+          "symbol": "601218",
+          "name": "吉鑫科技",
+          "threshold_mode": "normal",
+          "score_total": 92.95,
+          "close": 6.75,
+          "stop_loss_price": 6.16,
+          "take_profit_price": 7.91,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-18 21:15:08",
+          "trade_date": "2026-03-19",
+          "symbol": "600691",
+          "name": "潞化科技",
+          "threshold_mode": "normal",
+          "score_total": 89.85,
+          "close": 4.42,
+          "stop_loss_price": 3.89,
+          "take_profit_price": 5.46,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-18 21:15:08",
+          "trade_date": "2026-03-19",
+          "symbol": "603538",
+          "name": "美诺华",
+          "threshold_mode": "normal",
+          "score_total": 89.81,
+          "close": 26.36,
+          "stop_loss_price": 24.46,
+          "take_profit_price": 30.15,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
           "run_time": "2026-03-18 22:22:38",
           "trade_date": "2026-03-19",
           "symbol": "600935",
@@ -784,6 +1700,48 @@ window.STOCK_DASHBOARD_DATA = {
           "suggested_holding_days": 1,
           "exit_plan": "",
           "source_strategy": "recommend-pullback"
+        },
+        {
+          "run_time": "2026-03-17 21:58:59",
+          "trade_date": "2026-03-18",
+          "symbol": "603538",
+          "name": "美诺华",
+          "threshold_mode": "normal",
+          "score_total": 90.9,
+          "close": 26.36,
+          "stop_loss_price": 24.58,
+          "take_profit_price": 29.91,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-17 21:58:59",
+          "trade_date": "2026-03-18",
+          "symbol": "000912",
+          "name": "泸天化",
+          "threshold_mode": "normal",
+          "score_total": 90.13,
+          "close": 6.47,
+          "stop_loss_price": 5.7,
+          "take_profit_price": 7.99,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-17 21:58:59",
+          "trade_date": "2026-03-18",
+          "symbol": "600844",
+          "name": "金煤科技",
+          "threshold_mode": "normal",
+          "score_total": 89.62,
+          "close": 3.99,
+          "stop_loss_price": 3.53,
+          "take_profit_price": 4.89,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
         },
         {
           "run_time": "2026-03-17 22:09:38",
@@ -828,6 +1786,48 @@ window.STOCK_DASHBOARD_DATA = {
           "source_strategy": "recommend-pullback"
         },
         {
+          "run_time": "2026-03-16 19:58:49",
+          "trade_date": "2026-03-17",
+          "symbol": "000537",
+          "name": "绿发电力",
+          "threshold_mode": "normal",
+          "score_total": 91.72,
+          "close": 11.23,
+          "stop_loss_price": 10.33,
+          "take_profit_price": 13.02,
+          "suggested_holding_days": 3,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-16 19:58:49",
+          "trade_date": "2026-03-17",
+          "symbol": "600746",
+          "name": "江苏索普",
+          "threshold_mode": "normal",
+          "score_total": 90.01,
+          "close": 9.16,
+          "stop_loss_price": 8.51,
+          "take_profit_price": 10.44,
+          "suggested_holding_days": 3,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-16 19:58:49",
+          "trade_date": "2026-03-17",
+          "symbol": "603421",
+          "name": "鼎信通讯",
+          "threshold_mode": "normal",
+          "score_total": 89.65,
+          "close": 10.32,
+          "stop_loss_price": 9.49,
+          "take_profit_price": 11.96,
+          "suggested_holding_days": 3,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
           "run_time": "2026-03-16 20:57:16",
           "trade_date": "2026-03-17",
           "symbol": "600528",
@@ -870,6 +1870,48 @@ window.STOCK_DASHBOARD_DATA = {
           "source_strategy": "recommend-pullback"
         },
         {
+          "run_time": "2026-03-16 09:13:28",
+          "trade_date": "2026-03-16",
+          "symbol": "002360",
+          "name": "同德化工",
+          "threshold_mode": "normal",
+          "score_total": 91.45,
+          "close": 6.69,
+          "stop_loss_price": 6.27,
+          "take_profit_price": 7.52,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-16 09:13:28",
+          "trade_date": "2026-03-16",
+          "symbol": "603507",
+          "name": "振江股份",
+          "threshold_mode": "normal",
+          "score_total": 89.81,
+          "close": 37.57,
+          "stop_loss_price": 34.73,
+          "take_profit_price": 43.24,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-16 09:13:28",
+          "trade_date": "2026-03-16",
+          "symbol": "601877",
+          "name": "正泰电器",
+          "threshold_mode": "normal",
+          "score_total": 89.57,
+          "close": 38.33,
+          "stop_loss_price": 35.38,
+          "take_profit_price": 44.21,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
           "run_time": "2026-03-15 12:23:58",
           "trade_date": "2026-03-16",
           "symbol": "603519",
@@ -910,6 +1952,48 @@ window.STOCK_DASHBOARD_DATA = {
           "suggested_holding_days": 1,
           "exit_plan": "",
           "source_strategy": "recommend-pullback"
+        },
+        {
+          "run_time": "2026-03-15 11:39:06",
+          "trade_date": "2026-03-13",
+          "symbol": "600075",
+          "name": "新疆天业",
+          "threshold_mode": "normal",
+          "score_total": 92.08,
+          "close": 7.8,
+          "stop_loss_price": 7.16,
+          "take_profit_price": 9.07,
+          "suggested_holding_days": 3,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-15 11:39:06",
+          "trade_date": "2026-03-13",
+          "symbol": "002092",
+          "name": "中泰化学",
+          "threshold_mode": "normal",
+          "score_total": 90.24,
+          "close": 8.5,
+          "stop_loss_price": 7.66,
+          "take_profit_price": 10.16,
+          "suggested_holding_days": 3,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-15 11:39:06",
+          "trade_date": "2026-03-13",
+          "symbol": "600873",
+          "name": "梅花生物",
+          "threshold_mode": "normal",
+          "score_total": 90.04,
+          "close": 12.7,
+          "stop_loss_price": 12.09,
+          "take_profit_price": 13.91,
+          "suggested_holding_days": 3,
+          "exit_plan": "",
+          "source_strategy": "recommend"
         },
         {
           "run_time": "2026-03-13 15:25:40",
@@ -1108,6 +2192,300 @@ window.STOCK_DASHBOARD_DATA = {
           "source_strategy": "recommend"
         },
         {
+          "run_time": "2026-03-06 21:06:31",
+          "trade_date": "2026-03-09",
+          "symbol": "600236",
+          "name": "桂冠电力",
+          "threshold_mode": "normal",
+          "score_total": 91.95,
+          "close": 10.95,
+          "stop_loss_price": 10.14,
+          "take_profit_price": 12.55,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-06 21:06:31",
+          "trade_date": "2026-03-09",
+          "symbol": "600149",
+          "name": "廊坊发展",
+          "threshold_mode": "normal",
+          "score_total": 89.16,
+          "close": 7.13,
+          "stop_loss_price": 6.54,
+          "take_profit_price": 8.3,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-06 21:06:31",
+          "trade_date": "2026-03-09",
+          "symbol": "000912",
+          "name": "泸天化",
+          "threshold_mode": "normal",
+          "score_total": 88.18,
+          "close": 5.54,
+          "stop_loss_price": 5.07,
+          "take_profit_price": 6.47,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-06 09:13:07",
+          "trade_date": "2026-03-06",
+          "symbol": "603318",
+          "name": "水发燃气",
+          "threshold_mode": "normal",
+          "score_total": 91.26,
+          "close": 9.6,
+          "stop_loss_price": 8.93,
+          "take_profit_price": 10.93,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-06 09:13:07",
+          "trade_date": "2026-03-06",
+          "symbol": "600149",
+          "name": "廊坊发展",
+          "threshold_mode": "normal",
+          "score_total": 90.77,
+          "close": 6.87,
+          "stop_loss_price": 6.31,
+          "take_profit_price": 7.97,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-06 09:13:07",
+          "trade_date": "2026-03-06",
+          "symbol": "601857",
+          "name": "中国石油",
+          "threshold_mode": "normal",
+          "score_total": 88.16,
+          "close": 12.69,
+          "stop_loss_price": 11.77,
+          "take_profit_price": 14.52,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-05 00:19:03",
+          "trade_date": "2026-03-05",
+          "symbol": "000912",
+          "name": "泸天化",
+          "threshold_mode": "force",
+          "score_total": 94.09,
+          "close": 5.68,
+          "stop_loss_price": 5.3,
+          "take_profit_price": 6.42,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-05 00:19:03",
+          "trade_date": "2026-03-05",
+          "symbol": "002350",
+          "name": "北京科锐",
+          "threshold_mode": "force",
+          "score_total": 92.87,
+          "close": 13.32,
+          "stop_loss_price": 12.22,
+          "take_profit_price": 15.51,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-05 00:19:03",
+          "trade_date": "2026-03-05",
+          "symbol": "002980",
+          "name": "华盛昌",
+          "threshold_mode": "force",
+          "score_total": 92.8,
+          "close": 34.02,
+          "stop_loss_price": 31.95,
+          "take_profit_price": 38.14,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-05 10:16:19",
+          "trade_date": "2026-03-05",
+          "symbol": "600256",
+          "name": "广汇能源",
+          "threshold_mode": "normal",
+          "score_total": 92.21,
+          "close": 6.88,
+          "stop_loss_price": 6.45,
+          "take_profit_price": 7.73,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-05 10:16:19",
+          "trade_date": "2026-03-05",
+          "symbol": "600821",
+          "name": "金开新能",
+          "threshold_mode": "normal",
+          "score_total": 89.07,
+          "close": 7.87,
+          "stop_loss_price": 7.18,
+          "take_profit_price": 9.24,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-05 10:16:19",
+          "trade_date": "2026-03-05",
+          "symbol": "000035",
+          "name": "中国天楹",
+          "threshold_mode": "normal",
+          "score_total": 88.63,
+          "close": 7.57,
+          "stop_loss_price": 6.96,
+          "take_profit_price": 8.78,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-05 10:12:31",
+          "trade_date": "2026-03-04",
+          "symbol": "000899",
+          "name": "赣能股份",
+          "threshold_mode": "normal",
+          "score_total": 91.66,
+          "close": 13.73,
+          "stop_loss_price": 12.7,
+          "take_profit_price": 15.78,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-03 17:01:30",
+          "trade_date": "2026-03-04",
+          "symbol": "001209",
+          "name": "洪兴股份",
+          "threshold_mode": "normal",
+          "score_total": 90.58,
+          "close": 29.27,
+          "stop_loss_price": 26.21,
+          "take_profit_price": 35.37,
+          "suggested_holding_days": 2,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-03 17:01:30",
+          "trade_date": "2026-03-04",
+          "symbol": "002350",
+          "name": "北京科锐",
+          "threshold_mode": "normal",
+          "score_total": 89.41,
+          "close": 11.89,
+          "stop_loss_price": 11.11,
+          "take_profit_price": 13.43,
+          "suggested_holding_days": 3,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-05 10:12:31",
+          "trade_date": "2026-03-04",
+          "symbol": "002470",
+          "name": "金正大",
+          "threshold_mode": "normal",
+          "score_total": 88.93,
+          "close": 2.79,
+          "stop_loss_price": 2.48,
+          "take_profit_price": 3.39,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-03 17:01:30",
+          "trade_date": "2026-03-04",
+          "symbol": "600938",
+          "name": "中国海油",
+          "threshold_mode": "normal",
+          "score_total": 87.75,
+          "close": 39.46,
+          "stop_loss_price": 37.41,
+          "take_profit_price": 43.55,
+          "suggested_holding_days": 3,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-05 10:12:31",
+          "trade_date": "2026-03-04",
+          "symbol": "002015",
+          "name": "协鑫能科",
+          "threshold_mode": "normal",
+          "score_total": 87.27,
+          "close": 14.13,
+          "stop_loss_price": 12.96,
+          "take_profit_price": 16.45,
+          "suggested_holding_days": 1,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-05 16:52:13",
+          "trade_date": "2026-03-03",
+          "symbol": "001209",
+          "name": "洪兴股份",
+          "threshold_mode": "normal",
+          "score_total": 90.58,
+          "close": 29.27,
+          "stop_loss_price": 26.21,
+          "take_profit_price": 35.37,
+          "suggested_holding_days": 2,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-05 16:52:13",
+          "trade_date": "2026-03-03",
+          "symbol": "002350",
+          "name": "北京科锐",
+          "threshold_mode": "normal",
+          "score_total": 89.41,
+          "close": 11.89,
+          "stop_loss_price": 11.11,
+          "take_profit_price": 13.43,
+          "suggested_holding_days": 3,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-03-05 16:52:13",
+          "trade_date": "2026-03-03",
+          "symbol": "600938",
+          "name": "中国海油",
+          "threshold_mode": "normal",
+          "score_total": 87.75,
+          "close": 39.46,
+          "stop_loss_price": 37.41,
+          "take_profit_price": 43.55,
+          "suggested_holding_days": 3,
+          "exit_plan": "",
+          "source_strategy": "recommend"
+        },
+        {
           "run_time": "2026-02-28 15:51:33",
           "trade_date": "2026-03-02",
           "symbol": "600821",
@@ -1205,588 +2583,11 @@ window.STOCK_DASHBOARD_DATA = {
           "exit_plan": "",
           "source_strategy": "recommend"
         }
-      ],
-      "date_summaries": {
-        "2026-03-24": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold"
-          ],
-          "chosen_strategy": null,
-          "has_recommendations": false,
-          "chosen_count": null
-        },
-        "2026-03-25": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-03-26": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-03-27": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-03-30": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-03-31": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-01": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-02": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-03": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-07": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-08": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-09": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-10": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-13": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-14": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-15": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-16": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-17": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-20": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-21": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-22": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-23": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-24": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-27": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-28": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-29": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-04-30": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-05-06": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-05-07": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-05-08": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-05-11": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-05-12": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-05-13": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-05-14": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-05-15": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-05-18": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-05-19": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-05-20": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-05-21": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-05-22": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-05-25": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-05-26": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-05-27": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true,
-          "chosen_count": 1
-        },
-        "2026-03-23": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-oversold",
-          "has_recommendations": true
-        },
-        "2026-03-20": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true
-        },
-        "2026-03-19": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true
-        },
-        "2026-03-18": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true
-        },
-        "2026-03-17": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true
-        },
-        "2026-03-16": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback",
-            "recommend"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true
-        },
-        "2026-03-13": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": "recommend-pullback",
-          "has_recommendations": true
-        },
-        "2026-03-12": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback",
-            "recommend"
-          ],
-          "chosen_strategy": "recommend",
-          "has_recommendations": true
-        },
-        "2026-03-11": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback",
-            "recommend"
-          ],
-          "chosen_strategy": "recommend",
-          "has_recommendations": true
-        },
-        "2026-03-10": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback",
-            "recommend"
-          ],
-          "chosen_strategy": "recommend",
-          "has_recommendations": true
-        },
-        "2026-03-09": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": null,
-          "has_recommendations": false
-        },
-        "2026-03-06": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": null,
-          "has_recommendations": false
-        },
-        "2026-03-05": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": null,
-          "has_recommendations": false
-        },
-        "2026-03-04": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": null,
-          "has_recommendations": false
-        },
-        "2026-03-03": {
-          "market_state": "bear",
-          "tried_strategies": [
-            "recommend-oversold",
-            "recommend-pullback"
-          ],
-          "chosen_strategy": null,
-          "has_recommendations": false
-        },
-        "2026-03-02": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback",
-            "recommend"
-          ],
-          "chosen_strategy": "recommend",
-          "has_recommendations": true
-        },
-        "2026-02-27": {
-          "market_state": "neutral",
-          "tried_strategies": [
-            "recommend-pullback",
-            "recommend"
-          ],
-          "chosen_strategy": "recommend",
-          "has_recommendations": true
-        },
-        "2026-02-26": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback",
-            "recommend"
-          ],
-          "chosen_strategy": "recommend",
-          "has_recommendations": true
-        },
-        "2026-02-25": {
-          "market_state": "bull",
-          "tried_strategies": [
-            "recommend-pullback",
-            "recommend"
-          ],
-          "chosen_strategy": "recommend",
-          "has_recommendations": true
-        }
-      }
-    },
-    "opportunity": {
-      "key": "opportunity",
-      "label": "机会池",
-      "source_file": "reports/opportunity_recommendations.csv",
-      "available_dates": [],
-      "latest_run_time": null,
-      "records": []
+      ]
     }
   },
   "all_dates": [
+    "2026-05-28",
     "2026-05-27",
     "2026-05-26",
     "2026-05-25",

@@ -115,12 +115,19 @@ def build_dashboard_payload(
         "latest_run_time": None,
         "records": [],
     }
+    observation_fallback_sources = {
+        "recommend": default_data,
+        "recommend-pullback": pullback_data,
+        "recommend-oversold": oversold_data,
+    }
     adaptive_data = _build_adaptive_strategy_data(
         default_data=default_data,
         pullback_data=pullback_data,
         oversold_data=oversold_data,
         cfg=cfg,
     )
+    _merge_cash_observation_fallbacks(opportunity_data, adaptive_data, observation_fallback_sources)
+    _annotate_adaptive_opportunity_context(adaptive_data, opportunity_data)
     all_dates = sorted(
         set(adaptive_data["available_dates"]) | set(opportunity_data["available_dates"]),
         reverse=True,
@@ -207,16 +214,20 @@ def _build_adaptive_strategy_data(default_data: dict, pullback_data: dict, overs
             saved_summary.setdefault("tried_strategies", ordered_cmds)
         else:
             for cmd_name in ordered_cmds:
+                if cmd_name == "cash":
+                    break
                 chosen_records = records_by_strategy_and_date.get(cmd_name, {}).get(trade_date, [])
                 if chosen_records:
                     chosen_cmd = cmd_name
                     break
-            date_summaries[trade_date] = {
+            saved_summary = {
                 "market_state": market_label,
                 "tried_strategies": ordered_cmds,
                 "chosen_strategy": chosen_cmd,
                 "has_recommendations": bool(chosen_records),
             }
+            date_summaries[trade_date] = saved_summary
+        saved_summary["formal_action"] = _resolve_formal_action(chosen_cmd, bool(chosen_records))
         for record in chosen_records:
             enriched = dict(record)
             enriched["source_strategy"] = chosen_cmd
@@ -231,6 +242,66 @@ def _build_adaptive_strategy_data(default_data: dict, pullback_data: dict, overs
         "records": adaptive_records,
         "date_summaries": date_summaries,
     }
+
+
+def _merge_cash_observation_fallbacks(opportunity_data: dict, adaptive_data: dict, fallback_sources: dict[str, dict]) -> None:
+    records_by_date = _group_records_by_date(opportunity_data.get("records", []))
+    existing_keys = {
+        (record.get("trade_date"), record.get("symbol"))
+        for record in opportunity_data.get("records", [])
+        if record.get("trade_date") and record.get("symbol")
+    }
+    source_records_by_strategy = {
+        source_strategy: _group_records_by_date(source_data.get("records", []))
+        for source_strategy, source_data in fallback_sources.items()
+    }
+    added_records: list[dict] = []
+    for trade_date, summary in adaptive_data.get("date_summaries", {}).items():
+        if summary.get("formal_action") != "cash":
+            continue
+        if records_by_date.get(trade_date):
+            continue
+        for source_strategy, records_by_date_for_source in source_records_by_strategy.items():
+            for record in records_by_date_for_source.get(trade_date, []):
+                key = (record.get("trade_date"), record.get("symbol"))
+                if key in existing_keys:
+                    continue
+                enriched = dict(record)
+                enriched["source_strategy"] = source_strategy
+                added_records.append(enriched)
+                existing_keys.add(key)
+    if not added_records:
+        return
+    opportunity_data["records"] = list(opportunity_data.get("records", [])) + added_records
+    opportunity_data["records"].sort(key=lambda item: (item.get("trade_date", ""), item.get("score_total") or 0), reverse=True)
+    opportunity_data["available_dates"] = sorted(
+        {record["trade_date"] for record in opportunity_data["records"] if record.get("trade_date")},
+        reverse=True,
+    )
+    opportunity_data["latest_run_time"] = max(
+        (record["run_time"] for record in opportunity_data["records"] if record.get("run_time")),
+        default=opportunity_data.get("latest_run_time"),
+    )
+
+
+def _annotate_adaptive_opportunity_context(adaptive_data: dict, opportunity_data: dict) -> None:
+    opportunity_by_date = _group_records_by_date(opportunity_data.get("records", []))
+    date_summaries = adaptive_data.setdefault("date_summaries", {})
+    for trade_date, summary in date_summaries.items():
+        opportunity_count = len(opportunity_by_date.get(trade_date, []))
+        summary["opportunity_count"] = opportunity_count
+        summary["has_observation_candidates"] = opportunity_count > 0
+        summary.setdefault(
+            "formal_action",
+            _resolve_formal_action(summary.get("chosen_strategy"), bool(summary.get("has_recommendations"))),
+        )
+
+
+def _resolve_formal_action(chosen_strategy: object, has_recommendations: bool) -> str:
+    chosen = _clean_text(chosen_strategy)
+    if has_recommendations and chosen and chosen != "cash":
+        return "trade"
+    return "cash"
 
 
 def _group_records_by_date(records: list[dict]) -> dict[str, list[dict]]:
@@ -322,12 +393,18 @@ def _load_adaptive_run_summaries(cfg: dict | None) -> dict[str, dict]:
         if not target_date:
             continue
         tried = [item.strip() for item in _clean_text(row.get("tried_strategies", "")).split(",") if item.strip()]
+        chosen_strategy = _clean_text(row.get("chosen_strategy", "")) or None
+        has_recommendations = _clean_text(row.get("has_recommendations", "")).lower() == "true"
+        chosen_count = _to_int(row.get("chosen_count", ""))
+        if chosen_strategy == "cash":
+            has_recommendations = False
+            chosen_count = 0
         out[target_date] = {
             "market_state": _clean_text(row.get("market_state", "")),
             "tried_strategies": tried,
-            "chosen_strategy": _clean_text(row.get("chosen_strategy", "")) or None,
-            "has_recommendations": _clean_text(row.get("has_recommendations", "")).lower() == "true",
-            "chosen_count": _to_int(row.get("chosen_count", "")),
+            "chosen_strategy": chosen_strategy,
+            "has_recommendations": has_recommendations,
+            "chosen_count": chosen_count,
         }
     return out
 

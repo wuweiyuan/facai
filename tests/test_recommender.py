@@ -452,6 +452,44 @@ class TestRecommender(TestCase):
         self.assertEqual(payload["opportunity_pool"], fake_opportunity_payload)
         build_pool.assert_called_once()
 
+    def test_recommend_adaptive_cash_skips_formal_recommend_and_builds_opportunity_pool(self):
+        cfg = {"reporting": {"enabled": False}}
+        fake_target_date = date(2025, 3, 20)
+        fake_signal_date = date(2025, 3, 19)
+        fake_market_state = SimpleNamespace(label="neutral")
+        fake_opportunity_payload = {
+            "target_date": "2025-03-20",
+            "signal_date": "2025-03-19",
+            "market_state": "neutral",
+            "market_reason": "test reason",
+            "pool": [{"symbol": "000001", "name": "Alpha"}],
+        }
+
+        with (
+            patch.object(sys, "argv", ["prog", "recommend-adaptive", "--output", "json"]),
+            patch("app.main.load_config", return_value=cfg),
+            patch("app.main._configure_network"),
+            patch("app.main._build_data_source", return_value=Mock()),
+            patch("app.main._resolve_recommend_target_date", return_value=fake_target_date),
+            patch("app.main._resolve_adaptive_strategy_specs", return_value=[("cash", None, "空仓 cash")]),
+            patch("app.main._run_recommend_profile") as run_profile,
+            patch("app.main._build_opportunity_pool", return_value=fake_opportunity_payload) as build_pool,
+            patch("app.main.Recommender") as recommender_cls,
+        ):
+            recommender_cls.return_value.resolve_signal_date.return_value = fake_signal_date
+            recommender_cls.return_value._resolve_market_state.return_value = (fake_market_state, "test reason")
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                main_module.main()
+
+        payload = json.loads(buf.getvalue())
+        self.assertEqual(payload["chosen_strategy"], "cash")
+        self.assertEqual(payload["chosen_count"], 0)
+        self.assertEqual(payload["recommendations"], [])
+        self.assertEqual(payload["opportunity_pool"], fake_opportunity_payload)
+        run_profile.assert_not_called()
+        build_pool.assert_called_once()
+
     def test_recommend_adaptive_does_not_run_opportunity_pool_when_signal_exists(self):
         cfg = {"reporting": {"enabled": False}}
         fake_target_date = date(2025, 3, 20)
