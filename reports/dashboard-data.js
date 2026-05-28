@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-05-28 09:44:32",
+  "generated_at": "2026-05-28 20:14:50",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-05-29",
         "2026-05-28",
         "2026-05-27",
         "2026-05-26",
@@ -1242,6 +1243,18 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-05-29": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "cash"
+          ],
+          "chosen_strategy": "cash",
+          "has_recommendations": false,
+          "chosen_count": 0,
+          "formal_action": "cash",
+          "opportunity_count": 4,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -1469,6 +1482,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-05-29",
         "2026-05-28",
         "2026-03-20",
         "2026-03-19",
@@ -1489,8 +1503,64 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-05-28 09:29:16",
+      "latest_run_time": "2026-05-28 20:14:50",
       "records": [
+        {
+          "run_time": "2026-05-28 20:14:50",
+          "trade_date": "2026-05-29",
+          "symbol": "002079",
+          "name": "苏州固锝",
+          "threshold_mode": "normal",
+          "score_total": 77.81,
+          "close": 13.3,
+          "stop_loss_price": 12.39,
+          "take_profit_price": 15.11,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend-relative"
+        },
+        {
+          "run_time": "2026-05-28 20:14:50",
+          "trade_date": "2026-05-29",
+          "symbol": "603725",
+          "name": "天安新材",
+          "threshold_mode": "normal",
+          "score_total": 76.15,
+          "close": 11.74,
+          "stop_loss_price": 10.62,
+          "take_profit_price": 13.97,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend-relative"
+        },
+        {
+          "run_time": "2026-05-28 20:14:50",
+          "trade_date": "2026-05-29",
+          "symbol": "605500",
+          "name": "森林包装",
+          "threshold_mode": "normal",
+          "score_total": 73.33,
+          "close": 9.89,
+          "stop_loss_price": 8.85,
+          "take_profit_price": 11.96,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend-pullback"
+        },
+        {
+          "run_time": "2026-05-28 20:14:50",
+          "trade_date": "2026-05-29",
+          "symbol": "603666",
+          "name": "亿嘉和",
+          "threshold_mode": "normal",
+          "score_total": 71.94,
+          "close": 30.78,
+          "stop_loss_price": 28.84,
+          "take_profit_price": 34.65,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend-pullback"
+        },
         {
           "run_time": "2026-05-28 09:29:15",
           "trade_date": "2026-05-28",
@@ -2587,6 +2657,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-05-29",
     "2026-05-28",
     "2026-05-27",
     "2026-05-26",

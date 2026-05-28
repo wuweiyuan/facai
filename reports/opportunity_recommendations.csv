@@ -1,0 +1,5 @@
+run_time,trade_date,symbol,name,threshold_mode,score_total,close,stop_loss_price,take_profit_price,suggested_holding_days,exit_plan,source_strategy
+2026-05-28 20:14:50,2026-05-29,002079,苏州固锝,normal,77.81,13.3,12.39,15.11,3,默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。,recommend-relative
+2026-05-28 20:14:50,2026-05-29,603725,天安新材,normal,76.15,11.74,10.62,13.97,3,默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。,recommend-relative
+2026-05-28 20:14:50,2026-05-29,605500,森林包装,normal,73.33,9.89,8.85,11.96,3,默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。,recommend-pullback
+2026-05-28 20:14:50,2026-05-29,603666,亿嘉和,normal,71.94,30.78,28.84,34.65,3,默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。,recommend-pullback

@@ -45,3 +45,4 @@ run_time,target_date,signal_date,market_state,market_reason,tried_strategies,cho
 2026-05-25 20:07:08,2026-05-26,2026-05-25,bull,ok,recommend-pullback,recommend-pullback,true,1
 2026-05-26 20:03:05,2026-05-27,2026-05-26,bull,ok,recommend-pullback,recommend-pullback,true,1
 2026-05-28 09:29:16,2026-05-28,2026-05-27,neutral,ok,cash,cash,true,
+2026-05-28 19:59:50,2026-05-29,2026-05-28,neutral,ok,cash,cash,false,
