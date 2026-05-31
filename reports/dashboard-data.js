@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-05-28 20:14:50",
+  "generated_at": "2026-05-31 19:20:08",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-06-01",
         "2026-05-29",
         "2026-05-28",
         "2026-05-27",
@@ -1255,6 +1256,18 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 4,
           "has_observation_candidates": true
         },
+        "2026-06-01": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "cash"
+          ],
+          "chosen_strategy": "cash",
+          "has_recommendations": false,
+          "chosen_count": 0,
+          "formal_action": "cash",
+          "opportunity_count": 4,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -1482,6 +1495,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-06-01",
         "2026-05-29",
         "2026-05-28",
         "2026-03-20",
@@ -1503,8 +1517,64 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-05-28 20:14:50",
+      "latest_run_time": "2026-05-31 19:20:08",
       "records": [
+        {
+          "run_time": "2026-05-31 19:20:08",
+          "trade_date": "2026-06-01",
+          "symbol": "600460",
+          "name": "士兰微",
+          "threshold_mode": "normal",
+          "score_total": 78.26,
+          "close": 34.6,
+          "stop_loss_price": 31.38,
+          "take_profit_price": 41.02,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend-relative"
+        },
+        {
+          "run_time": "2026-05-31 19:20:08",
+          "trade_date": "2026-06-01",
+          "symbol": "000582",
+          "name": "北部湾港",
+          "threshold_mode": "normal",
+          "score_total": 77.37,
+          "close": 13.57,
+          "stop_loss_price": 12.55,
+          "take_profit_price": 15.61,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend-relative"
+        },
+        {
+          "run_time": "2026-05-31 19:20:08",
+          "trade_date": "2026-06-01",
+          "symbol": "601059",
+          "name": "信达证券",
+          "threshold_mode": "normal",
+          "score_total": 70.19,
+          "close": 17.2,
+          "stop_loss_price": 16.79,
+          "take_profit_price": 18.01,
+          "suggested_holding_days": 2,
+          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend-pullback"
+        },
+        {
+          "run_time": "2026-05-31 19:20:08",
+          "trade_date": "2026-06-01",
+          "symbol": "600018",
+          "name": "上港集团",
+          "threshold_mode": "normal",
+          "score_total": 69.6,
+          "close": 5.13,
+          "stop_loss_price": 5.02,
+          "take_profit_price": 5.34,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend-pullback"
+        },
         {
           "run_time": "2026-05-28 20:14:50",
           "trade_date": "2026-05-29",
@@ -2657,6 +2727,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-06-01",
     "2026-05-29",
     "2026-05-28",
     "2026-05-27",
