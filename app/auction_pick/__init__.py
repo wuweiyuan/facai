@@ -1,0 +1,1 @@
+"""Opening auction stock picker."""
