@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta
+from pathlib import Path
 
 from app.auction_pick.engine import AuctionPickEngine
 from app.auction_pick.models import AuctionPickResult
@@ -235,3 +236,47 @@ def test_auction_pick_does_not_change_existing_parser_commands():
     assert tail_args.cmd == "tail-pick"
     assert adaptive_args.cmd == "recommend-adaptive"
     assert adaptive_args.count == 1
+
+
+def test_auction_pick_launchd_plist_runs_weekdays_at_0926():
+    from app.auction_pick.automation import build_launchd_plist
+
+    plist = build_launchd_plist("/tmp/project", python_bin="/usr/bin/python3")
+
+    assert plist["Label"] == "com.wayne.auction-pick"
+    assert plist["WorkingDirectory"] == "/tmp/project"
+    assert plist["ProgramArguments"] == ["/bin/bash", "/tmp/project/scripts/run_auction_pick_auto.sh"]
+    assert plist["StartCalendarInterval"] == [
+        {"Weekday": 1, "Hour": 9, "Minute": 26},
+        {"Weekday": 2, "Hour": 9, "Minute": 26},
+        {"Weekday": 3, "Hour": 9, "Minute": 26},
+        {"Weekday": 4, "Hour": 9, "Minute": 26},
+        {"Weekday": 5, "Hour": 9, "Minute": 26},
+    ]
+    assert plist["EnvironmentVariables"]["PYTHON_BIN"] == "/usr/bin/python3"
+    assert plist["EnvironmentVariables"]["AUCTION_COUNT"] == "5"
+    assert plist["StandardOutPath"] == "/tmp/project/reports/auction_pick/launchd.out.log"
+    assert plist["StandardErrorPath"] == "/tmp/project/reports/auction_pick/launchd.err.log"
+
+
+def test_auction_pick_auto_runner_notifies_and_opens_latest_log():
+    script = Path("scripts/run_auction_pick_auto.sh").read_text(encoding="utf-8")
+
+    assert "AUCTION_STATUS=0" in script
+    assert "AUCTION_STATUS=$?" in script
+    assert "auction-pick" in script
+    assert 'REPORT_DIR="${PROJECT_ROOT}/reports/auction_pick"' in script
+    assert "display notification" in script
+    assert 'open "${LATEST_LOG}"' in script
+
+
+def test_auction_pick_launchd_install_and_uninstall_scripts_use_distinct_label():
+    install_script = Path("scripts/install_auction_pick_launchd.sh").read_text(encoding="utf-8")
+    uninstall_script = Path("scripts/uninstall_auction_pick_launchd.sh").read_text(encoding="utf-8")
+
+    assert 'LABEL="com.wayne.auction-pick"' in install_script
+    assert 'LABEL="com.wayne.auction-pick"' in uninstall_script
+    assert "app.auction_pick.automation" in install_script
+    assert "--hour 9" in install_script
+    assert "--minute 26" in install_script
+    assert "reports/auction_pick" in install_script
