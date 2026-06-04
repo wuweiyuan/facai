@@ -189,6 +189,20 @@ python -m app.main tail-pick --date YYYY-MM-DD
 
 它需要盘中或近实时行情源。没有候选时会明确提示空仓。
 
+### 竞价人工候选
+
+竞价功能是独立命令，不接入 `recommend-adaptive`，也不写入现有推荐报表。它适合在开盘集合竞价结束后手动运行一次：
+
+```bash
+# macOS / Linux
+python3 -m app.main auction-pick --date YYYY-MM-DD --count 5
+
+# Windows
+python -m app.main auction-pick --date YYYY-MM-DD --count 5
+```
+
+它使用当前 A 股快照和最近日线数据做候选筛选。没有候选时会明确提示空仓或只观察。
+
 ### 尾盘自动运行
 
 macOS 可以安装用户级 `launchd` 定时任务，工作日 `14:44` 自动运行尾盘策略：
@@ -241,6 +255,58 @@ python3 -m app.main tail-pick
 launchctl list com.wayne.tail-pick
 ```
 
+### 竞价自动运行
+
+macOS 可以安装用户级 `launchd` 定时任务，工作日 `09:26` 自动运行竞价策略：
+
+```bash
+cd /Users/wayne/data/myslef/发财/股票
+scripts/install_auction_pick_launchd.sh
+```
+
+自动运行结果写到独立目录，不写现有推荐报表：
+
+```bash
+reports/auction_pick/YYYY-MM-DD.log
+reports/auction_pick/latest.log
+```
+
+自动任务跑完后会弹出 macOS 通知，并自动打开 `reports/auction_pick/latest.log`。如果运行失败，也会打开同一个文件显示错误原因。
+
+查看最近一次结果：
+
+```bash
+cd /Users/wayne/data/myslef/发财/股票
+tail -n 80 reports/auction_pick/latest.log
+```
+
+停止自动运行：
+
+```bash
+cd /Users/wayne/data/myslef/发财/股票
+scripts/uninstall_auction_pick_launchd.sh
+```
+
+重新安装自动运行：
+
+```bash
+cd /Users/wayne/data/myslef/发财/股票
+scripts/install_auction_pick_launchd.sh
+```
+
+手动跑一次竞价：
+
+```bash
+cd /Users/wayne/data/myslef/发财/股票
+python3 -m app.main auction-pick --count 5
+```
+
+确认自动任务是否还在：
+
+```bash
+launchctl list com.wayne.auction-pick
+```
+
 ### 解释单只股票为什么入选或被过滤
 
 ```bash
@@ -266,6 +332,7 @@ python -m app.main explain --symbol 000001 --date YYYY-MM-DD --mode normal
 | `recommend-bull` | 强市研究策略 | 研究用途，不建议接入主流程 |
 | `recommend-relative` | 相对强度研究策略 | 研究用途，不建议接入主流程 |
 | `tail-pick` | 尾盘人工候选 | 独立盘中命令，不接入主流程，不写现有推荐报表 |
+| `auction-pick` | 竞价人工候选 | 独立开盘命令，不接入主流程，不写现有推荐报表 |
 
 推荐类命令的常见参数：
 
