@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-06-03 20:02:24",
+  "generated_at": "2026-06-04 19:55:56",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-06-05",
         "2026-06-04",
         "2026-06-03",
         "2026-06-02",
@@ -1307,6 +1308,18 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 4,
           "has_observation_candidates": true
         },
+        "2026-06-05": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "cash"
+          ],
+          "chosen_strategy": "cash",
+          "has_recommendations": false,
+          "chosen_count": 0,
+          "formal_action": "cash",
+          "opportunity_count": 4,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -1534,6 +1547,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-06-05",
         "2026-06-04",
         "2026-06-03",
         "2026-06-02",
@@ -1559,8 +1573,64 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-06-03 20:02:24",
+      "latest_run_time": "2026-06-04 19:55:56",
       "records": [
+        {
+          "run_time": "2026-06-04 19:55:56",
+          "trade_date": "2026-06-05",
+          "symbol": "600483",
+          "name": "福能股份",
+          "threshold_mode": "normal",
+          "score_total": 75.5,
+          "close": 11.92,
+          "stop_loss_price": 11.17,
+          "take_profit_price": 13.4,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend-relative"
+        },
+        {
+          "run_time": "2026-06-04 19:55:56",
+          "trade_date": "2026-06-05",
+          "symbol": "003043",
+          "name": "华亚智能",
+          "threshold_mode": "normal",
+          "score_total": 74.92,
+          "close": 67.57,
+          "stop_loss_price": 61.27,
+          "take_profit_price": 80.17,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend-relative"
+        },
+        {
+          "run_time": "2026-06-04 19:55:56",
+          "trade_date": "2026-06-05",
+          "symbol": "600012",
+          "name": "皖通高速",
+          "threshold_mode": "normal",
+          "score_total": 71.16,
+          "close": 16.45,
+          "stop_loss_price": 15.55,
+          "take_profit_price": 18.24,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend-pullback"
+        },
+        {
+          "run_time": "2026-06-04 19:55:56",
+          "trade_date": "2026-06-05",
+          "symbol": "603099",
+          "name": "长白山",
+          "threshold_mode": "normal",
+          "score_total": 69.75,
+          "close": 38.04,
+          "stop_loss_price": 35.83,
+          "take_profit_price": 42.45,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend-pullback"
+        },
         {
           "run_time": "2026-06-03 20:02:24",
           "trade_date": "2026-06-04",
@@ -2937,6 +3007,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-06-05",
     "2026-06-04",
     "2026-06-03",
     "2026-06-02",
