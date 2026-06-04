@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta
 
 from app.auction_pick.engine import AuctionPickEngine
 from app.auction_pick.models import AuctionPickResult
+from app.main import build_parser
 from app.models import DailyBar, StockInfo
 from app.tail_pick.models import IntradayQuote
 
@@ -205,3 +206,12 @@ def test_auction_pick_returns_no_trade_when_all_quotes_fail():
     assert payload.selected == []
     assert payload.candidates_scanned == 1
     assert payload.candidates_passed == 0
+
+
+def test_auction_pick_parser_accepts_date_count_and_output():
+    args = build_parser().parse_args(["auction-pick", "--date", "2026-06-04", "--count", "3", "--output", "json"])
+
+    assert args.cmd == "auction-pick"
+    assert args.date == "2026-06-04"
+    assert args.count == 3
+    assert args.output == "json"

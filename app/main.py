@@ -760,6 +760,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_tail.add_argument("--date", default=None, help="Run date YYYY-MM-DD; defaults to today")
     p_tail.add_argument("--output", choices=["table", "json"], default="table")
 
+    p_auction = sub.add_parser("auction-pick", help="Pick opening auction candidates from one quote snapshot")
+    p_auction.add_argument("--date", default=None, help="Run date YYYY-MM-DD; defaults to today")
+    p_auction.add_argument("--count", type=int, default=None, help="How many auction candidates to show")
+    p_auction.add_argument("--output", choices=["table", "json"], default="table")
+
     p_exp = sub.add_parser("explain", help="Explain one stock score on target date")
     p_exp.add_argument("--symbol", required=True, help="Stock code like 000001")
     p_exp.add_argument("--date", default=None, help="Target date YYYY-MM-DD")
@@ -901,6 +906,38 @@ def main() -> None:
         print("次日卖出规则:")
         for idx, rule in enumerate(item.next_day_sell_rules, start=1):
             print(f"  {idx}. {rule}")
+        return
+
+    if args.cmd == "auction-pick":
+        from app.auction_pick.engine import AuctionPickEngine
+
+        _configure_network(base_cfg)
+        ds = _build_data_source(base_cfg)
+        trade_date = _parse_date(args.date)
+        payload = AuctionPickEngine(ds, base_cfg).pick(trade_date, count=args.count)
+        if args.output == "json":
+            print(json.dumps(payload.as_dict(), ensure_ascii=False, indent=2))
+            return
+        print(
+            f"[竞价] 日期={payload.trade_date.isoformat()} "
+            f"扫描={payload.candidates_scanned} 入围={payload.candidates_passed}"
+        )
+        if not payload.selected:
+            print("[竞价] 当前没有符合条件的竞价候选，建议空仓或只观察。")
+            return
+        for idx, item in enumerate(payload.selected, start=1):
+            print(f"\n[{idx}] {item.quote.symbol} {item.quote.name}")
+            print(
+                f"现价: {item.quote.latest:.2f} 开盘: {item.quote.open:.2f} "
+                f"高开: {item.opening_gap:.2%} 当前涨幅: {item.current_return:.2%} "
+                f"成交额: {item.quote.amount / 10000:.0f}万 分数: {item.score:.2f}"
+            )
+            print("理由:")
+            for reason_idx, reason in enumerate(item.reasons, start=1):
+                print(f"  {reason_idx}. {reason}")
+            print("执行观察:")
+            for note_idx, note in enumerate(item.execution_notes, start=1):
+                print(f"  {note_idx}. {note}")
         return
 
     if args.cmd == "recommend-adaptive":
