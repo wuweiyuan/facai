@@ -120,6 +120,7 @@ class FakeTailPickDataSource:
         ]
         self.daily_bar_symbols = []
         self.daily_bar_ranges = []
+        self.daily_profile: dict[str, str] = {}
 
     def get_stock_list(self):
         return self.stocks
@@ -133,9 +134,12 @@ class FakeTailPickDataSource:
         close = 10.0 if symbol != "000003" else 12.0
         bars = []
         dates = [d for d in self.trade_dates if start_date <= d <= end_date]
-        for trade_date in dates:
-            if symbol == "000003":
+        profile = self.daily_profile.get(symbol, "weak" if symbol == "000003" else "normal")
+        for idx, trade_date in enumerate(dates):
+            if profile == "weak":
                 close *= 0.995
+            elif profile == "overextended":
+                close *= 1.001 if idx < max(len(dates) - 20, 0) else 1.025
             else:
                 close *= 1.002
             bars.append(
@@ -189,6 +193,79 @@ def test_tail_pick_returns_no_trade_when_all_quotes_fail():
 
     assert payload.selected is None
     assert payload.candidates_scanned == 1
+    assert payload.candidates_passed == 0
+
+
+def test_tail_pick_rejects_quote_not_above_open():
+    ds = FakeTailPickDataSource()
+    ds.quotes = [
+        IntradayQuote(
+            "000001",
+            "NotAboveOpen",
+            10.90,
+            10.50,
+            11.00,
+            11.10,
+            10.50,
+            2_000_000,
+            22_000_000,
+            3.0,
+            datetime(2026, 6, 4, 14, 45),
+        )
+    ]
+
+    payload = TailPickEngine(ds, {}).pick(date(2026, 6, 4))
+
+    assert payload.selected is None
+    assert payload.candidates_passed == 0
+
+
+def test_tail_pick_rejects_late_fade_from_high():
+    ds = FakeTailPickDataSource()
+    ds.quotes = [
+        IntradayQuote(
+            "000001",
+            "Fade",
+            10.90,
+            10.50,
+            10.60,
+            11.40,
+            10.50,
+            2_000_000,
+            25_000_000,
+            3.0,
+            datetime(2026, 6, 4, 14, 45),
+        )
+    ]
+
+    payload = TailPickEngine(ds, {}).pick(date(2026, 6, 4))
+
+    assert payload.selected is None
+    assert payload.candidates_passed == 0
+
+
+def test_tail_pick_rejects_overextended_daily_candidate():
+    ds = FakeTailPickDataSource()
+    ds.daily_profile = {"000001": "overextended"}
+    ds.quotes = [
+        IntradayQuote(
+            "000001",
+            "Overextended",
+            11.00,
+            10.50,
+            10.60,
+            11.10,
+            10.55,
+            2_000_000,
+            25_000_000,
+            3.0,
+            datetime(2026, 6, 4, 14, 45),
+        )
+    ]
+
+    payload = TailPickEngine(ds, {}).pick(date(2026, 6, 4))
+
+    assert payload.selected is None
     assert payload.candidates_passed == 0
 
 

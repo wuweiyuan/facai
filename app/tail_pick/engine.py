@@ -71,11 +71,17 @@ class TailPickEngine:
     def _filters(self) -> dict[str, float]:
         cfg = self.cfg.get("tail_pick", {}) if isinstance(self.cfg.get("tail_pick", {}), dict) else {}
         return {
-            "min_intraday_return": float(cfg.get("min_intraday_return", 0.0)),
-            "max_intraday_return": float(cfg.get("max_intraday_return", 0.07)),
-            "min_amount": float(cfg.get("min_amount", 10_000_000)),
+            "min_intraday_return": float(cfg.get("min_intraday_return", 0.01)),
+            "max_intraday_return": float(cfg.get("max_intraday_return", 0.06)),
+            "min_amount": float(cfg.get("min_amount", 20_000_000)),
             "stop_loss_pct": float(cfg.get("stop_loss_pct", 0.04)),
             "max_snapshot_candidates": float(cfg.get("max_snapshot_candidates", 60)),
+            "min_latest_vs_open": float(cfg.get("min_latest_vs_open", 1.0)),
+            "min_close_position": float(cfg.get("min_close_position", 0.65)),
+            "max_fade_from_high": float(cfg.get("max_fade_from_high", 0.025)),
+            "max_close_above_ma20_pct": float(cfg.get("max_close_above_ma20_pct", 0.10)),
+            "max_rsi14": float(cfg.get("max_rsi14", 78)),
+            "min_ma20_slope5": float(cfg.get("min_ma20_slope5", 0.0)),
         }
 
     def _resolve_completed_daily_date(self, trade_date: date) -> date:
@@ -86,18 +92,39 @@ class TailPickEngine:
         return trade_date - timedelta(days=1)
 
     @staticmethod
+    def _close_position(quote: IntradayQuote) -> float:
+        span = quote.high - quote.low
+        if span <= 0:
+            return 0.0
+        return (quote.latest - quote.low) / span
+
+    @staticmethod
     def _prefilter_quotes(
         quotes: list[IntradayQuote],
         filters: dict[str, float],
     ) -> list[IntradayQuote]:
         out: list[IntradayQuote] = []
         for quote in quotes:
-            if quote.latest <= 0 or quote.previous_close <= 0 or quote.volume <= 0 or quote.amount <= 0:
+            if (
+                quote.latest <= 0
+                or quote.previous_close <= 0
+                or quote.open <= 0
+                or quote.high <= 0
+                or quote.low <= 0
+                or quote.volume <= 0
+                or quote.amount <= 0
+            ):
                 continue
             intraday_return = quote.intraday_return
             if intraday_return < filters["min_intraday_return"] or intraday_return > filters["max_intraday_return"]:
                 continue
             if quote.amount < filters["min_amount"]:
+                continue
+            if quote.latest < quote.open * filters["min_latest_vs_open"]:
+                continue
+            if TailPickEngine._close_position(quote) < filters["min_close_position"]:
+                continue
+            if quote.high > 0 and quote.latest / quote.high - 1.0 < -filters["max_fade_from_high"]:
                 continue
             out.append(quote)
         out.sort(key=lambda item: (-item.amount, item.symbol))
@@ -121,13 +148,27 @@ class TailPickEngine:
         close = float(latest_daily["close"])
         ma20 = float(latest_daily["ma20"])
         ma60 = float(latest_daily["ma60"])
+        rsi14 = float(latest_daily["rsi14"])
+        ma20_slope5 = float(latest_daily["ma20_slope5"])
+        distance_above_ma20 = close / ma20 - 1.0 if ma20 > 0 else 0.0
         if close < ma20 or ma20 < ma60:
             return None
+        if distance_above_ma20 > filters["max_close_above_ma20_pct"]:
+            return None
+        if rsi14 == rsi14 and rsi14 > filters["max_rsi14"]:
+            return None
+        if ma20_slope5 != ma20_slope5 or ma20_slope5 < filters["min_ma20_slope5"]:
+            return None
 
-        amount_score = min(quote.amount / 50_000_000, 1.0) * 30.0
-        return_score = max(intraday_return, 0.0) / max(filters["max_intraday_return"], 0.01) * 35.0
-        trend_score = min(max(close / ma20 - 1.0, 0.0), 0.08) / 0.08 * 35.0
-        score = amount_score + return_score + trend_score
+        close_position = self._close_position(quote)
+        return_center = (filters["min_intraday_return"] + filters["max_intraday_return"]) / 2.0
+        return_half_width = max((filters["max_intraday_return"] - filters["min_intraday_return"]) / 2.0, 0.001)
+        amount_score = min(quote.amount / 80_000_000, 1.0) * 25.0
+        return_score = max(1.0 - abs(intraday_return - return_center) / return_half_width, 0.0) * 30.0
+        position_score = close_position * 20.0
+        trend_score = min(max(distance_above_ma20, 0.0), 0.08) / 0.08 * 25.0
+        fade_penalty = max(1.0 - quote.latest / quote.high, 0.0) * 100.0 if quote.high > 0 else 0.0
+        score = amount_score + return_score + position_score + trend_score - fade_penalty
         return TailPickResult(
             trade_date=trade_date,
             quote=quote,

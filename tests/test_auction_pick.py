@@ -90,6 +90,7 @@ class FakeAuctionDataSource:
         ]
         self.daily_bar_symbols: list[str] = []
         self.daily_bar_ranges: list[tuple[str, date, date]] = []
+        self.daily_profile: dict[str, str] = {}
 
     def get_stock_list(self):
         return self.stocks
@@ -103,8 +104,14 @@ class FakeAuctionDataSource:
         dates = [d for d in self.trade_dates if start_date <= d <= end_date]
         close = 10.0
         bars = []
-        for trade_date in dates:
-            close = close * (0.995 if symbol == "000004" else 1.002)
+        profile = self.daily_profile.get(symbol, "weak" if symbol == "000004" else "normal")
+        for idx, trade_date in enumerate(dates):
+            if profile == "weak":
+                close *= 0.995
+            elif profile == "overextended":
+                close *= 1.001 if idx < max(len(dates) - 20, 0) else 1.025
+            else:
+                close *= 1.002
             bars.append(
                 DailyBar(
                     trade_date=trade_date,
@@ -210,6 +217,55 @@ def test_auction_pick_returns_no_trade_when_all_quotes_fail():
     assert payload.candidates_passed == 0
 
 
+def test_auction_pick_rejects_current_price_below_open():
+    ds = FakeAuctionDataSource()
+    ds.quotes = [
+        IntradayQuote(
+            "000001",
+            "Fade",
+            10.19,
+            10.00,
+            10.20,
+            10.25,
+            10.05,
+            2_000_000,
+            25_000_000,
+            2.0,
+            datetime(2026, 6, 4, 9, 26),
+        )
+    ]
+
+    payload = AuctionPickEngine(ds, {}).pick(date(2026, 6, 4))
+
+    assert payload.selected == []
+    assert payload.candidates_passed == 0
+
+
+def test_auction_pick_rejects_overextended_daily_candidate():
+    ds = FakeAuctionDataSource()
+    ds.daily_profile = {"000001": "overextended"}
+    ds.quotes = [
+        IntradayQuote(
+            "000001",
+            "Overextended",
+            10.30,
+            10.00,
+            10.20,
+            10.35,
+            10.18,
+            2_000_000,
+            25_000_000,
+            2.0,
+            datetime(2026, 6, 4, 9, 26),
+        )
+    ]
+
+    payload = AuctionPickEngine(ds, {}).pick(date(2026, 6, 4), count=1)
+
+    assert payload.selected == []
+    assert payload.candidates_passed == 0
+
+
 def test_auction_pick_parser_accepts_date_count_and_output():
     args = build_parser().parse_args(["auction-pick", "--date", "2026-06-04", "--count", "3", "--output", "json"])
 
@@ -222,9 +278,17 @@ def test_auction_pick_parser_accepts_date_count_and_output():
 def test_default_config_contains_isolated_auction_pick_section():
     cfg = load_config("config/default.yaml")
 
-    assert cfg["auction_pick"]["count"] == 5
-    assert cfg["auction_pick"]["min_opening_gap"] == 0.01
-    assert cfg["auction_pick"]["max_current_return"] == 0.06
+    assert cfg["auction_pick"]["count"] == 2
+    assert cfg["auction_pick"]["min_opening_gap"] == 0.012
+    assert cfg["auction_pick"]["max_opening_gap"] == 0.04
+    assert cfg["auction_pick"]["min_current_return"] == 0.012
+    assert cfg["auction_pick"]["max_current_return"] == 0.055
+    assert cfg["auction_pick"]["min_amount"] == 20_000_000
+    assert cfg["auction_pick"]["min_latest_vs_open"] == 1.0
+    assert cfg["auction_pick"]["limit_up_return"] == 0.09
+    assert cfg["auction_pick"]["max_close_above_ma20_pct"] == 0.08
+    assert cfg["auction_pick"]["max_rsi14"] == 75
+    assert cfg["auction_pick"]["min_ma20_slope5"] == 0.0
 
 
 def test_auction_pick_does_not_change_existing_parser_commands():

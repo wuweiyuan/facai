@@ -62,15 +62,18 @@ class AuctionPickEngine:
     def _filters(self) -> dict[str, float]:
         cfg = self.cfg.get("auction_pick", {}) if isinstance(self.cfg.get("auction_pick", {}), dict) else {}
         return {
-            "count": float(cfg.get("count", 5)),
-            "min_opening_gap": float(cfg.get("min_opening_gap", 0.01)),
-            "max_opening_gap": float(cfg.get("max_opening_gap", 0.05)),
-            "min_current_return": float(cfg.get("min_current_return", 0.008)),
-            "max_current_return": float(cfg.get("max_current_return", 0.06)),
-            "min_amount": float(cfg.get("min_amount", 10_000_000)),
-            "min_latest_vs_open": float(cfg.get("min_latest_vs_open", 0.995)),
+            "count": float(cfg.get("count", 2)),
+            "min_opening_gap": float(cfg.get("min_opening_gap", 0.012)),
+            "max_opening_gap": float(cfg.get("max_opening_gap", 0.04)),
+            "min_current_return": float(cfg.get("min_current_return", 0.012)),
+            "max_current_return": float(cfg.get("max_current_return", 0.055)),
+            "min_amount": float(cfg.get("min_amount", 20_000_000)),
+            "min_latest_vs_open": float(cfg.get("min_latest_vs_open", 1.0)),
             "max_snapshot_candidates": float(cfg.get("max_snapshot_candidates", 80)),
-            "limit_up_return": float(cfg.get("limit_up_return", 0.095)),
+            "limit_up_return": float(cfg.get("limit_up_return", 0.09)),
+            "max_close_above_ma20_pct": float(cfg.get("max_close_above_ma20_pct", 0.08)),
+            "max_rsi14": float(cfg.get("max_rsi14", 75)),
+            "min_ma20_slope5": float(cfg.get("min_ma20_slope5", 0.0)),
         }
 
     def _resolve_completed_daily_date(self, trade_date: date) -> date:
@@ -124,7 +127,16 @@ class AuctionPickEngine:
         close = float(latest_daily["close"])
         ma20 = float(latest_daily["ma20"])
         ma60 = float(latest_daily["ma60"])
-        if not (close >= ma20 or ma20 >= ma60):
+        rsi14 = float(latest_daily["rsi14"])
+        ma20_slope5 = float(latest_daily["ma20_slope5"])
+        distance_above_ma20 = close / ma20 - 1.0 if ma20 > 0 else 0.0
+        if close < ma20 or ma20 < ma60:
+            return None
+        if distance_above_ma20 > filters["max_close_above_ma20_pct"]:
+            return None
+        if rsi14 == rsi14 and rsi14 > filters["max_rsi14"]:
+            return None
+        if ma20_slope5 != ma20_slope5 or ma20_slope5 < filters["min_ma20_slope5"]:
             return None
 
         opening_gap = quote.open / quote.previous_close - 1.0
@@ -132,14 +144,12 @@ class AuctionPickEngine:
         gap_span = max(filters["max_opening_gap"] - filters["min_opening_gap"], 0.001)
         gap_mid = (filters["min_opening_gap"] + filters["max_opening_gap"]) / 2.0
         gap_score = max(1.0 - abs(opening_gap - gap_mid) / gap_span, 0.0) * 25.0
-        return_score = min(max(current_return - filters["min_current_return"], 0.0) / 0.05, 1.0) * 25.0
-        amount_score = min(quote.amount / 50_000_000, 1.0) * 25.0
-        trend_score = 0.0
-        if close >= ma20:
-            trend_score += 12.5
-        if ma20 >= ma60:
-            trend_score += 12.5
-        fade_penalty = max((quote.open - quote.latest) / quote.open, 0.0) * 100.0
+        return_center = (filters["min_current_return"] + filters["max_current_return"]) / 2.0
+        return_half_width = max((filters["max_current_return"] - filters["min_current_return"]) / 2.0, 0.001)
+        return_score = max(1.0 - abs(current_return - return_center) / return_half_width, 0.0) * 25.0
+        amount_score = min(quote.amount / 80_000_000, 1.0) * 20.0
+        trend_score = 20.0 + min(max(ma20_slope5, 0.0) / 0.03, 1.0) * 10.0
+        fade_penalty = max((quote.open - quote.latest) / quote.open, 0.0) * 150.0
         score = gap_score + return_score + amount_score + trend_score - fade_penalty
         return AuctionPickResult(
             trade_date=trade_date,
