@@ -8,6 +8,7 @@ from typing import Any
 import pandas as pd
 
 from app.models import DailyBar, StockInfo
+from app.tail_pick.models import IntradayQuote
 
 try:
     import akshare as ak
@@ -254,6 +255,67 @@ class AkshareDataSource:
             except Exception:
                 continue
         return out
+
+    def get_intraday_quotes(self) -> list[IntradayQuote]:
+        last_err: Exception | None = None
+        for attempt in range(max(1, self.hist_retries)):
+            try:
+                df = ak.stock_zh_a_spot_em()
+                return self._spot_rows_to_intraday_quotes(df)
+            except Exception as exc:
+                last_err = exc
+                if attempt < self.hist_retries - 1:
+                    time.sleep(0.2 * (attempt + 1))
+        try:
+            df = ak.stock_zh_a_spot()
+            return self._spot_rows_to_intraday_quotes(df)
+        except Exception as exc:
+            raise RuntimeError("Failed to fetch intraday A-share spot quotes from EM and Sina") from (last_err or exc)
+
+    @staticmethod
+    def _spot_rows_to_intraday_quotes(df: pd.DataFrame) -> list[IntradayQuote]:
+        quotes: list[IntradayQuote] = []
+        for _, row in df.iterrows():
+            try:
+                symbol = AkshareDataSource._normalize_spot_symbol(row.get("代码", ""))
+                latest = float(row.get("最新价", 0) or 0)
+                previous_close = float(row.get("昨收", 0) or 0)
+                open_price = float(row.get("今开", 0) or 0)
+                high = float(row.get("最高", 0) or 0)
+                low = float(row.get("最低", 0) or 0)
+                volume = float(row.get("成交量", 0) or 0)
+                amount = float(row.get("成交额", 0) or 0)
+                turnover = row.get("换手率", None)
+                turnover_rate = float(turnover) if turnover is not None and pd.notna(turnover) else None
+            except Exception:
+                continue
+            if not symbol or symbol == "000000":
+                continue
+            quotes.append(
+                IntradayQuote(
+                    symbol=symbol,
+                    name=str(row.get("名称", "") or symbol),
+                    latest=latest,
+                    previous_close=previous_close,
+                    open=open_price,
+                    high=high,
+                    low=low,
+                    volume=volume,
+                    amount=amount,
+                    turnover_rate=turnover_rate,
+                    snapshot_time=datetime.now(),
+                )
+            )
+        return quotes
+
+    @staticmethod
+    def _normalize_spot_symbol(raw_symbol: object) -> str:
+        symbol = str(raw_symbol or "").strip().lower()
+        for prefix in ("sh", "sz", "bj"):
+            if symbol.startswith(prefix):
+                symbol = symbol[len(prefix) :]
+                break
+        return symbol.zfill(6)
 
     def _index_cache_path(self, symbol: str) -> Path:
         return self.index_cache_dir / f"{symbol}.csv"
@@ -515,7 +577,7 @@ class AkshareDataSource:
             out = new_df
         out["trade_date"] = pd.to_datetime(out["trade_date"], errors="coerce").dt.strftime("%Y-%m-%d")
         out = out.dropna(subset=["trade_date"])
-        out = out.drop_duplicates(subset=["trade_date"], keep="last").sort_values("trade_date").reset_index(drop=True)
+        out = out.drop_duplicates(subset=["trade_date"], keep="first").sort_values("trade_date").reset_index(drop=True)
         self._save_bars_df(symbol, out)
 
     def _save_bars_df(self, symbol: str, df: pd.DataFrame) -> None:

@@ -4,6 +4,7 @@ from datetime import date
 from typing import Protocol
 
 from app.models import DailyBar, StockInfo
+from app.tail_pick.models import IntradayQuote
 
 
 class MarketDataSource(Protocol):
@@ -19,3 +20,7 @@ class MarketDataSource(Protocol):
     def get_index_closes(self, symbol: str, start_date: date, end_date: date) -> dict[date, float]:
         ...
 
+
+class IntradayQuoteDataSource(Protocol):
+    def get_intraday_quotes(self) -> list[IntradayQuote]:
+        ...

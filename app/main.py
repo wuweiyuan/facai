@@ -756,6 +756,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_rec_pool.add_argument("--count", type=int, default=None, help="Total number of opportunity names to show")
     p_rec_pool.add_argument("--output", choices=["table", "json"], default="table")
 
+    p_tail = sub.add_parser("tail-pick", help="Pick one isolated tail-session candidate")
+    p_tail.add_argument("--date", default=None, help="Run date YYYY-MM-DD; defaults to today")
+    p_tail.add_argument("--output", choices=["table", "json"], default="table")
+
     p_exp = sub.add_parser("explain", help="Explain one stock score on target date")
     p_exp.add_argument("--symbol", required=True, help="Stock code like 000001")
     p_exp.add_argument("--date", default=None, help="Target date YYYY-MM-DD")
@@ -868,6 +872,35 @@ def main() -> None:
             opportunity_csv=args.opportunity_csv,
         )
         print(f"Dashboard data exported to {saved}")
+        return
+
+    if args.cmd == "tail-pick":
+        from app.tail_pick.engine import TailPickEngine
+
+        _configure_network(base_cfg)
+        ds = _build_data_source(base_cfg)
+        trade_date = _parse_date(args.date)
+        payload = TailPickEngine(ds, base_cfg).pick(trade_date)
+        if args.output == "json":
+            print(json.dumps(payload.as_dict(), ensure_ascii=False, indent=2))
+            return
+        print(
+            f"[尾盘] 日期={payload.trade_date.isoformat()} "
+            f"扫描={payload.candidates_scanned} 入围={payload.candidates_passed}"
+        )
+        if payload.selected is None:
+            print("[尾盘] 当前没有符合条件的尾盘候选，建议空仓。")
+            return
+        item = payload.selected
+        print(f"[尾盘] 主选: {item.quote.symbol} {item.quote.name}")
+        print(f"现价: {item.quote.latest:.2f} 涨幅: {item.intraday_return:.2%} 分数: {item.score:.2f}")
+        print(f"参考买入: {item.entry_price:.2f} 止损: {item.stop_loss_price:.2f}")
+        print("理由:")
+        for idx, reason in enumerate(item.reasons, start=1):
+            print(f"  {idx}. {reason}")
+        print("次日卖出规则:")
+        for idx, rule in enumerate(item.next_day_sell_rules, start=1):
+            print(f"  {idx}. {rule}")
         return
 
     if args.cmd == "recommend-adaptive":
