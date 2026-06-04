@@ -154,6 +154,32 @@ filters:
   # 若想扩大机会集，可考虑改为 false，但需同步评估风险过滤参数。
   exclude_gem_board: true
 
+# 开盘竞价候选策略。
+# 这是独立命令 `auction-pick` 使用的配置，不参与 recommend-adaptive / tail-pick。
+auction_pick:
+  # 默认展示候选数量。
+  count: 5
+
+  # 开盘相对昨收高开的合理区间。
+  min_opening_gap: 0.01
+  max_opening_gap: 0.05
+
+  # 当前价相对昨收的合理涨幅区间。
+  min_current_return: 0.008
+  max_current_return: 0.06
+
+  # 最低成交额，单位：元。
+  min_amount: 10000000
+
+  # 当前价不能明显低于开盘价，用于过滤开盘后快速走弱。
+  min_latest_vs_open: 0.995
+
+  # 快照预筛后最多拉取多少只股票的日线，控制运行速度。
+  max_snapshot_candidates: 80
+
+  # 接近一字涨停的快照先过滤，避免不可成交候选。
+  limit_up_return: 0.095
+
 # 大盘环境过滤。
 # 目的：先判断市场大环境是否适合做当前策略，再决定是否放行个股筛选。
 # 对趋势/动量类策略非常重要。

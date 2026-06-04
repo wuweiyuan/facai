@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta
 
 from app.auction_pick.engine import AuctionPickEngine
 from app.auction_pick.models import AuctionPickResult
+from app.config import load_config
 from app.main import build_parser
 from app.models import DailyBar, StockInfo
 from app.tail_pick.models import IntradayQuote
@@ -215,3 +216,22 @@ def test_auction_pick_parser_accepts_date_count_and_output():
     assert args.date == "2026-06-04"
     assert args.count == 3
     assert args.output == "json"
+
+
+def test_default_config_contains_isolated_auction_pick_section():
+    cfg = load_config("config/default.yaml")
+
+    assert cfg["auction_pick"]["count"] == 5
+    assert cfg["auction_pick"]["min_opening_gap"] == 0.01
+    assert cfg["auction_pick"]["max_current_return"] == 0.06
+
+
+def test_auction_pick_does_not_change_existing_parser_commands():
+    parser = build_parser()
+
+    tail_args = parser.parse_args(["tail-pick", "--date", "2026-06-04", "--output", "json"])
+    adaptive_args = parser.parse_args(["recommend-adaptive", "--date", "2026-06-04", "--count", "1"])
+
+    assert tail_args.cmd == "tail-pick"
+    assert adaptive_args.cmd == "recommend-adaptive"
+    assert adaptive_args.count == 1
