@@ -815,9 +815,12 @@ class TestRecommender(TestCase):
         bull_pullback = overrides["bull"]["recommend-pullback"]
         bear_oversold = overrides["bear"]["recommend-oversold"]
 
-        self.assertEqual(bull_pullback["strategy"]["pick_count"], 2)
-        self.assertEqual(bull_pullback["risk_filter"]["pullback"]["max_close_above_ma20_pct"], 0.07)
-        self.assertEqual(bull_pullback["risk_filter"]["pullback"]["max_mom20"], 0.22)
+        self.assertEqual(bull_pullback["strategy"]["pick_count"], 3)
+        self.assertEqual(bull_pullback["risk_filter"]["pullback"]["max_close_above_ma20_pct"], 0.10)
+        self.assertEqual(bull_pullback["risk_filter"]["pullback"]["max_mom20"], 0.28)
+        self.assertEqual(bull_pullback["risk_filter"]["pullback"]["max_mom5"], 0.10)
+        self.assertEqual(bull_pullback["risk_filter"]["pullback"]["max_rsi14"], 80.0)
+        self.assertEqual(bull_pullback["risk_filter"]["pullback"]["max_volume_zscore20"], 2.5)
         self.assertEqual(bear_oversold["strategy"]["pick_count"], 2)
         self.assertEqual(bear_oversold["risk_filter"]["oversold"]["max_mom5"], -0.10)
         self.assertEqual(bear_oversold["risk_filter"]["oversold"]["max_ret_1d"], -0.025)

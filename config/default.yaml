@@ -663,18 +663,21 @@ adaptive_strategy:
     recommend: 1
     recommend-pullback: 1
     recommend-oversold: 3
-  # 平衡型参数自适应：
+  # 优化平衡型参数自适应：
   # 只影响 recommend-adaptive / backtest-adaptive / backtest-adaptive-rules。
   # 单独运行 recommend-pullback / recommend-oversold 时仍使用各自 profile 原始参数。
   parameter_overrides:
     bull:
       recommend-pullback:
         strategy:
-          pick_count: 2
+          pick_count: 3
         risk_filter:
           pullback:
-            max_close_above_ma20_pct: 0.07
-            max_mom20: 0.22
+            max_close_above_ma20_pct: 0.10
+            max_mom20: 0.28
+            max_mom5: 0.10
+            max_rsi14: 80.0
+            max_volume_zscore20: 2.5
     bear:
       recommend-oversold:
         strategy:
