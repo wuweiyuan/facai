@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date
 from unittest import TestCase
 
+from app.backtest import local_adaptive, local_rule_adaptive
 from app.backtest.runner import BacktestRunner
 from app.config import apply_strategy_profile
 from app.engine.recommender import Recommender
@@ -88,6 +89,64 @@ class TestBacktest(TestCase):
 
         self.assertGreaterEqual(summary["total_trades"], 1)
         self.assertIn("threshold_mode_counts", summary)
+
+    def test_local_adaptive_profiles_apply_market_parameter_overrides(self):
+        cfg = {
+            "strategy": {"pick_count": 1},
+            "strategy_profiles": {
+                "pullback_confirm": {
+                    "strategy": {"pick_count": 1},
+                    "risk_filter": {"pullback": {"max_close_above_ma20_pct": 0.05}},
+                },
+                "oversold_rebound": {},
+                "bull_trend_research": {},
+                "relative_strength": {},
+            },
+            "adaptive_strategy": {
+                "parameter_overrides": {
+                    "bull": {
+                        "recommend-pullback": {
+                            "strategy": {"pick_count": 2},
+                            "risk_filter": {"pullback": {"max_close_above_ma20_pct": 0.07}},
+                        }
+                    }
+                }
+            },
+        }
+
+        profiles = local_adaptive._build_adaptive_profiles(cfg, "bull")
+
+        self.assertEqual(profiles["recommend-pullback"]["strategy"]["pick_count"], 2)
+        self.assertEqual(profiles["recommend-pullback"]["risk_filter"]["pullback"]["max_close_above_ma20_pct"], 0.07)
+
+    def test_local_rule_adaptive_profiles_apply_market_parameter_overrides(self):
+        cfg = {
+            "strategy": {"pick_count": 1},
+            "strategy_profiles": {
+                "pullback_confirm": {},
+                "oversold_rebound": {
+                    "strategy": {"pick_count": 3},
+                    "risk_filter": {"oversold": {"max_mom5": -0.12}},
+                },
+                "bull_trend_research": {},
+                "relative_strength": {},
+            },
+            "adaptive_strategy": {
+                "parameter_overrides": {
+                    "bear": {
+                        "recommend-oversold": {
+                            "strategy": {"pick_count": 2},
+                            "risk_filter": {"oversold": {"max_mom5": -0.10}},
+                        }
+                    }
+                }
+            },
+        }
+
+        profiles = local_rule_adaptive._build_adaptive_profiles(cfg, "bear")
+
+        self.assertEqual(profiles["recommend-oversold"]["strategy"]["pick_count"], 2)
+        self.assertEqual(profiles["recommend-oversold"]["risk_filter"]["oversold"]["max_mom5"], -0.10)
 
     def test_parser_accepts_backtest_pullback(self):
         args = build_parser().parse_args(

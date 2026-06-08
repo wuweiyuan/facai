@@ -16,7 +16,7 @@ from app.backtest.entry_price import (
     normalize_entry_price_mode,
     signal_attempted_dates,
 )
-from app.config import apply_strategy_profile
+from app.config import apply_adaptive_parameter_overrides, apply_strategy_profile
 from app.features.indicators import add_indicators
 from app.models import BacktestRecord, StockInfo
 from app.strategy.regime_risk import detect_market_state, passes_risk_filter
@@ -98,8 +98,8 @@ def run_local_adaptive_backtest(
     if not cache.is_available(index_symbol):
         raise RuntimeError("Local adaptive cache is unavailable")
 
-    profiles = _build_adaptive_profiles(base_cfg)
-    for cfg in profiles.values():
+    base_profiles = _build_adaptive_profiles(base_cfg)
+    for cfg in base_profiles.values():
         cfg.setdefault("data_freshness", {})["enabled"] = False
 
     stocks = cache.load_stock_list()
@@ -112,7 +112,7 @@ def run_local_adaptive_backtest(
     attempted_set = set(attempted_dates)
     available_symbols = {path.stem for path in cache.iter_bar_files()}
     universe_by_profile: dict[str, set[str]] = {}
-    for name, cfg in profiles.items():
+    for name, cfg in base_profiles.items():
         universe_by_profile[name] = {
             item.symbol
             for item in filter_universe(stocks, cfg, start_date)
@@ -120,15 +120,13 @@ def run_local_adaptive_backtest(
         }
 
     index_closes = cache.load_index_closes(index_symbol)
-    market_labels = {dt: detect_market_state(index_closes, dt, base_cfg).label for dt in attempted_dates}
-    market_states_by_profile = {
-        name: {dt: detect_market_state(index_closes, dt, cfg) for dt in attempted_dates}
-        for name, cfg in profiles.items()
-    }
+    market_states = {dt: detect_market_state(index_closes, dt, base_cfg) for dt in attempted_dates}
+    market_labels = {dt: state.label for dt, state in market_states.items()}
+    market_profile_labels = sorted(set(market_labels.values()))
+    profiles_by_market = {label: _build_adaptive_profiles(base_cfg, label) for label in market_profile_labels}
     order_map = base_cfg.get("adaptive_strategy", {}).get("regime_orders", {})
-    pick_count_map = base_cfg.get("adaptive_strategy", {}).get("strategy_pick_counts", {})
 
-    candidates: dict[str, dict[date, list[AdaptiveCandidate]]] = {name: defaultdict(list) for name in profiles}
+    candidates: dict[str, dict[date, list[AdaptiveCandidate]]] = {name: defaultdict(list) for name in base_profiles}
 
     for path in cache.iter_bar_files():
         symbol = path.stem
@@ -149,14 +147,15 @@ def run_local_adaptive_backtest(
         for row in df.itertuples(index=False):
             latest_dict = row._asdict()
             signal_date = latest_dict["trade_date"]
-            for name, cfg in profiles.items():
+            for name in base_profiles:
                 if symbol not in universe_by_profile[name]:
                     continue
+                cfg = profiles_by_market[market_labels[signal_date]][name]
                 latest_view = dict(latest_dict)
-                latest_view["market_mom20"] = market_states_by_profile[name][signal_date].mom20
+                latest_view["market_mom20"] = market_states[signal_date].mom20
                 if not passes_threshold(latest_view, "normal", cfg):
                     continue
-                if not passes_risk_filter(latest_view, market_states_by_profile[name][signal_date], "normal", cfg):
+                if not passes_risk_filter(latest_view, market_states[signal_date], "normal", cfg):
                     continue
                 score_total, _ = compute_score(latest_view, cfg)
                 candidates[name][signal_date].append(
@@ -188,6 +187,8 @@ def run_local_adaptive_backtest(
             if not day:
                 continue
             chosen_name = cmd_name
+            day_cfg = profiles_by_market[market_label][cmd_name]
+            pick_count_map = day_cfg.get("adaptive_strategy", {}).get("strategy_pick_counts", {})
             pick_count = count_override if count_override is not None else pick_count_map.get(cmd_name, 1)
             pick_count = max(int(pick_count), 1)
             picked = day[:pick_count]
@@ -225,7 +226,7 @@ def run_local_adaptive_backtest(
     return summary
 
 
-def _build_adaptive_profiles(base_cfg: dict) -> dict[str, dict]:
+def _build_adaptive_profiles(base_cfg: dict, market_label: str | None = None) -> dict[str, dict]:
     profile_names = {
         "recommend": None,
         "recommend-pullback": "pullback_confirm",
@@ -239,7 +240,10 @@ def _build_adaptive_profiles(base_cfg: dict) -> dict[str, dict]:
     profiles = {}
     for name, default_profile in profile_names.items():
         profile_name = overrides.get(name, default_profile)
-        profiles[name] = apply_strategy_profile(base_cfg, profile_name)
+        cfg = apply_strategy_profile(base_cfg, profile_name)
+        if market_label is not None:
+            cfg = apply_adaptive_parameter_overrides(cfg, market_label, name)
+        profiles[name] = cfg
     return profiles
 
 

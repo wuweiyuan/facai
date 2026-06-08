@@ -15,7 +15,7 @@ from app.backtest.entry_price import (
     normalize_entry_price_mode,
     signal_attempted_dates,
 )
-from app.config import apply_strategy_profile
+from app.config import apply_adaptive_parameter_overrides, apply_strategy_profile
 from app.features.indicators import add_indicators
 from app.models import BacktestRecord, StockInfo
 from app.strategy.regime_risk import detect_market_state, passes_risk_filter
@@ -45,8 +45,8 @@ def run_local_rule_adaptive_backtest(
     index_dir = cache_dir / "index"
     index_symbol = str(base_cfg.get("market_filter", {}).get("index_symbol", "000300"))
 
-    profiles = _build_adaptive_profiles(base_cfg)
-    for cfg in profiles.values():
+    base_profiles = _build_adaptive_profiles(base_cfg)
+    for cfg in base_profiles.values():
         cfg.setdefault("data_freshness", {})["enabled"] = False
 
     stocks: list[StockInfo] = []
@@ -80,15 +80,14 @@ def run_local_rule_adaptive_backtest(
     with (index_dir / f"{index_symbol}.csv").open("r", encoding="utf-8", newline="") as f:
         for row in csv.DictReader(f):
             index_closes[datetime.strptime(row["trade_date"], "%Y-%m-%d").date()] = float(row["close"])
-    market_labels = {dt: detect_market_state(index_closes, dt, base_cfg).label for dt in attempted_dates}
-    market_states_by_profile = {
-        name: {dt: detect_market_state(index_closes, dt, cfg) for dt in attempted_dates}
-        for name, cfg in profiles.items()
-    }
+    market_states = {dt: detect_market_state(index_closes, dt, base_cfg) for dt in attempted_dates}
+    market_labels = {dt: state.label for dt, state in market_states.items()}
+    market_profile_labels = sorted(set(market_labels.values()))
+    profiles_by_market = {label: _build_adaptive_profiles(base_cfg, label) for label in market_profile_labels}
 
     available_symbols = {p.stem for p in bars_dir.glob("*.csv")}
     universe_by_profile: dict[str, set[str]] = {}
-    for name, cfg in profiles.items():
+    for name, cfg in base_profiles.items():
         universe_by_profile[name] = {
             item.symbol
             for item in filter_universe(stocks, cfg, start_date)
@@ -96,9 +95,8 @@ def run_local_rule_adaptive_backtest(
         }
 
     order_map = base_cfg.get("adaptive_strategy", {}).get("regime_orders", {})
-    pick_count_map = base_cfg.get("adaptive_strategy", {}).get("strategy_pick_counts", {})
 
-    candidates: dict[str, dict[date, list[dict]]] = {name: defaultdict(list) for name in profiles}
+    candidates: dict[str, dict[date, list[dict]]] = {name: defaultdict(list) for name in base_profiles}
     bars_cache: dict[str, SymbolPath] = {}
 
     for path in bars_dir.glob("*.csv"):
@@ -128,16 +126,17 @@ def run_local_rule_adaptive_backtest(
         for row in df.itertuples(index=False):
             latest_dict = row._asdict()
             signal_date = latest_dict["trade_date"]
-            for name, cfg in profiles.items():
+            for name in base_profiles:
                 if symbol not in universe_by_profile[name]:
                     continue
+                cfg = profiles_by_market[market_labels[signal_date]][name]
                 latest_view = dict(latest_dict)
-                latest_view["market_mom20"] = market_states_by_profile[name][signal_date].mom20
+                latest_view["market_mom20"] = market_states[signal_date].mom20
                 accepted_mode = None
                 for mode in _resolve_enabled_modes(cfg):
                     if mode != "force" and not passes_threshold(latest_view, mode, cfg):
                         continue
-                    if not passes_risk_filter(latest_view, market_states_by_profile[name][signal_date], mode, cfg):
+                    if not passes_risk_filter(latest_view, market_states[signal_date], mode, cfg):
                         continue
                     accepted_mode = mode
                     break
@@ -168,6 +167,8 @@ def run_local_rule_adaptive_backtest(
             if not day:
                 continue
             chosen_cmd = cmd_name
+            day_cfg = profiles_by_market[regime][cmd_name]
+            pick_count_map = day_cfg.get("adaptive_strategy", {}).get("strategy_pick_counts", {})
             pick_count = count_override if count_override is not None else pick_count_map.get(cmd_name, 1)
             pick_count = max(int(pick_count), 1)
             picked = day[:pick_count]
@@ -278,11 +279,12 @@ def _simulate_rule_exit(
     }
 
 
-def _build_adaptive_profiles(base_cfg: dict) -> dict[str, dict]:
+def _build_adaptive_profiles(base_cfg: dict, market_label: str | None = None) -> dict[str, dict]:
     profile_names = {
         "recommend": None,
         "recommend-pullback": "pullback_confirm",
         "recommend-oversold": "oversold_rebound",
+        "recommend-bull": "bull_trend_research",
         "recommend-relative": "relative_strength",
     }
     overrides = base_cfg.get("adaptive_strategy", {}).get("profile_overrides", {})
@@ -291,7 +293,10 @@ def _build_adaptive_profiles(base_cfg: dict) -> dict[str, dict]:
     profiles = {}
     for name, default_profile in profile_names.items():
         profile_name = overrides.get(name, default_profile)
-        profiles[name] = apply_strategy_profile(base_cfg, profile_name)
+        cfg = apply_strategy_profile(base_cfg, profile_name)
+        if market_label is not None:
+            cfg = apply_adaptive_parameter_overrides(cfg, market_label, name)
+        profiles[name] = cfg
     return profiles
 
 
