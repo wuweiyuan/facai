@@ -121,6 +121,7 @@ class FakeTailPickDataSource:
         self.daily_bar_symbols = []
         self.daily_bar_ranges = []
         self.daily_profile: dict[str, str] = {}
+        self.daily_fail_symbols: set[str] = set()
 
     def get_stock_list(self):
         return self.stocks
@@ -131,6 +132,8 @@ class FakeTailPickDataSource:
     def get_daily_bars(self, symbol, start_date, end_date):
         self.daily_bar_symbols.append(symbol)
         self.daily_bar_ranges.append((symbol, start_date, end_date))
+        if symbol in self.daily_fail_symbols:
+            raise OSError(11, "Resource deadlock avoided", f".cache/akshare/bars/{symbol}.csv")
         close = 10.0 if symbol != "000003" else 12.0
         bars = []
         dates = [d for d in self.trade_dates if start_date <= d <= end_date]
@@ -267,6 +270,19 @@ def test_tail_pick_rejects_overextended_daily_candidate():
 
     assert payload.selected is None
     assert payload.candidates_passed == 0
+
+
+def test_tail_pick_skips_symbol_when_daily_bars_fail_and_warns(capsys):
+    ds = FakeTailPickDataSource()
+    ds.daily_fail_symbols = {"000001"}
+
+    payload = TailPickEngine(ds, {}).pick(date(2026, 6, 4))
+
+    captured = capsys.readouterr()
+    assert payload.selected is None
+    assert payload.candidates_passed == 0
+    assert "跳过 000001 Leader" in captured.err
+    assert "Resource deadlock avoided" in captured.err
 
 
 def test_tail_pick_prefilters_quotes_before_fetching_daily_bars():

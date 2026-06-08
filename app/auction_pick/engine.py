@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, timedelta
+import sys
 from typing import Any, Protocol
 
 from app.auction_pick.models import AuctionPickPayload, AuctionPickResult
@@ -119,7 +120,11 @@ class AuctionPickEngine:
         daily_end_date: date,
         filters: dict[str, float],
     ) -> AuctionPickResult | None:
-        bars = self.data_source.get_daily_bars(quote.symbol, daily_end_date - timedelta(days=160), daily_end_date)
+        try:
+            bars = self.data_source.get_daily_bars(quote.symbol, daily_end_date - timedelta(days=160), daily_end_date)
+        except Exception as exc:
+            print(f"[竞价] 跳过 {quote.symbol} {quote.name}: 日线数据获取失败: {exc}", file=sys.stderr)
+            return None
         df = add_indicators(bars_to_df(bars))
         if df.empty:
             return None

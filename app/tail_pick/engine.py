@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, timedelta
+import sys
 from typing import Any, Protocol
 
 from app.features.indicators import add_indicators, bars_to_df
@@ -140,7 +141,11 @@ class TailPickEngine:
     ) -> TailPickResult | None:
         intraday_return = quote.intraday_return
 
-        bars = self.data_source.get_daily_bars(quote.symbol, daily_end_date - timedelta(days=160), daily_end_date)
+        try:
+            bars = self.data_source.get_daily_bars(quote.symbol, daily_end_date - timedelta(days=160), daily_end_date)
+        except Exception as exc:
+            print(f"[尾盘] 跳过 {quote.symbol} {quote.name}: 日线数据获取失败: {exc}", file=sys.stderr)
+            return None
         df = add_indicators(bars_to_df(bars))
         if df.empty:
             return None

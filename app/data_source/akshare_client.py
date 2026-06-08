@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 import time
 from datetime import date, datetime
 from pathlib import Path
@@ -460,13 +461,18 @@ class AkshareDataSource:
     def _bars_cache_path(self, symbol: str) -> Path:
         return self.bars_cache_dir / f"{symbol}.csv"
 
+    @staticmethod
+    def _warn_cache(message: str) -> None:
+        print(f"[缓存] {message}", file=sys.stderr)
+
     def _get_bars_from_cache(self, symbol: str, start_date: date, end_date: date) -> list[DailyBar] | None:
         path = self._bars_cache_path(symbol)
         if not path.exists():
             return None
         try:
             df = pd.read_csv(path)
-        except Exception:
+        except Exception as exc:
+            self._warn_cache(f"缓存读取失败 {symbol}: {path}: {exc}")
             return None
         if df.empty:
             return None
@@ -544,7 +550,10 @@ class AkshareDataSource:
         merged["trade_date"] = pd.to_datetime(merged["trade_date"], errors="coerce").dt.strftime("%Y-%m-%d")
         merged = merged.dropna(subset=["trade_date"])
         merged = merged.drop_duplicates(subset=["trade_date"], keep="last").sort_values("trade_date").reset_index(drop=True)
-        self._save_bars_df(symbol, merged)
+        try:
+            self._save_bars_df(symbol, merged)
+        except Exception as exc:
+            self._warn_cache(f"缓存写入失败 {symbol}: {self._bars_cache_path(symbol)}: {exc}")
         merged["trade_date"] = pd.to_datetime(merged["trade_date"], errors="coerce").dt.date
         merged = merged.dropna(subset=["trade_date"]).reset_index(drop=True)
         return merged
@@ -571,14 +580,18 @@ class AkshareDataSource:
                     out = new_df
                 else:
                     out = frames[0].copy() if len(frames) == 1 else pd.concat(frames, ignore_index=True)
-            except Exception:
+            except Exception as exc:
+                self._warn_cache(f"缓存读取失败 {symbol}: {path}: {exc}")
                 out = new_df
         else:
             out = new_df
         out["trade_date"] = pd.to_datetime(out["trade_date"], errors="coerce").dt.strftime("%Y-%m-%d")
         out = out.dropna(subset=["trade_date"])
         out = out.drop_duplicates(subset=["trade_date"], keep="first").sort_values("trade_date").reset_index(drop=True)
-        self._save_bars_df(symbol, out)
+        try:
+            self._save_bars_df(symbol, out)
+        except Exception as exc:
+            self._warn_cache(f"缓存写入失败 {symbol}: {path}: {exc}")
 
     def _save_bars_df(self, symbol: str, df: pd.DataFrame) -> None:
         path = self._bars_cache_path(symbol)

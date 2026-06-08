@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+import io
 from datetime import date
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -70,3 +72,32 @@ class TestCacheDeterminism(TestCase):
             self.assertAlmostEqual(float(old_row["close"]), 10.1, places=8)
             self.assertEqual(len(out[out["trade_date"] == "2026-03-03"]), 1)
             self.assertEqual(len(out[out["trade_date"] == "2026-03-04"]), 1)
+
+    def test_merge_save_bars_cache_warns_and_continues_when_cache_write_fails(self):
+        with TemporaryDirectory() as tmp:
+            ds = self._build_ds(tmp)
+
+            def fail_save(symbol, df):
+                raise OSError(11, "Resource deadlock avoided", f".cache/akshare/bars/{symbol}.csv")
+
+            ds._save_bars_df = fail_save
+
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                ds._merge_save_bars_cache(
+                    "601888",
+                    [
+                        DailyBar(
+                            trade_date=date(2026, 6, 5),
+                            open=10.0,
+                            high=10.2,
+                            low=9.9,
+                            close=10.1,
+                            volume=1000.0,
+                            turnover_rate=0.3,
+                        )
+                    ],
+                )
+
+            self.assertIn("缓存写入失败 601888", err.getvalue())
+            self.assertIn("Resource deadlock avoided", err.getvalue())

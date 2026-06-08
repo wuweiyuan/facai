@@ -91,6 +91,7 @@ class FakeAuctionDataSource:
         self.daily_bar_symbols: list[str] = []
         self.daily_bar_ranges: list[tuple[str, date, date]] = []
         self.daily_profile: dict[str, str] = {}
+        self.daily_fail_symbols: set[str] = set()
 
     def get_stock_list(self):
         return self.stocks
@@ -101,6 +102,8 @@ class FakeAuctionDataSource:
     def get_daily_bars(self, symbol, start_date, end_date):
         self.daily_bar_symbols.append(symbol)
         self.daily_bar_ranges.append((symbol, start_date, end_date))
+        if symbol in self.daily_fail_symbols:
+            raise OSError(11, "Resource deadlock avoided", f".cache/akshare/bars/{symbol}.csv")
         dates = [d for d in self.trade_dates if start_date <= d <= end_date]
         close = 10.0
         bars = []
@@ -264,6 +267,23 @@ def test_auction_pick_rejects_overextended_daily_candidate():
 
     assert payload.selected == []
     assert payload.candidates_passed == 0
+
+
+def test_auction_pick_skips_symbol_when_daily_bars_fail_and_warns(capsys):
+    ds = FakeAuctionDataSource()
+    ds.daily_fail_symbols = {"000001"}
+    ds.quotes = [
+        ds.quotes[0],
+        ds.quotes[4],
+    ]
+
+    payload = AuctionPickEngine(ds, {}).pick(date(2026, 6, 4), count=2)
+
+    captured = capsys.readouterr()
+    assert [item.quote.symbol for item in payload.selected] == ["000005"]
+    assert payload.candidates_passed == 1
+    assert "跳过 000001 Leader" in captured.err
+    assert "Resource deadlock avoided" in captured.err
 
 
 def test_auction_pick_parser_accepts_date_count_and_output():
