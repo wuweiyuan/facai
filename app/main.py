@@ -11,6 +11,7 @@ from pathlib import Path
 
 from app.backtest.runner import BacktestRunner
 from app.backtest.local_adaptive import run_local_adaptive_backtest
+from app.backtest.local_intraday_proxy import run_local_intraday_proxy_backtest
 from app.backtest.local_rule_adaptive import run_local_rule_adaptive_backtest
 from app.backtest.local_single import run_local_single_backtest
 from app.config import apply_adaptive_parameter_overrides, apply_strategy_profile, load_config
@@ -19,10 +20,12 @@ from app.data_source.akshare_client import AkshareDataSource
 from app.doctor import print_doctor_report, run_doctor
 from app.engine.recommender import Recommender
 from app.error_messages import friendly_error_message
+from app.intraday_review import analyze_intraday_pick_signals
 from app.models import BacktestRecord
 from app.network import clear_proxy_env, disable_requests_env_proxy, force_no_proxy_all
 from app.reporting import (
     append_adaptive_run_csv,
+    append_intraday_pick_signals,
     append_opportunity_pool_csv,
     append_recommendation_csv,
     append_recommendation_md,
@@ -603,6 +606,50 @@ def _print_backtest(summary: dict, output: str) -> None:
             print(f"  - {e['trade_date']} {e['error_type']}: {e['message']}")
 
 
+def _print_intraday_review(summary: dict, output: str) -> None:
+    percent_keys = {
+        "win_rate_next_open",
+        "avg_return_next_open",
+        "median_return_next_open",
+        "worst_return_next_open",
+        "win_rate_next_close",
+        "avg_return_next_close",
+    }
+    record_percent_keys = {"ret_next_open", "ret_next_close"}
+    if output == "json":
+        payload = {}
+        for key, value in summary.items():
+            if key == "records" and isinstance(value, list):
+                payload[key] = [
+                    {
+                        row_key: f"{row_value:.2%}"
+                        if row_key in record_percent_keys and isinstance(row_value, (int, float))
+                        else row_value
+                        for row_key, row_value in row.items()
+                    }
+                    for row in value
+                ]
+            elif key in percent_keys and isinstance(value, (int, float)):
+                payload[key] = f"{value:.2%}"
+            else:
+                payload[key] = value
+        print(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
+        return
+
+    print(f"策略: {summary['strategy']}")
+    print(f"信号日数量: {summary['signal_days']}")
+    print(f"空仓日数量: {summary['no_trade_days']}")
+    print(f"入选信号: {summary['selected_signals']}")
+    print(f"完成复盘: {summary['completed_trades']}")
+    print(f"跳过信号: {summary['skipped_signals']}")
+    print(f"次日开盘胜率: {summary['win_rate_next_open']:.2%}")
+    print(f"次日开盘平均收益: {summary['avg_return_next_open']:.4%}")
+    print(f"次日开盘中位数收益: {summary['median_return_next_open']:.4%}")
+    print(f"次日开盘最差收益: {summary['worst_return_next_open']:.4%}")
+    print(f"次日收盘胜率: {summary['win_rate_next_close']:.2%}")
+    print(f"次日收盘平均收益: {summary['avg_return_next_close']:.4%}")
+
+
 def _format_backtest_output(summary: dict, output: str) -> str:
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
@@ -782,6 +829,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_auction.add_argument("--count", type=int, default=None, help="How many auction candidates to show")
     p_auction.add_argument("--output", choices=["table", "json"], default="table")
 
+    p_intraday_review = sub.add_parser("analyze-intraday-picks", help="Review saved auction/tail pick signals")
+    p_intraday_review.add_argument(
+        "--signals",
+        default="reports/intraday_pick_signals.jsonl",
+        help="JSONL signal file saved by auction-pick and tail-pick",
+    )
+    p_intraday_review.add_argument("--strategy", choices=["auction-pick", "tail-pick"], default=None)
+    p_intraday_review.add_argument("--start", default=None, help="Start signal date YYYY-MM-DD")
+    p_intraday_review.add_argument("--end", default=None, help="End signal date YYYY-MM-DD")
+    p_intraday_review.add_argument("--output", choices=["table", "json"], default="table")
+
     p_exp = sub.add_parser("explain", help="Explain one stock score on target date")
     p_exp.add_argument("--symbol", required=True, help="Stock code like 000001")
     p_exp.add_argument("--date", default=None, help="Target date YYYY-MM-DD")
@@ -846,6 +904,24 @@ def build_parser() -> argparse.ArgumentParser:
     p_bt_ad_rules.add_argument("--output", choices=["table", "json", "json-cn"], default="json-cn")
     p_bt_ad_rules.add_argument("--entry-price", choices=["close", "next-open"], default="close", help="Entry price mode")
 
+    p_bt_auction_proxy = sub.add_parser(
+        "backtest-auction-pick-proxy",
+        help="Daily-bar proxy backtest for auction-pick with next-open exit",
+    )
+    p_bt_auction_proxy.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
+    p_bt_auction_proxy.add_argument("--end", required=True, help="End date YYYY-MM-DD")
+    p_bt_auction_proxy.add_argument("--count", type=int, default=None, help="How many proxy candidates per day")
+    p_bt_auction_proxy.add_argument("--output", choices=["table", "json", "json-cn"], default="json-cn")
+
+    p_bt_tail_proxy = sub.add_parser(
+        "backtest-tail-pick-proxy",
+        help="Daily-bar proxy backtest for tail-pick with next-open exit",
+    )
+    p_bt_tail_proxy.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
+    p_bt_tail_proxy.add_argument("--end", required=True, help="End date YYYY-MM-DD")
+    p_bt_tail_proxy.add_argument("--count", type=int, default=None, help="How many proxy candidates per day")
+    p_bt_tail_proxy.add_argument("--output", choices=["table", "json", "json-cn"], default="json-cn")
+
     p_doc = sub.add_parser("doctor", help="Run connectivity diagnostics for data sources")
     p_doc.add_argument("--output", choices=["table", "json"], default="table")
 
@@ -903,6 +979,14 @@ def main() -> None:
         ds = _build_data_source(base_cfg)
         trade_date = _parse_date(args.date)
         payload = TailPickEngine(ds, base_cfg).pick(trade_date)
+        signal_path = None
+        if bool(base_cfg.get("reporting", {}).get("enabled", True)):
+            signal_path = append_intraday_pick_signals(
+                "tail-pick",
+                payload,
+                str(base_cfg.get("reporting", {}).get("intraday_pick_signals_jsonl", "reports/intraday_pick_signals.jsonl")),
+                source="cli",
+            )
         if args.output == "json":
             print(json.dumps(payload.as_dict(), ensure_ascii=False, indent=2))
             return
@@ -912,6 +996,8 @@ def main() -> None:
         )
         if payload.selected is None:
             print("[尾盘] 当前没有符合条件的尾盘候选，建议空仓。")
+            if signal_path:
+                print(f"已写入文档: {signal_path}")
             return
         item = payload.selected
         print(f"[尾盘] 主选: {item.quote.symbol} {item.quote.name}")
@@ -923,6 +1009,8 @@ def main() -> None:
         print("次日卖出规则:")
         for idx, rule in enumerate(item.next_day_sell_rules, start=1):
             print(f"  {idx}. {rule}")
+        if signal_path:
+            print(f"已写入文档: {signal_path}")
         return
 
     if args.cmd == "auction-pick":
@@ -932,6 +1020,14 @@ def main() -> None:
         ds = _build_data_source(base_cfg)
         trade_date = _parse_date(args.date)
         payload = AuctionPickEngine(ds, base_cfg).pick(trade_date, count=args.count)
+        signal_path = None
+        if bool(base_cfg.get("reporting", {}).get("enabled", True)):
+            signal_path = append_intraday_pick_signals(
+                "auction-pick",
+                payload,
+                str(base_cfg.get("reporting", {}).get("intraday_pick_signals_jsonl", "reports/intraday_pick_signals.jsonl")),
+                source="cli",
+            )
         if args.output == "json":
             print(json.dumps(payload.as_dict(), ensure_ascii=False, indent=2))
             return
@@ -941,6 +1037,8 @@ def main() -> None:
         )
         if not payload.selected:
             print("[竞价] 当前没有符合条件的竞价候选，建议空仓或只观察。")
+            if signal_path:
+                print(f"已写入文档: {signal_path}")
             return
         for idx, item in enumerate(payload.selected, start=1):
             print(f"\n[{idx}] {item.quote.symbol} {item.quote.name}")
@@ -955,6 +1053,21 @@ def main() -> None:
             print("执行观察:")
             for note_idx, note in enumerate(item.execution_notes, start=1):
                 print(f"  {note_idx}. {note}")
+        if signal_path:
+            print(f"已写入文档: {signal_path}")
+        return
+
+    if args.cmd == "analyze-intraday-picks":
+        _configure_network(base_cfg)
+        ds = _build_data_source(base_cfg)
+        summary = analyze_intraday_pick_signals(
+            args.signals,
+            ds,
+            strategy=args.strategy,
+            start_date=_parse_date(args.start) if args.start else None,
+            end_date=_parse_date(args.end) if args.end else None,
+        )
+        _print_intraday_review(summary, args.output)
         return
 
     if args.cmd == "recommend-adaptive":
@@ -1163,6 +1276,14 @@ def main() -> None:
         start = _parse_date(args.start)
         end = _parse_date(args.end)
         summary = run_local_rule_adaptive_backtest(base_cfg, start, end, args.count, args.entry_price)
+        _print_backtest(summary, args.output)
+        return
+
+    if args.cmd in {"backtest-auction-pick-proxy", "backtest-tail-pick-proxy"}:
+        strategy = "auction-pick" if args.cmd == "backtest-auction-pick-proxy" else "tail-pick"
+        start = _parse_date(args.start)
+        end = _parse_date(args.end)
+        summary = run_local_intraday_proxy_backtest(base_cfg, strategy, start, end, args.count)
         _print_backtest(summary, args.output)
         return
 

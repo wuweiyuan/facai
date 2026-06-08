@@ -798,34 +798,41 @@ class TestRecommender(TestCase):
         self.assertEqual(pullback_cfg["min_ret_1d"], -0.04)
         self.assertEqual(merged["risk_filter"]["max_vol20_std"], 0.06)
 
-    def test_default_config_promotes_stable_v2_adaptive_rules(self):
+    def test_default_config_promotes_aggressive_adaptive_rules(self):
         cfg = load_config("config/default.yaml")
 
-        self.assertEqual(cfg["adaptive_strategy"]["regime_orders"]["bull"], ["recommend-pullback", "recommend"])
-        self.assertEqual(cfg["adaptive_strategy"]["regime_orders"]["neutral"], ["cash"])
-        self.assertEqual(cfg["adaptive_strategy"]["regime_orders"]["bear"], ["recommend-oversold", "cash"])
-        self.assertEqual(cfg["adaptive_strategy"]["regime_orders"]["unknown"], ["cash"])
+        self.assertEqual(
+            cfg["adaptive_strategy"]["regime_orders"]["bull"],
+            ["recommend-relative", "recommend-pullback", "recommend-bull", "recommend"],
+        )
+        self.assertEqual(
+            cfg["adaptive_strategy"]["regime_orders"]["neutral"],
+            ["recommend-relative", "recommend-pullback", "recommend"],
+        )
+        self.assertEqual(
+            cfg["adaptive_strategy"]["regime_orders"]["bear"],
+            ["recommend-oversold", "recommend-pullback"],
+        )
+        self.assertEqual(
+            cfg["adaptive_strategy"]["regime_orders"]["unknown"],
+            ["recommend-pullback", "recommend-oversold"],
+        )
+        self.assertEqual(cfg["adaptive_strategy"]["profile_overrides"]["recommend-pullback"], "pullback_opportunity")
+        self.assertEqual(cfg["adaptive_strategy"]["profile_overrides"]["recommend-oversold"], "oversold_opportunity")
+        self.assertEqual(cfg["adaptive_strategy"]["profile_overrides"]["recommend-bull"], "bull_opportunity")
+        self.assertEqual(cfg["adaptive_strategy"]["profile_overrides"]["recommend-relative"], "relative_opportunity")
+        self.assertEqual(cfg["adaptive_strategy"]["strategy_pick_counts"]["recommend"], 2)
+        self.assertEqual(cfg["adaptive_strategy"]["strategy_pick_counts"]["recommend-pullback"], 3)
+        self.assertEqual(cfg["adaptive_strategy"]["strategy_pick_counts"]["recommend-oversold"], 2)
+        self.assertEqual(cfg["adaptive_strategy"]["strategy_pick_counts"]["recommend-bull"], 2)
+        self.assertEqual(cfg["adaptive_strategy"]["strategy_pick_counts"]["recommend-relative"], 2)
         self.assertEqual(cfg["market_filter"]["bull_min_close_above_ma20_pct"], 0.01)
         self.assertEqual(cfg["market_filter"]["bull_min_mom20"], 0.04)
 
-    def test_default_config_defines_balanced_adaptive_parameter_overrides(self):
+    def test_default_config_does_not_use_balanced_adaptive_parameter_overrides(self):
         cfg = load_config("config/default.yaml")
-        overrides = cfg["adaptive_strategy"]["parameter_overrides"]
 
-        bull_pullback = overrides["bull"]["recommend-pullback"]
-        bear_oversold = overrides["bear"]["recommend-oversold"]
-
-        self.assertEqual(bull_pullback["strategy"]["pick_count"], 3)
-        self.assertEqual(bull_pullback["risk_filter"]["pullback"]["max_close_above_ma20_pct"], 0.10)
-        self.assertEqual(bull_pullback["risk_filter"]["pullback"]["max_mom20"], 0.28)
-        self.assertEqual(bull_pullback["risk_filter"]["pullback"]["max_mom5"], 0.10)
-        self.assertEqual(bull_pullback["risk_filter"]["pullback"]["max_rsi14"], 80.0)
-        self.assertEqual(bull_pullback["risk_filter"]["pullback"]["max_volume_zscore20"], 2.5)
-        self.assertEqual(bear_oversold["strategy"]["pick_count"], 2)
-        self.assertEqual(bear_oversold["risk_filter"]["oversold"]["max_mom5"], -0.10)
-        self.assertEqual(bear_oversold["risk_filter"]["oversold"]["max_ret_1d"], -0.025)
-        self.assertNotIn("neutral", overrides)
-        self.assertNotIn("unknown", overrides)
+        self.assertNotIn("parameter_overrides", cfg["adaptive_strategy"])
 
     def test_stable_v2_config_uses_cash_in_weak_regimes(self):
         cfg = load_config("config/default.stable-v2.yaml")

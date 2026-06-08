@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, date
 from pathlib import Path
 import unicodedata
@@ -7,6 +8,69 @@ import unicodedata
 import pandas as pd
 
 from app.models import RecommendationResult
+
+
+def _payload_as_dict(payload) -> dict:
+    if hasattr(payload, "as_dict"):
+        return payload.as_dict()
+    if isinstance(payload, dict):
+        return dict(payload)
+    raise TypeError("payload must be a dict or expose as_dict()")
+
+
+def append_intraday_pick_signals(strategy: str, payload, path: str, source: str = "cli") -> Path:
+    out_path = Path(path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    payload_dict = _payload_as_dict(payload)
+    trade_date = str(payload_dict.get("trade_date", ""))
+    selected = payload_dict.get("selected")
+    if isinstance(selected, list):
+        items = selected
+    elif isinstance(selected, dict):
+        items = [selected]
+    else:
+        items = []
+
+    run_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    rows: list[dict] = []
+    if items:
+        for idx, item in enumerate(items, start=1):
+            entry_price = item.get("entry_price", item.get("latest"))
+            rows.append(
+                {
+                    "run_time": run_time,
+                    "strategy": strategy,
+                    "trade_date": trade_date,
+                    "rank": idx,
+                    "symbol": str(item.get("symbol", "")),
+                    "name": str(item.get("name", "")),
+                    "entry_price": float(entry_price) if entry_price is not None else None,
+                    "score": float(item.get("score", 0.0)),
+                    "selected": True,
+                    "source": source,
+                }
+            )
+    else:
+        rows.append(
+            {
+                "run_time": run_time,
+                "strategy": strategy,
+                "trade_date": trade_date,
+                "rank": None,
+                "symbol": "",
+                "name": "",
+                "entry_price": None,
+                "score": None,
+                "selected": False,
+                "source": source,
+            }
+        )
+
+    with out_path.open("a", encoding="utf-8") as f:
+        for row in rows:
+            f.write(json.dumps(row, ensure_ascii=False, sort_keys=True))
+            f.write("\n")
+    return out_path
 
 
 def _build_row(rec: RecommendationResult) -> dict:

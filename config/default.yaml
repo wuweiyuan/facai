@@ -2,9 +2,9 @@
 #
 # 说明：
 # - 这是当前建议用于日常运行 `recommend-adaptive` / `backtest-adaptive` 的主配置。
-# - 它已提升为 stable-v2 稳健默认：强市才做回踩/趋势，弱环境优先空仓。
-# - 2025-03-24 到 2026-05-27 对比中，stable-v2 降低交易频率并改善 3/5 日净收益与回撤代理。
-# - 如果后续要继续做实验，建议复制出新的实验配置，不要直接覆盖这份文件。
+# - 当前默认是进攻型：增加 neutral / unknown / bear 环境下的正式出手机会。
+# - 进攻型会提高交易频率，也可能放大回撤；运行后请结合 backtest-adaptive 复盘。
+# - auction-pick / tail-pick 使用独立配置，不受 adaptive 编排影响。
 #
 # 项目默认配置文件
 #
@@ -655,37 +655,24 @@ strategy_profiles:
 # 先判断市场状态，再决定优先尝试哪套策略；如果全部无信号，就接受空仓。
 adaptive_strategy:
   regime_orders:
-    bull: [recommend-pullback, recommend]
-    neutral: [cash]
-    bear: [recommend-oversold, cash]
-    unknown: [cash]
+    bull: [recommend-relative, recommend-pullback, recommend-bull, recommend]
+    neutral: [recommend-relative, recommend-pullback, recommend]
+    bear: [recommend-oversold, recommend-pullback]
+    unknown: [recommend-pullback, recommend-oversold]
   strategy_pick_counts:
-    recommend: 1
-    recommend-pullback: 1
-    recommend-oversold: 3
-  # 优化平衡型参数自适应：
+    recommend: 2
+    recommend-pullback: 3
+    recommend-oversold: 2
+    recommend-bull: 2
+    recommend-relative: 2
+  # 进攻型默认使用更宽松的 opportunity profiles。
   # 只影响 recommend-adaptive / backtest-adaptive / backtest-adaptive-rules。
-  # 单独运行 recommend-pullback / recommend-oversold 时仍使用各自 profile 原始参数。
-  parameter_overrides:
-    bull:
-      recommend-pullback:
-        strategy:
-          pick_count: 3
-        risk_filter:
-          pullback:
-            max_close_above_ma20_pct: 0.10
-            max_mom20: 0.28
-            max_mom5: 0.10
-            max_rsi14: 80.0
-            max_volume_zscore20: 2.5
-    bear:
-      recommend-oversold:
-        strategy:
-          pick_count: 2
-        risk_filter:
-          oversold:
-            max_mom5: -0.10
-            max_ret_1d: -0.025
+  # 单独运行 recommend-pullback / recommend-oversold 等命令仍使用各自原始 profile。
+  profile_overrides:
+    recommend-pullback: pullback_opportunity
+    recommend-oversold: oversold_opportunity
+    recommend-bull: bull_opportunity
+    recommend-relative: relative_opportunity
 
 # 机会池：
 # 当你觉得 adaptive 空仓太多时，可以额外生成一份宽一点的候选列表供人工复核。
@@ -768,6 +755,10 @@ reporting:
   # recommend-opportunity 输出的机会池结果。
   # 用于在 dashboard 中展示“额外可观察候选”。
   opportunity_recommendation_csv: reports/opportunity_recommendations.csv
+
+  # auction-pick / tail-pick 的机器可读信号流水。
+  # analyze-intraday-picks 会读取该文件做次日卖出绩效复盘。
+  intraday_pick_signals_jsonl: reports/intraday_pick_signals.jsonl
 
 # ------------------------------------------------------------
 # 调参参考模板（以下内容全部为注释，不会参与实际配置）
