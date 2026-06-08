@@ -53,13 +53,10 @@ def generate_pullback_override_candidates() -> Iterable[dict[str, Any]]:
         pullback_filter = {
             "max_close_above_ma20_pct": max_distance,
             "max_mom20": max_mom20,
+            "max_mom5": max_mom5,
+            "max_rsi14": max_rsi14,
+            "max_volume_zscore20": max_volume_zscore20,
         }
-        if max_mom5 != 0.10:
-            pullback_filter["max_mom5"] = max_mom5
-        if max_rsi14 != 78.0:
-            pullback_filter["max_rsi14"] = max_rsi14
-        if max_volume_zscore20 != 2.2:
-            pullback_filter["max_volume_zscore20"] = max_volume_zscore20
 
         yield {
             "bull": {
