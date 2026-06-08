@@ -50,3 +50,33 @@ def apply_strategy_profile(cfg: dict[str, Any], profile_name: str | None) -> dic
     if not isinstance(profile, dict):
         raise ValueError(f"Strategy profile must be an object: {profile_name}")
     return merge_config(cfg, profile)
+
+
+def apply_adaptive_parameter_overrides(
+    cfg: dict[str, Any],
+    market_label: str,
+    command_name: str,
+) -> dict[str, Any]:
+    adaptive_cfg = cfg.get("adaptive_strategy", {})
+    if not isinstance(adaptive_cfg, dict):
+        return merge_config(cfg, {})
+
+    all_overrides = adaptive_cfg.get("parameter_overrides", {})
+    if not isinstance(all_overrides, dict):
+        return merge_config(cfg, {})
+
+    market_overrides = all_overrides.get(market_label, {})
+    if not isinstance(market_overrides, dict):
+        return merge_config(cfg, {})
+
+    command_overrides = market_overrides.get(command_name, {})
+    if not isinstance(command_overrides, dict):
+        return merge_config(cfg, {})
+
+    merged = merge_config(cfg, command_overrides)
+    strategy_override = command_overrides.get("strategy", {})
+    if isinstance(strategy_override, dict) and "pick_count" in strategy_override:
+        merged.setdefault("adaptive_strategy", {}).setdefault("strategy_pick_counts", {})[command_name] = (
+            strategy_override["pick_count"]
+        )
+    return merged

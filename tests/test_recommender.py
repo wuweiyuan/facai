@@ -12,7 +12,7 @@ from unittest import TestCase
 from unittest.mock import Mock, patch
 
 import app.main as main_module
-from app.config import apply_strategy_profile, load_config
+from app.config import apply_adaptive_parameter_overrides, apply_strategy_profile, load_config
 from app.engine.recommender import Recommender
 from app.main import (
     _resolve_adaptive_strategy_specs,
@@ -681,6 +681,53 @@ class TestRecommender(TestCase):
 
         self.assertNotIn("pullback", cfg["strategy"]["weights"])
         self.assertEqual(merged["strategy"]["weights"]["pullback"], 0.35)
+
+    def test_apply_adaptive_parameter_overrides_applies_market_command_override(self):
+        cfg = {
+            "strategy": {"pick_count": 1, "weights": {"trend": 0.20}},
+            "risk_filter": {"pullback": {"max_close_above_ma20_pct": 0.05}},
+            "adaptive_strategy": {
+                "strategy_pick_counts": {"recommend-pullback": 1},
+                "parameter_overrides": {
+                    "bull": {
+                        "recommend-pullback": {
+                            "strategy": {"pick_count": 2, "weights": {"momentum": 0.15}},
+                            "risk_filter": {"pullback": {"max_close_above_ma20_pct": 0.07}},
+                        }
+                    }
+                },
+            },
+        }
+
+        merged = apply_adaptive_parameter_overrides(cfg, "bull", "recommend-pullback")
+
+        self.assertEqual(cfg["strategy"]["pick_count"], 1)
+        self.assertNotIn("momentum", cfg["strategy"]["weights"])
+        self.assertEqual(merged["strategy"]["pick_count"], 2)
+        self.assertEqual(merged["strategy"]["weights"]["trend"], 0.20)
+        self.assertEqual(merged["strategy"]["weights"]["momentum"], 0.15)
+        self.assertEqual(merged["risk_filter"]["pullback"]["max_close_above_ma20_pct"], 0.07)
+        self.assertEqual(merged["adaptive_strategy"]["strategy_pick_counts"]["recommend-pullback"], 2)
+
+    def test_apply_adaptive_parameter_overrides_returns_copy_when_missing_or_invalid(self):
+        cfg = {
+            "strategy": {"pick_count": 1},
+            "adaptive_strategy": {
+                "parameter_overrides": {
+                    "bull": {
+                        "recommend-pullback": "invalid-block",
+                    }
+                }
+            },
+        }
+
+        invalid = apply_adaptive_parameter_overrides(cfg, "bull", "recommend-pullback")
+        missing = apply_adaptive_parameter_overrides(cfg, "bear", "recommend-oversold")
+
+        self.assertEqual(invalid, cfg)
+        self.assertEqual(missing, cfg)
+        self.assertIsNot(invalid, cfg)
+        self.assertIsNot(missing, cfg)
 
     def test_default_config_defines_pullback_defensive_profile(self):
         cfg = load_config("config/default.yaml")
