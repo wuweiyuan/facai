@@ -13,7 +13,7 @@ from app.backtest.runner import BacktestRunner
 from app.backtest.local_adaptive import run_local_adaptive_backtest
 from app.backtest.local_rule_adaptive import run_local_rule_adaptive_backtest
 from app.backtest.local_single import run_local_single_backtest
-from app.config import apply_strategy_profile, load_config
+from app.config import apply_adaptive_parameter_overrides, apply_strategy_profile, load_config
 from app.dashboard import export_dashboard_data
 from app.data_source.akshare_client import AkshareDataSource
 from app.doctor import print_doctor_report, run_doctor
@@ -302,8 +302,9 @@ def _choose_adaptive_recommendations(
             chosen_count = 0
             chosen_profile_name = None
             break
-        resolved_count = _resolve_adaptive_pick_count(base_cfg, cmd_name, override_count)
         cfg = apply_strategy_profile(base_cfg, profile_name)
+        cfg = apply_adaptive_parameter_overrides(cfg, market_state.label, cmd_name)
+        resolved_count = _resolve_adaptive_pick_count(cfg, cmd_name, override_count)
         engine = Recommender(ds, cfg)
         try:
             recs = engine.recommend_many(target_date, count=resolved_count)
@@ -349,15 +350,13 @@ def _build_data_source(cfg: dict) -> AkshareDataSource:
     )
 
 
-def _run_recommend_profile(
-    base_cfg: dict,
-    profile_name: str | None,
+def _run_recommend_config(
+    cfg: dict,
     section_title: str,
     target_date: date,
     count: int | None,
     output: str,
 ) -> tuple[list, bool]:
-    cfg = apply_strategy_profile(base_cfg, profile_name)
     _configure_network(cfg)
     ds = _build_data_source(cfg)
     rec_engine = Recommender(ds, cfg)
@@ -422,6 +421,24 @@ def _run_recommend_profile(
         else:
             recs = _execute_body()
     return recs, reporting_enabled
+
+
+def _run_recommend_profile(
+    base_cfg: dict,
+    profile_name: str | None,
+    section_title: str,
+    target_date: date,
+    count: int | None,
+    output: str,
+) -> tuple[list, bool]:
+    cfg = apply_strategy_profile(base_cfg, profile_name)
+    return _run_recommend_config(
+        cfg=cfg,
+        section_title=section_title,
+        target_date=target_date,
+        count=count,
+        output=output,
+    )
 
 
 def _print_recommendations(recs, output: str) -> None:
@@ -970,11 +987,12 @@ def main() -> None:
                 chosen_cmd = "cash"
                 chosen_count = 0
                 break
-            resolved_count = _resolve_adaptive_pick_count(base_cfg, cmd_name, args.count)
+            cfg = apply_strategy_profile(base_cfg, profile_name)
+            cfg = apply_adaptive_parameter_overrides(cfg, market_state.label, cmd_name)
+            resolved_count = _resolve_adaptive_pick_count(cfg, cmd_name, args.count)
             try:
-                recs, reporting_enabled = _run_recommend_profile(
-                    base_cfg=base_cfg,
-                    profile_name=profile_name,
+                recs, reporting_enabled = _run_recommend_config(
+                    cfg=cfg,
                     section_title=f"自适应选择: {section_title}",
                     target_date=target_date,
                     count=resolved_count,

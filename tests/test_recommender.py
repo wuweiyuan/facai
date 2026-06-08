@@ -409,7 +409,10 @@ class TestRecommender(TestCase):
         )
 
     def test_recommend_adaptive_runs_opportunity_pool_when_no_signal(self):
-        cfg = {"reporting": {"enabled": False}}
+        cfg = {
+            "reporting": {"enabled": False},
+            "strategy_profiles": {"pullback_confirm": {"strategy": {"name": "pullback_confirm_v1"}}},
+        }
         fake_target_date = date(2025, 3, 20)
         fake_signal_date = date(2025, 3, 19)
         fake_market_state = SimpleNamespace(label="neutral")
@@ -436,7 +439,7 @@ class TestRecommender(TestCase):
             patch("app.main._build_data_source", return_value=Mock()),
             patch("app.main._resolve_recommend_target_date", return_value=fake_target_date),
             patch("app.main._resolve_adaptive_strategy_specs", return_value=[("recommend-pullback", "pullback_confirm", "x")]),
-            patch("app.main._run_recommend_profile", side_effect=RuntimeError("No candidate found in enabled modes: normal")),
+            patch("app.main._run_recommend_config", side_effect=RuntimeError("No candidate found in enabled modes: normal")),
             patch("app.main._build_opportunity_pool", return_value=fake_opportunity_payload) as build_pool,
             patch("app.main.Recommender") as recommender_cls,
         ):
@@ -472,7 +475,7 @@ class TestRecommender(TestCase):
             patch("app.main._build_data_source", return_value=Mock()),
             patch("app.main._resolve_recommend_target_date", return_value=fake_target_date),
             patch("app.main._resolve_adaptive_strategy_specs", return_value=[("cash", None, "空仓 cash")]),
-            patch("app.main._run_recommend_profile") as run_profile,
+            patch("app.main._run_recommend_config") as run_config,
             patch("app.main._build_opportunity_pool", return_value=fake_opportunity_payload) as build_pool,
             patch("app.main.Recommender") as recommender_cls,
         ):
@@ -487,11 +490,14 @@ class TestRecommender(TestCase):
         self.assertEqual(payload["chosen_count"], 0)
         self.assertEqual(payload["recommendations"], [])
         self.assertEqual(payload["opportunity_pool"], fake_opportunity_payload)
-        run_profile.assert_not_called()
+        run_config.assert_not_called()
         build_pool.assert_called_once()
 
     def test_recommend_adaptive_does_not_run_opportunity_pool_when_signal_exists(self):
-        cfg = {"reporting": {"enabled": False}}
+        cfg = {
+            "reporting": {"enabled": False},
+            "strategy_profiles": {"pullback_confirm": {"strategy": {"name": "pullback_confirm_v1"}}},
+        }
         fake_target_date = date(2025, 3, 20)
         fake_signal_date = date(2025, 3, 19)
         fake_market_state = SimpleNamespace(label="neutral")
@@ -505,7 +511,7 @@ class TestRecommender(TestCase):
             patch("app.main._build_data_source", return_value=Mock()),
             patch("app.main._resolve_recommend_target_date", return_value=fake_target_date),
             patch("app.main._resolve_adaptive_strategy_specs", return_value=[("recommend-pullback", "pullback_confirm", "x")]),
-            patch("app.main._run_recommend_profile", return_value=([fake_rec], False)),
+            patch("app.main._run_recommend_config", return_value=([fake_rec], False)),
             patch("app.main._build_opportunity_pool") as build_pool,
             patch("app.main.Recommender") as recommender_cls,
         ):
@@ -519,6 +525,58 @@ class TestRecommender(TestCase):
         self.assertEqual(payload["chosen_strategy"], "recommend-pullback")
         self.assertEqual(payload["recommendations"], [{"symbol": "000001", "name": "Alpha"}])
         self.assertIsNone(payload["opportunity_pool"])
+        build_pool.assert_not_called()
+
+    def test_recommend_adaptive_applies_parameter_overrides_before_running_profile(self):
+        cfg = {
+            "reporting": {"enabled": False},
+            "adaptive_strategy": {
+                "strategy_pick_counts": {"recommend-pullback": 1},
+                "parameter_overrides": {
+                    "bull": {
+                        "recommend-pullback": {
+                            "strategy": {"pick_count": 2},
+                            "risk_filter": {"pullback": {"max_close_above_ma20_pct": 0.07}},
+                        }
+                    }
+                },
+            },
+            "strategy_profiles": {
+                "pullback_confirm": {
+                    "strategy": {"name": "pullback_confirm_v1", "pick_count": 1},
+                    "risk_filter": {"pullback": {"max_close_above_ma20_pct": 0.05}},
+                }
+            },
+        }
+        fake_target_date = date(2025, 3, 20)
+        fake_signal_date = date(2025, 3, 19)
+        fake_market_state = SimpleNamespace(label="bull")
+        fake_rec = Mock()
+        fake_rec.as_dict.return_value = {"symbol": "000001", "name": "Alpha"}
+
+        with (
+            patch.object(sys, "argv", ["prog", "recommend-adaptive", "--output", "json"]),
+            patch("app.main.load_config", return_value=cfg),
+            patch("app.main._configure_network"),
+            patch("app.main._build_data_source", return_value=Mock()),
+            patch("app.main._resolve_recommend_target_date", return_value=fake_target_date),
+            patch("app.main._resolve_adaptive_strategy_specs", return_value=[("recommend-pullback", "pullback_confirm", "x")]),
+            patch("app.main._run_recommend_config", return_value=([fake_rec], False)) as run_config,
+            patch("app.main._build_opportunity_pool") as build_pool,
+            patch("app.main.Recommender") as recommender_cls,
+        ):
+            recommender_cls.return_value.resolve_signal_date.return_value = fake_signal_date
+            recommender_cls.return_value._resolve_market_state.return_value = (fake_market_state, "test reason")
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                main_module.main()
+
+        payload = json.loads(buf.getvalue())
+        runtime_cfg = run_config.call_args.kwargs["cfg"]
+        self.assertEqual(payload["chosen_strategy"], "recommend-pullback")
+        self.assertEqual(run_config.call_args.kwargs["count"], 2)
+        self.assertEqual(runtime_cfg["strategy"]["pick_count"], 2)
+        self.assertEqual(runtime_cfg["risk_filter"]["pullback"]["max_close_above_ma20_pct"], 0.07)
         build_pool.assert_not_called()
 
     def test_recommend_returns_one_stock(self):
