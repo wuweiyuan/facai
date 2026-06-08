@@ -808,6 +808,22 @@ class TestRecommender(TestCase):
         self.assertEqual(cfg["market_filter"]["bull_min_close_above_ma20_pct"], 0.01)
         self.assertEqual(cfg["market_filter"]["bull_min_mom20"], 0.04)
 
+    def test_default_config_defines_balanced_adaptive_parameter_overrides(self):
+        cfg = load_config("config/default.yaml")
+        overrides = cfg["adaptive_strategy"]["parameter_overrides"]
+
+        bull_pullback = overrides["bull"]["recommend-pullback"]
+        bear_oversold = overrides["bear"]["recommend-oversold"]
+
+        self.assertEqual(bull_pullback["strategy"]["pick_count"], 2)
+        self.assertEqual(bull_pullback["risk_filter"]["pullback"]["max_close_above_ma20_pct"], 0.07)
+        self.assertEqual(bull_pullback["risk_filter"]["pullback"]["max_mom20"], 0.22)
+        self.assertEqual(bear_oversold["strategy"]["pick_count"], 2)
+        self.assertEqual(bear_oversold["risk_filter"]["oversold"]["max_mom5"], -0.10)
+        self.assertEqual(bear_oversold["risk_filter"]["oversold"]["max_ret_1d"], -0.025)
+        self.assertNotIn("neutral", overrides)
+        self.assertNotIn("unknown", overrides)
+
     def test_stable_v2_config_uses_cash_in_weak_regimes(self):
         cfg = load_config("config/default.stable-v2.yaml")
 

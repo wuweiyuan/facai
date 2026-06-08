@@ -663,6 +663,26 @@ adaptive_strategy:
     recommend: 1
     recommend-pullback: 1
     recommend-oversold: 3
+  # 平衡型参数自适应：
+  # 只影响 recommend-adaptive / backtest-adaptive / backtest-adaptive-rules。
+  # 单独运行 recommend-pullback / recommend-oversold 时仍使用各自 profile 原始参数。
+  parameter_overrides:
+    bull:
+      recommend-pullback:
+        strategy:
+          pick_count: 2
+        risk_filter:
+          pullback:
+            max_close_above_ma20_pct: 0.07
+            max_mom20: 0.22
+    bear:
+      recommend-oversold:
+        strategy:
+          pick_count: 2
+        risk_filter:
+          oversold:
+            max_mom5: -0.10
+            max_ret_1d: -0.025
 
 # 机会池：
 # 当你觉得 adaptive 空仓太多时，可以额外生成一份宽一点的候选列表供人工复核。
