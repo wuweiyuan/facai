@@ -5,12 +5,13 @@ from unittest.mock import patch
 from app.backtest.entry_price import ENTRY_PRICE_NEXT_OPEN
 from app.config import apply_adaptive_parameter_overrides
 from app.optimization.adaptive_parameters import (
-    BASELINE,
     CandidateResult,
     apply_parameter_overrides,
     combine_override_candidates,
     generate_pullback_override_candidates,
     generate_oversold_override_candidates,
+    is_primary_acceptance,
+    run_baseline,
     run_candidate,
     score_candidate,
 )
@@ -131,6 +132,16 @@ class AdaptiveParameterOptimizationTest(unittest.TestCase):
         self.assertEqual(result.total_trades, 3)
 
     def test_score_candidate_rewards_balanced_improvement(self):
+        baseline = CandidateResult(
+            name="baseline",
+            overrides={},
+            total_trades=61,
+            avg_return_1d_net=0.003994,
+            avg_return_3d_net=0.009931,
+            avg_return_5d_net=0.007431,
+            max_drawdown_proxy=0.1628,
+            adaptive_strategy_counts={},
+        )
         result = CandidateResult(
             name="candidate",
             overrides={},
@@ -142,11 +153,21 @@ class AdaptiveParameterOptimizationTest(unittest.TestCase):
             adaptive_strategy_counts={"recommend-pullback": 78, "recommend-oversold": 2},
         )
 
-        score = score_candidate(result)
+        score = score_candidate(result, baseline)
 
         self.assertGreater(score, 0)
 
     def test_score_candidate_penalizes_drawdown_above_tolerance(self):
+        baseline = CandidateResult(
+            name="baseline",
+            overrides={},
+            total_trades=61,
+            avg_return_1d_net=0.003994,
+            avg_return_3d_net=0.009931,
+            avg_return_5d_net=0.007431,
+            max_drawdown_proxy=0.1628,
+            adaptive_strategy_counts={},
+        )
         good = CandidateResult(
             name="good",
             overrides={},
@@ -154,7 +175,7 @@ class AdaptiveParameterOptimizationTest(unittest.TestCase):
             avg_return_1d_net=0.0045,
             avg_return_3d_net=0.012,
             avg_return_5d_net=0.009,
-            max_drawdown_proxy=BASELINE.max_drawdown_proxy,
+            max_drawdown_proxy=baseline.max_drawdown_proxy,
             adaptive_strategy_counts={},
         )
         bad = CandidateResult(
@@ -168,9 +189,19 @@ class AdaptiveParameterOptimizationTest(unittest.TestCase):
             adaptive_strategy_counts={},
         )
 
-        self.assertGreater(score_candidate(good), score_candidate(bad))
+        self.assertGreater(score_candidate(good, baseline), score_candidate(bad, baseline))
 
     def test_score_candidate_is_negative_for_bad_returns_or_low_quality_candidate(self):
+        baseline = CandidateResult(
+            name="baseline",
+            overrides={},
+            total_trades=61,
+            avg_return_1d_net=0.003994,
+            avg_return_3d_net=0.009931,
+            avg_return_5d_net=0.007431,
+            max_drawdown_proxy=0.1628,
+            adaptive_strategy_counts={},
+        )
         result = CandidateResult(
             name="weak",
             overrides={},
@@ -182,7 +213,118 @@ class AdaptiveParameterOptimizationTest(unittest.TestCase):
             adaptive_strategy_counts={},
         )
 
-        self.assertLess(score_candidate(result), 0)
+        self.assertLess(score_candidate(result, baseline), 0)
+
+    def test_score_candidate_requires_explicit_baseline_and_uses_it(self):
+        result = CandidateResult(
+            name="candidate",
+            overrides={},
+            total_trades=12,
+            avg_return_1d_net=0.02,
+            avg_return_3d_net=0.03,
+            avg_return_5d_net=0.04,
+            max_drawdown_proxy=0.10,
+            adaptive_strategy_counts={},
+        )
+        easy_baseline = CandidateResult(
+            name="easy",
+            overrides={},
+            total_trades=1,
+            avg_return_1d_net=0.0,
+            avg_return_3d_net=0.0,
+            avg_return_5d_net=0.0,
+            max_drawdown_proxy=0.20,
+            adaptive_strategy_counts={},
+        )
+        hard_baseline = CandidateResult(
+            name="hard",
+            overrides={},
+            total_trades=100,
+            avg_return_1d_net=0.05,
+            avg_return_3d_net=0.06,
+            avg_return_5d_net=0.07,
+            max_drawdown_proxy=0.08,
+            adaptive_strategy_counts={},
+        )
+
+        with self.assertRaises(TypeError):
+            score_candidate(result)
+
+        self.assertGreater(score_candidate(result, easy_baseline), 0)
+        self.assertLess(score_candidate(result, hard_baseline), 0)
+
+    def test_primary_acceptance_requires_explicit_baseline_and_uses_it(self):
+        result = CandidateResult(
+            name="candidate",
+            overrides={},
+            total_trades=12,
+            avg_return_1d_net=0.02,
+            avg_return_3d_net=0.03,
+            avg_return_5d_net=0.04,
+            max_drawdown_proxy=0.10,
+            adaptive_strategy_counts={},
+        )
+        easy_baseline = CandidateResult(
+            name="easy",
+            overrides={},
+            total_trades=1,
+            avg_return_1d_net=0.0,
+            avg_return_3d_net=0.0,
+            avg_return_5d_net=0.0,
+            max_drawdown_proxy=0.20,
+            adaptive_strategy_counts={},
+        )
+        hard_baseline = CandidateResult(
+            name="hard",
+            overrides={},
+            total_trades=100,
+            avg_return_1d_net=0.05,
+            avg_return_3d_net=0.06,
+            avg_return_5d_net=0.07,
+            max_drawdown_proxy=0.08,
+            adaptive_strategy_counts={},
+        )
+
+        with self.assertRaises(TypeError):
+            is_primary_acceptance(result)
+
+        self.assertTrue(is_primary_acceptance(result, easy_baseline))
+        self.assertFalse(is_primary_acceptance(result, hard_baseline))
+
+    def test_run_baseline_uses_next_open_entry_price_and_current_cfg_overrides(self):
+        current_overrides = {
+            "bull": {
+                "recommend-pullback": {
+                    "strategy": {"pick_count": 3},
+                }
+            }
+        }
+        base_cfg = {"adaptive_strategy": {"parameter_overrides": current_overrides}}
+        summary = {
+            "total_trades": 5,
+            "avg_return_1d_net": 0.01,
+            "avg_return_3d_net": 0.02,
+            "avg_return_5d_net": 0.03,
+            "max_drawdown_proxy": 0.04,
+            "adaptive_strategy_counts": {"recommend-pullback": 5},
+        }
+
+        with patch(
+            "app.optimization.adaptive_parameters.run_local_adaptive_backtest",
+            return_value=summary,
+        ) as backtest:
+            result = run_baseline(base_cfg, date(2026, 1, 1), date(2026, 1, 31))
+
+        backtest.assert_called_once_with(
+            base_cfg,
+            date(2026, 1, 1),
+            date(2026, 1, 31),
+            None,
+            ENTRY_PRICE_NEXT_OPEN,
+        )
+        self.assertEqual(result.name, "baseline")
+        self.assertEqual(result.overrides, current_overrides)
+        self.assertEqual(result.total_trades, 5)
 
 
 if __name__ == "__main__":

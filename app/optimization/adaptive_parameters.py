@@ -22,18 +22,6 @@ class CandidateResult:
     adaptive_strategy_counts: dict[str, int]
 
 
-BASELINE = CandidateResult(
-    name="current-balanced",
-    overrides={},
-    total_trades=61,
-    avg_return_1d_net=0.003994,
-    avg_return_3d_net=0.009931,
-    avg_return_5d_net=0.007431,
-    max_drawdown_proxy=0.1628,
-    adaptive_strategy_counts={"recommend-oversold": 2, "recommend-pullback": 59},
-)
-
-
 def generate_pullback_override_candidates() -> Iterable[dict[str, Any]]:
     pick_counts = [2, 3]
     max_distances = [0.07, 0.08, 0.09, 0.10]
@@ -130,7 +118,7 @@ def summarize_candidate(name: str, overrides: dict[str, Any], summary: dict[str,
     )
 
 
-def score_candidate(result: CandidateResult, baseline: CandidateResult = BASELINE) -> float:
+def score_candidate(result: CandidateResult, baseline: CandidateResult) -> float:
     drawdown_penalty = max(result.max_drawdown_proxy - baseline.max_drawdown_proxy, 0.0) * 80.0
     severe_drawdown_penalty = max(result.max_drawdown_proxy - 0.17, 0.0) * 200.0
     trade_bonus = min(max(result.total_trades - baseline.total_trades, 0), 40) * 0.01
@@ -142,7 +130,7 @@ def score_candidate(result: CandidateResult, baseline: CandidateResult = BASELIN
     return return_bonus + trade_bonus - drawdown_penalty - severe_drawdown_penalty
 
 
-def is_primary_acceptance(result: CandidateResult, baseline: CandidateResult = BASELINE) -> bool:
+def is_primary_acceptance(result: CandidateResult, baseline: CandidateResult) -> bool:
     return (
         result.total_trades > baseline.total_trades
         and result.max_drawdown_proxy <= baseline.max_drawdown_proxy
@@ -161,3 +149,9 @@ def run_candidate(
     cfg = apply_parameter_overrides(base_cfg, overrides)
     summary = run_local_adaptive_backtest(cfg, start, end, None, ENTRY_PRICE_NEXT_OPEN)
     return summarize_candidate(name, overrides, summary)
+
+
+def run_baseline(base_cfg: dict[str, Any], start: date, end: date) -> CandidateResult:
+    current_overrides = base_cfg.get("adaptive_strategy", {}).get("parameter_overrides", {})
+    summary = run_local_adaptive_backtest(base_cfg, start, end, None, ENTRY_PRICE_NEXT_OPEN)
+    return summarize_candidate("baseline", current_overrides, summary)
