@@ -1,4 +1,9 @@
+from contextlib import redirect_stdout
 from datetime import date
+import importlib.util
+import io
+from pathlib import Path
+import sys
 import unittest
 from unittest.mock import patch
 
@@ -325,6 +330,127 @@ class AdaptiveParameterOptimizationTest(unittest.TestCase):
         self.assertEqual(result.name, "baseline")
         self.assertEqual(result.overrides, current_overrides)
         self.assertEqual(result.total_trades, 5)
+
+    def test_cli_default_evaluates_all_candidates_and_uses_dynamic_baseline(self):
+        cli = _load_optimizer_cli()
+        baseline = CandidateResult(
+            name="baseline",
+            overrides={},
+            total_trades=10,
+            avg_return_1d_net=0.01,
+            avg_return_3d_net=0.02,
+            avg_return_5d_net=0.03,
+            max_drawdown_proxy=0.10,
+            adaptive_strategy_counts={},
+        )
+        first = CandidateResult(
+            name="candidate-001",
+            overrides={"candidate": 1},
+            total_trades=12,
+            avg_return_1d_net=0.02,
+            avg_return_3d_net=0.03,
+            avg_return_5d_net=0.04,
+            max_drawdown_proxy=0.09,
+            adaptive_strategy_counts={"recommend-pullback": 12},
+        )
+        second = CandidateResult(
+            name="candidate-002",
+            overrides={"candidate": 2},
+            total_trades=11,
+            avg_return_1d_net=0.015,
+            avg_return_3d_net=0.025,
+            avg_return_5d_net=0.035,
+            max_drawdown_proxy=0.08,
+            adaptive_strategy_counts={"recommend-pullback": 11},
+        )
+        seen_score_baselines = []
+        seen_acceptance_baselines = []
+
+        def fake_score(result, baseline_arg):
+            seen_score_baselines.append(baseline_arg)
+            return 2.0 if result.name == "candidate-001" else 1.0
+
+        def fake_acceptance(result, baseline_arg):
+            seen_acceptance_baselines.append(baseline_arg)
+            return result.name == "candidate-001"
+
+        out = io.StringIO()
+        with (
+            patch.object(sys, "argv", ["optimize_adaptive_parameters.py", "--top", "2"]),
+            patch.object(cli, "load_config", return_value={"cfg": True}),
+            patch.object(cli, "run_baseline", return_value=baseline),
+            patch.object(cli, "generate_pullback_override_candidates", return_value=["pullback"]),
+            patch.object(cli, "generate_oversold_override_candidates", return_value=["oversold"]),
+            patch.object(cli, "combine_override_candidates", return_value=[{"candidate": 1}, {"candidate": 2}]),
+            patch.object(cli, "run_candidate", side_effect=[first, second]) as run_candidate_mock,
+            patch.object(cli, "score_candidate", side_effect=fake_score),
+            patch.object(cli, "is_primary_acceptance", side_effect=fake_acceptance),
+            redirect_stdout(out),
+        ):
+            cli.main()
+
+        output = out.getvalue()
+        self.assertIn("evaluated=2 total=2 truncated=False", output)
+        self.assertIn("TOP\n", output)
+        self.assertNotIn("TOP_EVALUATED", output)
+        self.assertIn("ACCEPT candidate-001", output)
+        self.assertEqual(run_candidate_mock.call_count, 2)
+        self.assertTrue(seen_score_baselines)
+        self.assertTrue(all(item is baseline for item in seen_score_baselines))
+        self.assertTrue(seen_acceptance_baselines)
+        self.assertTrue(all(item is baseline for item in seen_acceptance_baselines))
+
+    def test_cli_explicit_limit_marks_output_as_truncated_prefix(self):
+        cli = _load_optimizer_cli()
+        baseline = CandidateResult(
+            name="baseline",
+            overrides={},
+            total_trades=10,
+            avg_return_1d_net=0.01,
+            avg_return_3d_net=0.02,
+            avg_return_5d_net=0.03,
+            max_drawdown_proxy=0.10,
+            adaptive_strategy_counts={},
+        )
+        first = CandidateResult(
+            name="candidate-001",
+            overrides={"candidate": 1},
+            total_trades=12,
+            avg_return_1d_net=0.02,
+            avg_return_3d_net=0.03,
+            avg_return_5d_net=0.04,
+            max_drawdown_proxy=0.09,
+            adaptive_strategy_counts={"recommend-pullback": 12},
+        )
+
+        out = io.StringIO()
+        with (
+            patch.object(sys, "argv", ["optimize_adaptive_parameters.py", "--limit", "1", "--top", "1"]),
+            patch.object(cli, "load_config", return_value={"cfg": True}),
+            patch.object(cli, "run_baseline", return_value=baseline),
+            patch.object(cli, "generate_pullback_override_candidates", return_value=["pullback"]),
+            patch.object(cli, "generate_oversold_override_candidates", return_value=["oversold"]),
+            patch.object(cli, "combine_override_candidates", return_value=[{"candidate": 1}, {"candidate": 2}]),
+            patch.object(cli, "run_candidate", return_value=first) as run_candidate_mock,
+            patch.object(cli, "score_candidate", return_value=1.0),
+            patch.object(cli, "is_primary_acceptance", return_value=False),
+            redirect_stdout(out),
+        ):
+            cli.main()
+
+        output = out.getvalue()
+        self.assertIn("evaluated=1 total=2 truncated=True", output)
+        self.assertIn("TOP_EVALUATED", output)
+        self.assertEqual(run_candidate_mock.call_count, 1)
+
+def _load_optimizer_cli():
+    script_path = Path(__file__).resolve().parents[1] / "scripts" / "optimize_adaptive_parameters.py"
+    spec = importlib.util.spec_from_file_location("optimize_adaptive_parameters_test_module", script_path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec is not None
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
 
 
 if __name__ == "__main__":
