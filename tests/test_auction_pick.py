@@ -338,7 +338,7 @@ def test_auction_pick_launchd_plist_runs_weekdays_at_0926():
         {"Weekday": 5, "Hour": 9, "Minute": 26},
     ]
     assert plist["EnvironmentVariables"]["PYTHON_BIN"] == "/usr/bin/python3"
-    assert plist["EnvironmentVariables"]["AUCTION_COUNT"] == "5"
+    assert plist["EnvironmentVariables"]["AUCTION_COUNT"] == "2"
     assert plist["StandardOutPath"] == "/tmp/project/reports/auction_pick/launchd.out.log"
     assert plist["StandardErrorPath"] == "/tmp/project/reports/auction_pick/launchd.err.log"
 

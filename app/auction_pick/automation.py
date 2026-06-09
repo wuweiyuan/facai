@@ -15,7 +15,7 @@ def build_launchd_plist(
     python_bin: str = "python3",
     hour: int = 9,
     minute: int = 26,
-    count: int = 5,
+    count: int = 2,
 ) -> dict[str, Any]:
     root = Path(project_root).expanduser()
     return {
@@ -40,7 +40,7 @@ def write_launchd_plist(
     python_bin: str = "python3",
     hour: int = 9,
     minute: int = 26,
-    count: int = 5,
+    count: int = 2,
 ) -> Path:
     plist = build_launchd_plist(project_root, python_bin=python_bin, hour=hour, minute=minute, count=count)
     path = Path(output_path).expanduser()
@@ -57,7 +57,7 @@ def main() -> None:
     parser.add_argument("--python-bin", default="python3")
     parser.add_argument("--hour", type=int, default=9)
     parser.add_argument("--minute", type=int, default=26)
-    parser.add_argument("--count", type=int, default=5)
+    parser.add_argument("--count", type=int, default=2)
     args = parser.parse_args()
     path = write_launchd_plist(
         args.output,

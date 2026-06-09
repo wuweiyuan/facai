@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
-AUCTION_COUNT="${AUCTION_COUNT:-5}"
+AUCTION_COUNT="${AUCTION_COUNT:-2}"
 LABEL="com.wayne.auction-pick"
 PLIST_PATH="${HOME}/Library/LaunchAgents/${LABEL}.plist"
 

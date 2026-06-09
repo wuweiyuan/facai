@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
-AUCTION_COUNT="${AUCTION_COUNT:-5}"
+AUCTION_COUNT="${AUCTION_COUNT:-2}"
 REPORT_DIR="${PROJECT_ROOT}/reports/auction_pick"
 RUN_DATE="$(date +%F)"
 RUN_TIME="$(date '+%F %T')"
