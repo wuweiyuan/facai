@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-06-08 21:00:19",
+  "generated_at": "2026-06-09 19:47:43",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-06-10",
         "2026-06-09",
         "2026-06-08",
         "2026-06-05",
@@ -78,7 +79,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-06-08 21:00:19",
+      "latest_run_time": "2026-06-09 19:47:43",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -1852,6 +1853,18 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-06-10": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold"
+          ],
+          "chosen_strategy": "recommend-oversold",
+          "has_recommendations": true,
+          "chosen_count": 2,
+          "formal_action": "cash",
+          "opportunity_count": 1,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2095,6 +2108,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-06-10",
         "2026-06-09",
         "2026-06-08",
         "2026-06-05",
@@ -2110,8 +2124,22 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-06-08 21:00:19",
+      "latest_run_time": "2026-06-09 19:47:43",
       "records": [
+        {
+          "run_time": "2026-06-09 19:47:43",
+          "trade_date": "2026-06-10",
+          "symbol": "002514",
+          "name": "宝馨科技",
+          "threshold_mode": "normal",
+          "score_total": 44.17,
+          "close": 3.66,
+          "stop_loss_price": 3.44,
+          "take_profit_price": 3.95,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有2到3天；2天内不修复或亏损5%到6%止损；快速反弹5%到8%止盈。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-06-08 21:00:19",
           "trade_date": "2026-06-09",
@@ -2886,6 +2914,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-06-10",
     "2026-06-09",
     "2026-06-08",
     "2026-06-05",
