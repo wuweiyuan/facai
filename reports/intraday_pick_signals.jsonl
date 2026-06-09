@@ -1,1 +1,7 @@
 {"entry_price": 16.35, "name": "赛伍技术", "rank": 1, "run_time": "2026-06-08 14:45:03", "score": 83.36, "selected": true, "source": "cli", "strategy": "tail-pick", "symbol": "603212", "trade_date": "2026-06-08"}
+{"entry_price": 54.41, "name": "永鼎股份", "rank": 1, "run_time": "2026-06-09 09:28:23", "score": 83.91, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "600105", "trade_date": "2026-06-09"}
+{"entry_price": 56.0, "name": "烽火通信", "rank": 2, "run_time": "2026-06-09 09:28:23", "score": 82.47, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "600498", "trade_date": "2026-06-09"}
+{"entry_price": 25.8, "name": "通鼎互联", "rank": 3, "run_time": "2026-06-09 09:28:23", "score": 82.25, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "002491", "trade_date": "2026-06-09"}
+{"entry_price": 16.88, "name": "三安光电", "rank": 4, "run_time": "2026-06-09 09:28:23", "score": 81.55, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "600703", "trade_date": "2026-06-09"}
+{"entry_price": 37.99, "name": "兴森科技", "rank": 5, "run_time": "2026-06-09 09:28:23", "score": 79.65, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "002436", "trade_date": "2026-06-09"}
+{"entry_price": 9.12, "name": "京能电力", "rank": 1, "run_time": "2026-06-09 14:45:21", "score": 96.32, "selected": true, "source": "cli", "strategy": "tail-pick", "symbol": "600578", "trade_date": "2026-06-09"}
