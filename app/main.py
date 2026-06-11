@@ -82,6 +82,20 @@ class _TeeStdout:
             s.flush()
 
 
+class _CachedIntradayDataSource:
+    def __init__(self, inner):
+        self._inner = inner
+        self._intraday_quotes = None
+
+    def get_intraday_quotes(self):
+        if self._intraday_quotes is None:
+            self._intraday_quotes = self._inner.get_intraday_quotes()
+        return self._intraday_quotes
+
+    def __getattr__(self, name: str):
+        return getattr(self._inner, name)
+
+
 def _parse_date(v: str | None) -> date:
     if not v:
         return date.today()
@@ -266,6 +280,45 @@ def _print_opportunity_pool(payload: dict) -> None:
         exit_plan = item["key_metrics"].get("exit_plan", "")
         if exit_plan:
             print(f"退出规则: {exit_plan}")
+
+
+def _print_intraday_regime(payload) -> None:
+    print(f"[出手提示] 日期={payload.trade_date.isoformat()} 时段={payload.session} 结论={payload.decision_zh}")
+    print(f"综合分: {payload.score:.2f}")
+    print("关键指标:")
+    labels = {
+        "total": "快照股票数",
+        "up_ratio": "上涨占比",
+        "down_ratio": "下跌占比",
+        "strong_count": "强势票数量",
+        "weak_count": "弱势票数量",
+        "above_open_ratio": "站上开盘价占比",
+        "avg_return": "平均涨跌幅",
+    }
+    for key, label in labels.items():
+        value = payload.metrics.get(key, 0.0)
+        if key.endswith("_ratio") or key == "avg_return":
+            print(f"  - {label}: {value:.2%}")
+        else:
+            print(f"  - {label}: {int(value)}")
+    print("策略提示:")
+    for strategy, advice in payload.advice.items():
+        print(f"  - {strategy}: {advice}")
+    print("原因:")
+    for idx, reason in enumerate(payload.reasons, start=1):
+        print(f"  {idx}. {reason}")
+
+
+def _print_intraday_regime_hint(base_cfg: dict, ds, trade_date: date, session: str, strategy: str) -> None:
+    from app.intraday_regime.engine import IntradayRegimeEngine
+
+    payload = IntradayRegimeEngine(ds, base_cfg).evaluate(trade_date, session=session)
+    print(f"[出手提示] 结论={payload.decision_zh} 综合分={payload.score:.2f}")
+    advice = payload.advice.get(strategy)
+    if advice:
+        print(f"[出手提示] {strategy}: {advice}")
+    if payload.reasons:
+        print(f"[出手提示] 原因: {'；'.join(payload.reasons[:3])}")
 
 
 def _resolve_adaptive_pick_count(base_cfg: dict, cmd_name: str, override_count: int | None) -> int | None:
@@ -829,6 +882,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_auction.add_argument("--count", type=int, default=None, help="How many auction candidates to show")
     p_auction.add_argument("--output", choices=["table", "json"], default="table")
 
+    p_regime = sub.add_parser("intraday-regime", help="Show whether intraday momentum strategies are suitable today")
+    p_regime.add_argument("--date", default=None, help="Run date YYYY-MM-DD; defaults to today")
+    p_regime.add_argument("--session", choices=["morning", "tail"], default="morning")
+    p_regime.add_argument("--output", choices=["table", "json"], default="table")
+
     p_intraday_review = sub.add_parser("analyze-intraday-picks", help="Review saved auction/tail pick signals")
     p_intraday_review.add_argument(
         "--signals",
@@ -972,11 +1030,24 @@ def main() -> None:
         print(f"Dashboard data exported to {saved}")
         return
 
+    if args.cmd == "intraday-regime":
+        from app.intraday_regime.engine import IntradayRegimeEngine
+
+        _configure_network(base_cfg)
+        ds = _build_data_source(base_cfg)
+        trade_date = _parse_date(args.date)
+        payload = IntradayRegimeEngine(ds, base_cfg).evaluate(trade_date, session=args.session)
+        if args.output == "json":
+            print(json.dumps(payload.as_dict(), ensure_ascii=False, indent=2))
+            return
+        _print_intraday_regime(payload)
+        return
+
     if args.cmd == "tail-pick":
         from app.tail_pick.engine import TailPickEngine
 
         _configure_network(base_cfg)
-        ds = _build_data_source(base_cfg)
+        ds = _CachedIntradayDataSource(_build_data_source(base_cfg))
         trade_date = _parse_date(args.date)
         payload = TailPickEngine(ds, base_cfg).pick(trade_date)
         signal_path = None
@@ -990,6 +1061,7 @@ def main() -> None:
         if args.output == "json":
             print(json.dumps(payload.as_dict(), ensure_ascii=False, indent=2))
             return
+        _print_intraday_regime_hint(base_cfg, ds, trade_date, session="tail", strategy="tail-pick")
         print(
             f"[尾盘] 日期={payload.trade_date.isoformat()} "
             f"扫描={payload.candidates_scanned} 入围={payload.candidates_passed}"
@@ -1017,7 +1089,7 @@ def main() -> None:
         from app.auction_pick.engine import AuctionPickEngine
 
         _configure_network(base_cfg)
-        ds = _build_data_source(base_cfg)
+        ds = _CachedIntradayDataSource(_build_data_source(base_cfg))
         trade_date = _parse_date(args.date)
         payload = AuctionPickEngine(ds, base_cfg).pick(trade_date, count=args.count)
         signal_path = None
@@ -1031,6 +1103,7 @@ def main() -> None:
         if args.output == "json":
             print(json.dumps(payload.as_dict(), ensure_ascii=False, indent=2))
             return
+        _print_intraday_regime_hint(base_cfg, ds, trade_date, session="morning", strategy="auction-pick")
         print(
             f"[竞价] 日期={payload.trade_date.isoformat()} "
             f"扫描={payload.candidates_scanned} 入围={payload.candidates_passed}"

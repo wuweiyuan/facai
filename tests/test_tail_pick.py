@@ -173,6 +173,17 @@ def test_tail_pick_selects_one_moderate_strength_candidate():
     assert payload.candidates_passed == 1
 
 
+def test_tail_pick_returns_no_trade_when_passed_candidates_below_minimum():
+    engine = TailPickEngine(FakeTailPickDataSource(), {"tail_pick": {"min_required_candidates": 2}})
+
+    payload = engine.pick(date(2026, 6, 4))
+
+    assert payload.selected is None
+    assert payload.candidates_scanned == 3
+    assert payload.candidates_passed == 1
+    assert payload.filters["min_required_candidates"] == 2
+
+
 def test_tail_pick_returns_no_trade_when_all_quotes_fail():
     ds = FakeTailPickDataSource()
     ds.quotes = [

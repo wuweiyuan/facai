@@ -189,6 +189,73 @@ auction_pick:
   # 20 日线至少不能继续走坏。
   min_ma20_slope5: 0.0
 
+# 尾盘候选策略。
+# 这是独立命令 `tail-pick` 使用的配置，不参与 recommend-adaptive / auction-pick。
+tail_pick:
+  # 尾盘相对昨收的合理涨幅区间。
+  min_intraday_return: 0.01
+  max_intraday_return: 0.06
+
+  # 最低成交额，单位：元。
+  min_amount: 20000000
+
+  # 参考止损比例。
+  stop_loss_pct: 0.04
+
+  # 快照预筛后最多拉取多少只股票的日线，控制运行速度。
+  max_snapshot_candidates: 60
+
+  # 当前价不能低于开盘价，过滤尾盘反抽但全天走弱的候选。
+  min_latest_vs_open: 1.0
+
+  # 当前价在日内振幅中的位置，越高越要求收在高位。
+  min_close_position: 0.65
+
+  # 当前价相对日内高点最大允许回落幅度。
+  max_fade_from_high: 0.025
+
+  # 日线不能离 20 日线太远，避免高位过热追涨。
+  max_close_above_ma20_pct: 0.10
+
+  # RSI 过热时过滤。
+  max_rsi14: 78
+
+  # 20 日线至少不能继续走坏。
+  min_ma20_slope5: 0.0
+
+  # 入围候选太少时说明市场宽度不足，默认空仓。
+  min_required_candidates: 8
+
+# 盘中短线环境提示。
+# 第一版只服务独立命令 `intraday-regime`，不会影响 auction-pick / tail-pick 的选股输出。
+intraday_regime:
+  # 预留开关：当前不被 auction-pick / tail-pick 读取。
+  enabled: false
+
+  # 早盘提示阈值，用于 auction-pick 出手前后判断短线环境。
+  morning:
+    attack_up_ratio: 0.58
+    observe_up_ratio: 0.48
+    attack_strong_count: 60
+    observe_strong_count: 25
+    max_attack_weak_count: 30
+    max_observe_weak_count: 70
+    strong_return: 0.02
+    weak_return: -0.02
+    min_above_open_ratio: 0.52
+
+  # 尾盘提示阈值，用于 tail-pick 隔夜前判断短线环境。
+  tail:
+    attack_up_ratio: 0.60
+    observe_up_ratio: 0.50
+    attack_strong_count: 80
+    observe_strong_count: 35
+    max_attack_weak_count: 25
+    max_observe_weak_count: 60
+    strong_return: 0.02
+    weak_return: -0.02
+    min_above_open_ratio: 0.55
+
 # 大盘环境过滤。
 # 目的：先判断市场大环境是否适合做当前策略，再决定是否放行个股筛选。
 # 对趋势/动量类策略非常重要。

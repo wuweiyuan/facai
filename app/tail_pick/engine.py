@@ -61,9 +61,11 @@ class TailPickEngine:
             if result is not None:
                 ranked.append(result)
         ranked.sort(key=lambda item: (-item.score, item.quote.symbol))
+        min_required_candidates = max(int(filters.get("min_required_candidates", 1)), 1)
+        selected = ranked[0] if len(ranked) >= min_required_candidates else None
         return TailPickPayload(
             trade_date=trade_date,
-            selected=ranked[0] if ranked else None,
+            selected=selected,
             candidates_scanned=scanned_count,
             candidates_passed=len(ranked),
             filters=filters,
@@ -83,6 +85,7 @@ class TailPickEngine:
             "max_close_above_ma20_pct": float(cfg.get("max_close_above_ma20_pct", 0.10)),
             "max_rsi14": float(cfg.get("max_rsi14", 78)),
             "min_ma20_slope5": float(cfg.get("min_ma20_slope5", 0.0)),
+            "min_required_candidates": float(cfg.get("min_required_candidates", 1)),
         }
 
     def _resolve_completed_daily_date(self, trade_date: date) -> date:
