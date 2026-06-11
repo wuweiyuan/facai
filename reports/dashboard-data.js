@@ -1,11 +1,13 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-06-08 21:00:19",
+  "generated_at": "2026-06-10 20:59:53",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-06-11",
+        "2026-06-10",
         "2026-06-09",
         "2026-06-08",
         "2026-06-05",
@@ -78,7 +80,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-06-08 21:00:19",
+      "latest_run_time": "2026-06-10 20:59:52",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -1852,6 +1854,31 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-06-10": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold"
+          ],
+          "chosen_strategy": "recommend-oversold",
+          "has_recommendations": true,
+          "chosen_count": 2,
+          "formal_action": "cash",
+          "opportunity_count": 1,
+          "has_observation_candidates": true
+        },
+        "2026-06-11": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2095,6 +2122,8 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-06-11",
+        "2026-06-10",
         "2026-06-09",
         "2026-06-08",
         "2026-06-05",
@@ -2110,8 +2139,64 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-06-08 21:00:19",
+      "latest_run_time": "2026-06-10 20:59:52",
       "records": [
+        {
+          "run_time": "2026-06-10 20:59:52",
+          "trade_date": "2026-06-11",
+          "symbol": "002981",
+          "name": "朝阳科技",
+          "threshold_mode": "normal",
+          "score_total": 71.8,
+          "close": 26.5,
+          "stop_loss_price": 24.04,
+          "take_profit_price": 31.41,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-06-10 20:59:52",
+          "trade_date": "2026-06-11",
+          "symbol": "600060",
+          "name": "海信视像",
+          "threshold_mode": "normal",
+          "score_total": 65.83,
+          "close": 25.82,
+          "stop_loss_price": 23.9,
+          "take_profit_price": 29.64,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-06-10 20:59:52",
+          "trade_date": "2026-06-11",
+          "symbol": "600020",
+          "name": "中原高速",
+          "threshold_mode": "normal",
+          "score_total": 65.65,
+          "close": 4.0,
+          "stop_loss_price": 3.84,
+          "take_profit_price": 4.31,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-06-09 19:47:43",
+          "trade_date": "2026-06-10",
+          "symbol": "002514",
+          "name": "宝馨科技",
+          "threshold_mode": "normal",
+          "score_total": 44.17,
+          "close": 3.66,
+          "stop_loss_price": 3.44,
+          "take_profit_price": 3.95,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有2到3天；2天内不修复或亏损5%到6%止损；快速反弹5%到8%止盈。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-06-08 21:00:19",
           "trade_date": "2026-06-09",
@@ -2886,6 +2971,8 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-06-11",
+    "2026-06-10",
     "2026-06-09",
     "2026-06-08",
     "2026-06-05",
