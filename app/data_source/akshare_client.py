@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 import time
 from datetime import date, datetime
@@ -465,12 +466,32 @@ class AkshareDataSource:
     def _warn_cache(message: str) -> None:
         print(f"[缓存] {message}", file=sys.stderr)
 
+    @staticmethod
+    def _is_transient_cache_error(exc: Exception) -> bool:
+        return isinstance(exc, OSError) and (
+            getattr(exc, "errno", None) == 11 or "Resource deadlock avoided" in str(exc)
+        )
+
+    @staticmethod
+    def _cache_retry_delay(attempt: int) -> float:
+        return 0.15 * (attempt + 1)
+
+    def _read_csv_cache(self, path: Path, **kwargs) -> pd.DataFrame:
+        for attempt in range(3):
+            try:
+                return pd.read_csv(path, **kwargs)
+            except Exception as exc:
+                if not self._is_transient_cache_error(exc) or attempt == 2:
+                    raise
+                time.sleep(self._cache_retry_delay(attempt))
+        raise RuntimeError("unreachable cache read retry state")
+
     def _get_bars_from_cache(self, symbol: str, start_date: date, end_date: date) -> list[DailyBar] | None:
         path = self._bars_cache_path(symbol)
         if not path.exists():
             return None
         try:
-            df = pd.read_csv(path)
+            df = self._read_csv_cache(path)
         except Exception as exc:
             self._warn_cache(f"缓存读取失败 {symbol}: {path}: {exc}")
             return None
@@ -573,7 +594,7 @@ class AkshareDataSource:
         path = self._bars_cache_path(symbol)
         if path.exists():
             try:
-                old = pd.read_csv(path)
+                old = self._read_csv_cache(path)
                 old["trade_date"] = pd.to_datetime(old["trade_date"], errors="coerce").dt.strftime("%Y-%m-%d")
                 frames = [frame for frame in (old, new_df) if not frame.empty]
                 if not frames:
@@ -595,7 +616,28 @@ class AkshareDataSource:
 
     def _save_bars_df(self, symbol: str, df: pd.DataFrame) -> None:
         path = self._bars_cache_path(symbol)
-        df.to_csv(path, index=False)
+        tmp_path = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+        try:
+            for attempt in range(3):
+                try:
+                    df.to_csv(tmp_path, index=False)
+                    tmp_path.replace(path)
+                    return
+                except Exception as exc:
+                    if not self._is_transient_cache_error(exc) or attempt == 2:
+                        raise
+                    try:
+                        if tmp_path.exists():
+                            tmp_path.unlink()
+                    except OSError:
+                        pass
+                    time.sleep(self._cache_retry_delay(attempt))
+        finally:
+            try:
+                if tmp_path.exists():
+                    tmp_path.unlink()
+            except OSError:
+                pass
 
     @staticmethod
     def _rows_to_bars_cache(df: pd.DataFrame) -> list[DailyBar]:
