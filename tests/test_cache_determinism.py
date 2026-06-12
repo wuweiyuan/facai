@@ -5,6 +5,7 @@ import io
 from datetime import date
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 from unittest import TestCase
 
 import pandas as pd
@@ -101,3 +102,66 @@ class TestCacheDeterminism(TestCase):
 
             self.assertIn("缓存写入失败 601888", err.getvalue())
             self.assertIn("Resource deadlock avoided", err.getvalue())
+
+    def test_get_bars_from_cache_retries_transient_resource_deadlock(self):
+        with TemporaryDirectory() as tmp:
+            ds = self._build_ds(tmp)
+            symbol = "000001"
+            path = ds._bars_cache_path(symbol)
+            path.touch()
+            cached_df = pd.DataFrame(
+                {
+                    "trade_date": ["2026-06-05"],
+                    "open": [10.0],
+                    "high": [10.2],
+                    "low": [9.9],
+                    "close": [10.1],
+                    "volume": [1000.0],
+                    "turnover_rate": [0.3],
+                }
+            )
+
+            with patch("app.data_source.akshare_client.time.sleep") as sleep_mock:
+                with patch(
+                    "app.data_source.akshare_client.pd.read_csv",
+                    side_effect=[OSError(11, "Resource deadlock avoided", str(path)), cached_df],
+                ) as read_csv:
+                    bars = ds._get_bars_from_cache(symbol, date(2026, 6, 5), date(2026, 6, 5))
+
+            self.assertEqual(len(bars), 1)
+            self.assertEqual(bars[0].trade_date, date(2026, 6, 5))
+            self.assertEqual(read_csv.call_count, 2)
+            sleep_mock.assert_called()
+
+    def test_save_bars_df_retries_transient_resource_deadlock(self):
+        with TemporaryDirectory() as tmp:
+            ds = self._build_ds(tmp)
+            symbol = "000001"
+            df = pd.DataFrame(
+                {
+                    "trade_date": ["2026-06-05"],
+                    "open": [10.0],
+                    "high": [10.2],
+                    "low": [9.9],
+                    "close": [10.1],
+                    "volume": [1000.0],
+                    "turnover_rate": [0.3],
+                }
+            )
+            original_to_csv = pd.DataFrame.to_csv
+            attempts = {"count": 0}
+
+            def flaky_to_csv(frame, *args, **kwargs):
+                attempts["count"] += 1
+                if attempts["count"] == 1:
+                    raise OSError(11, "Resource deadlock avoided", str(ds._bars_cache_path(symbol)))
+                return original_to_csv(frame, *args, **kwargs)
+
+            with patch("app.data_source.akshare_client.time.sleep") as sleep_mock:
+                with patch.object(pd.DataFrame, "to_csv", flaky_to_csv):
+                    ds._save_bars_df(symbol, df)
+
+            out = pd.read_csv(ds._bars_cache_path(symbol))
+            self.assertEqual(out["trade_date"].tolist(), ["2026-06-05"])
+            self.assertEqual(attempts["count"], 2)
+            sleep_mock.assert_called()
