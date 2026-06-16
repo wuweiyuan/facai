@@ -238,8 +238,8 @@ intraday_regime:
     observe_up_ratio: 0.48
     attack_strong_count: 60
     observe_strong_count: 25
-    max_attack_weak_count: 30
-    max_observe_weak_count: 70
+    max_attack_weak_ratio: 0.12
+    max_observe_weak_ratio: 0.20
     strong_return: 0.02
     weak_return: -0.02
     min_above_open_ratio: 0.52
@@ -250,8 +250,8 @@ intraday_regime:
     observe_up_ratio: 0.50
     attack_strong_count: 80
     observe_strong_count: 35
-    max_attack_weak_count: 25
-    max_observe_weak_count: 60
+    max_attack_weak_ratio: 0.12
+    max_observe_weak_ratio: 0.20
     strong_return: 0.02
     weak_return: -0.02
     min_above_open_ratio: 0.55

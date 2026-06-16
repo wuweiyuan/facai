@@ -55,8 +55,8 @@ class IntradayRegimeEngine:
             "observe_up_ratio": 0.48 if session == "morning" else 0.50,
             "attack_strong_count": 60 if session == "morning" else 80,
             "observe_strong_count": 25 if session == "morning" else 35,
-            "max_attack_weak_count": 30 if session == "morning" else 25,
-            "max_observe_weak_count": 70 if session == "morning" else 60,
+            "max_attack_weak_ratio": 0.12,
+            "max_observe_weak_ratio": 0.20,
             "strong_return": 0.02,
             "weak_return": -0.02,
             "min_above_open_ratio": 0.52 if session == "morning" else 0.55,
@@ -73,6 +73,7 @@ class IntradayRegimeEngine:
                 "down_ratio": 0.0,
                 "strong_count": 0.0,
                 "weak_count": 0.0,
+                "weak_ratio": 0.0,
                 "above_open_ratio": 0.0,
                 "avg_return": 0.0,
             }
@@ -88,6 +89,7 @@ class IntradayRegimeEngine:
             "down_ratio": down_count / total,
             "strong_count": float(strong_count),
             "weak_count": float(weak_count),
+            "weak_ratio": weak_count / total,
             "above_open_ratio": above_open_count / total,
             "avg_return": mean(returns),
         }
@@ -97,7 +99,7 @@ class IntradayRegimeEngine:
         up_score = min(metrics["up_ratio"] / max(thresholds["attack_up_ratio"], 0.001), 1.0) * 35.0
         strong_score = min(metrics["strong_count"] / max(thresholds["attack_strong_count"], 1.0), 1.0) * 30.0
         open_score = min(metrics["above_open_ratio"] / max(thresholds["min_above_open_ratio"], 0.001), 1.0) * 20.0
-        weak_penalty = min(metrics["weak_count"] / max(thresholds["max_observe_weak_count"], 1.0), 1.0) * 25.0
+        weak_penalty = min(metrics["weak_ratio"] / max(thresholds["max_observe_weak_ratio"], 0.001), 1.0) * 25.0
         avg_bonus = max(min(metrics["avg_return"], 0.02), -0.02) / 0.02 * 10.0
         return max(up_score + strong_score + open_score + avg_bonus - weak_penalty, 0.0)
 
@@ -108,7 +110,7 @@ class IntradayRegimeEngine:
         attack = (
             metrics["up_ratio"] >= thresholds["attack_up_ratio"]
             and metrics["strong_count"] >= thresholds["attack_strong_count"]
-            and metrics["weak_count"] <= thresholds["max_attack_weak_count"]
+            and metrics["weak_ratio"] <= thresholds["max_attack_weak_ratio"]
             and metrics["above_open_ratio"] >= thresholds["min_above_open_ratio"]
             and score >= 70.0
         )
@@ -117,7 +119,7 @@ class IntradayRegimeEngine:
         observe = (
             metrics["up_ratio"] >= thresholds["observe_up_ratio"]
             and metrics["strong_count"] >= thresholds["observe_strong_count"]
-            and metrics["weak_count"] <= thresholds["max_observe_weak_count"]
+            and metrics["weak_ratio"] <= thresholds["max_observe_weak_ratio"]
             and score >= 45.0
         )
         if observe:
@@ -146,7 +148,7 @@ class IntradayRegimeEngine:
         reasons = [
             f"上涨占比 {metrics['up_ratio']:.1%}",
             f"强势票数量 {int(metrics['strong_count'])}",
-            f"弱势票数量 {int(metrics['weak_count'])}",
+            f"弱势票数量 {int(metrics['weak_count'])} ({metrics['weak_ratio']:.1%})",
             f"站上开盘价占比 {metrics['above_open_ratio']:.1%}",
         ]
         if decision == "cash":
@@ -157,6 +159,7 @@ class IntradayRegimeEngine:
             reasons.append("短线宽度和承接达到进攻阈值")
         reasons.append(
             f"进攻阈值: 上涨占比>={thresholds['attack_up_ratio']:.0%}, "
-            f"强势票>={int(thresholds['attack_strong_count'])}"
+            f"强势票>={int(thresholds['attack_strong_count'])}, "
+            f"弱势票占比<={thresholds['max_attack_weak_ratio']:.0%}"
         )
         return reasons

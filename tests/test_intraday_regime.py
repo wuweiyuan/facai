@@ -50,6 +50,21 @@ def test_intraday_regime_returns_attack_when_breadth_and_strength_are_high():
     assert payload.advice["tail-pick"] == "尾盘可小仓参与，但仍需候选宽度确认"
 
 
+def test_intraday_regime_uses_weak_ratio_for_large_a_share_universe():
+    quotes = [_quote(f"{idx:06d}", 10.4) for idx in range(1, 965)]
+    quotes += [_quote(f"{idx:06d}", 10.1) for idx in range(965, 1920)]
+    quotes += [_quote(f"{idx:06d}", 9.7) for idx in range(1920, 2227)]
+    quotes += [_quote(f"{idx:06d}", 9.9) for idx in range(2227, 3066)]
+    ds = FakeIntradayRegimeDataSource(quotes)
+
+    tail_payload = IntradayRegimeEngine(ds, {}).evaluate(date(2026, 6, 15), session="tail")
+    morning_payload = IntradayRegimeEngine(ds, {}).evaluate(date(2026, 6, 15), session="morning")
+
+    assert tail_payload.metrics["weak_ratio"] == 307 / 3065
+    assert tail_payload.decision == "attack"
+    assert morning_payload.decision == "attack"
+
+
 def test_intraday_regime_returns_cash_when_snapshot_is_weak():
     quotes = [_quote(f"{idx:06d}", 9.7) for idx in range(1, 71)]
     quotes += [_quote(f"{idx:06d}", 10.1) for idx in range(71, 101)]

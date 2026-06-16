@@ -292,6 +292,7 @@ def _print_intraday_regime(payload) -> None:
         "down_ratio": "下跌占比",
         "strong_count": "强势票数量",
         "weak_count": "弱势票数量",
+        "weak_ratio": "弱势票占比",
         "above_open_ratio": "站上开盘价占比",
         "avg_return": "平均涨跌幅",
     }
