@@ -27,7 +27,7 @@ class TailPickDataSource(Protocol):
 @dataclass(frozen=True)
 class TailPickPayload:
     trade_date: date
-    selected: TailPickResult | None
+    selected: list[TailPickResult]
     candidates_scanned: int
     candidates_passed: int
     filters: dict[str, float]
@@ -35,7 +35,7 @@ class TailPickPayload:
     def as_dict(self) -> dict[str, Any]:
         return {
             "trade_date": self.trade_date.isoformat(),
-            "selected": self.selected.as_dict() if self.selected else None,
+            "selected": [item.as_dict() for item in self.selected],
             "candidates_scanned": self.candidates_scanned,
             "candidates_passed": self.candidates_passed,
             "filters": dict(self.filters),
@@ -61,8 +61,9 @@ class TailPickEngine:
             if result is not None:
                 ranked.append(result)
         ranked.sort(key=lambda item: (-item.score, item.quote.symbol))
+        pick_count = max(int(filters.get("count", 2)), 1)
         min_required_candidates = max(int(filters.get("min_required_candidates", 1)), 1)
-        selected = ranked[0] if len(ranked) >= min_required_candidates else None
+        selected = ranked[:pick_count] if len(ranked) >= min_required_candidates else []
         return TailPickPayload(
             trade_date=trade_date,
             selected=selected,
@@ -85,6 +86,7 @@ class TailPickEngine:
             "max_close_above_ma20_pct": float(cfg.get("max_close_above_ma20_pct", 0.10)),
             "max_rsi14": float(cfg.get("max_rsi14", 78)),
             "min_ma20_slope5": float(cfg.get("min_ma20_slope5", 0.0)),
+            "count": float(cfg.get("count", 2)),
             "min_required_candidates": float(cfg.get("min_required_candidates", 1)),
         }
 

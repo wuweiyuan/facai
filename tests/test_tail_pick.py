@@ -76,6 +76,7 @@ class FakeTailPickDataSource:
             StockInfo(symbol="000001", name="Leader"),
             StockInfo(symbol="000002", name="TooHot"),
             StockInfo(symbol="000003", name="Weak"),
+            StockInfo(symbol="000004", name="Second"),
         ]
         self.quotes = [
             IntradayQuote(
@@ -115,6 +116,19 @@ class FakeTailPickDataSource:
                 1_000_000,
                 8_000_000,
                 1.0,
+                datetime(2026, 6, 4, 14, 45),
+            ),
+            IntradayQuote(
+                "000004",
+                "Second",
+                10.35,
+                10.0,
+                10.1,
+                10.5,
+                10.0,
+                1_800_000,
+                21_000_000,
+                2.5,
                 datetime(2026, 6, 4, 14, 45),
             ),
         ]
@@ -162,26 +176,26 @@ class FakeTailPickDataSource:
         return self.quotes
 
 
-def test_tail_pick_selects_one_moderate_strength_candidate():
+def test_tail_pick_selects_two_moderate_strength_candidates():
     engine = TailPickEngine(FakeTailPickDataSource(), {})
 
     payload = engine.pick(date(2026, 6, 4))
 
-    assert payload.selected is not None
-    assert payload.selected.quote.symbol == "000001"
-    assert payload.candidates_scanned == 3
-    assert payload.candidates_passed == 1
+    assert [item.quote.symbol for item in payload.selected] == ["000004", "000001"]
+    assert payload.selected[0].score > payload.selected[1].score
+    assert payload.candidates_scanned == 4
+    assert payload.candidates_passed == 2
 
 
 def test_tail_pick_returns_no_trade_when_passed_candidates_below_minimum():
-    engine = TailPickEngine(FakeTailPickDataSource(), {"tail_pick": {"min_required_candidates": 2}})
+    engine = TailPickEngine(FakeTailPickDataSource(), {"tail_pick": {"min_required_candidates": 3}})
 
     payload = engine.pick(date(2026, 6, 4))
 
-    assert payload.selected is None
-    assert payload.candidates_scanned == 3
-    assert payload.candidates_passed == 1
-    assert payload.filters["min_required_candidates"] == 2
+    assert payload.selected == []
+    assert payload.candidates_scanned == 4
+    assert payload.candidates_passed == 2
+    assert payload.filters["min_required_candidates"] == 3
 
 
 def test_tail_pick_returns_no_trade_when_all_quotes_fail():
@@ -205,7 +219,7 @@ def test_tail_pick_returns_no_trade_when_all_quotes_fail():
 
     payload = engine.pick(date(2026, 6, 4))
 
-    assert payload.selected is None
+    assert payload.selected == []
     assert payload.candidates_scanned == 1
     assert payload.candidates_passed == 0
 
@@ -230,7 +244,7 @@ def test_tail_pick_rejects_quote_not_above_open():
 
     payload = TailPickEngine(ds, {}).pick(date(2026, 6, 4))
 
-    assert payload.selected is None
+    assert payload.selected == []
     assert payload.candidates_passed == 0
 
 
@@ -254,7 +268,7 @@ def test_tail_pick_rejects_late_fade_from_high():
 
     payload = TailPickEngine(ds, {}).pick(date(2026, 6, 4))
 
-    assert payload.selected is None
+    assert payload.selected == []
     assert payload.candidates_passed == 0
 
 
@@ -279,18 +293,18 @@ def test_tail_pick_rejects_overextended_daily_candidate():
 
     payload = TailPickEngine(ds, {}).pick(date(2026, 6, 4))
 
-    assert payload.selected is None
+    assert payload.selected == []
     assert payload.candidates_passed == 0
 
 
 def test_tail_pick_skips_symbol_when_daily_bars_fail_and_warns(capsys):
     ds = FakeTailPickDataSource()
-    ds.daily_fail_symbols = {"000001"}
+    ds.daily_fail_symbols = {"000001", "000004"}
 
     payload = TailPickEngine(ds, {}).pick(date(2026, 6, 4))
 
     captured = capsys.readouterr()
-    assert payload.selected is None
+    assert payload.selected == []
     assert payload.candidates_passed == 0
     assert "跳过 000001 Leader" in captured.err
     assert "Resource deadlock avoided" in captured.err
@@ -302,8 +316,8 @@ def test_tail_pick_prefilters_quotes_before_fetching_daily_bars():
 
     payload = engine.pick(date(2026, 6, 4))
 
-    assert payload.selected is not None
-    assert payload.selected.quote.symbol == "000001"
+    assert payload.selected
+    assert payload.selected[0].quote.symbol == "000001"
     assert ds.daily_bar_symbols == ["000001"]
 
 
@@ -329,7 +343,7 @@ def test_tail_pick_caps_prefiltered_snapshot_candidates_by_amount():
 
     payload = engine.pick(date(2026, 6, 4))
 
-    assert payload.selected is not None
+    assert payload.selected
     assert ds.daily_bar_symbols == ["000001"]
 
 
@@ -339,7 +353,7 @@ def test_tail_pick_uses_previous_trade_date_for_daily_trend():
 
     payload = engine.pick(date(2026, 6, 4))
 
-    assert payload.selected is not None
+    assert payload.selected
     assert ds.daily_bar_ranges[0][2] == date(2026, 6, 3)
 
 

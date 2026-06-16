@@ -874,7 +874,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_rec_pool.add_argument("--count", type=int, default=None, help="Total number of opportunity names to show")
     p_rec_pool.add_argument("--output", choices=["table", "json"], default="table")
 
-    p_tail = sub.add_parser("tail-pick", help="Pick one isolated tail-session candidate")
+    p_tail = sub.add_parser("tail-pick", help="Pick isolated tail-session candidates")
     p_tail.add_argument("--date", default=None, help="Run date YYYY-MM-DD; defaults to today")
     p_tail.add_argument("--output", choices=["table", "json"], default="table")
 
@@ -1067,21 +1067,21 @@ def main() -> None:
             f"[尾盘] 日期={payload.trade_date.isoformat()} "
             f"扫描={payload.candidates_scanned} 入围={payload.candidates_passed}"
         )
-        if payload.selected is None:
+        if not payload.selected:
             print("[尾盘] 当前没有符合条件的尾盘候选，建议空仓。")
             if signal_path:
                 print(f"已写入文档: {signal_path}")
             return
-        item = payload.selected
-        print(f"[尾盘] 主选: {item.quote.symbol} {item.quote.name}")
-        print(f"现价: {item.quote.latest:.2f} 涨幅: {item.intraday_return:.2%} 分数: {item.score:.2f}")
-        print(f"参考买入: {item.entry_price:.2f} 止损: {item.stop_loss_price:.2f}")
-        print("理由:")
-        for idx, reason in enumerate(item.reasons, start=1):
-            print(f"  {idx}. {reason}")
-        print("次日卖出规则:")
-        for idx, rule in enumerate(item.next_day_sell_rules, start=1):
-            print(f"  {idx}. {rule}")
+        for rank, item in enumerate(payload.selected, start=1):
+            print(f"[尾盘] 候选 {rank}: {item.quote.symbol} {item.quote.name}")
+            print(f"现价: {item.quote.latest:.2f} 涨幅: {item.intraday_return:.2%} 分数: {item.score:.2f}")
+            print(f"参考买入: {item.entry_price:.2f} 止损: {item.stop_loss_price:.2f}")
+            print("理由:")
+            for idx, reason in enumerate(item.reasons, start=1):
+                print(f"  {idx}. {reason}")
+            print("次日卖出规则:")
+            for idx, rule in enumerate(item.next_day_sell_rules, start=1):
+                print(f"  {idx}. {rule}")
         if signal_path:
             print(f"已写入文档: {signal_path}")
         return

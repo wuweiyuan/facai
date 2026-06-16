@@ -192,6 +192,9 @@ auction_pick:
 # 尾盘候选策略。
 # 这是独立命令 `tail-pick` 使用的配置，不参与 recommend-adaptive / auction-pick。
 tail_pick:
+  # 最多输出多少条尾盘候选。
+  count: 2
+
   # 尾盘相对昨收的合理涨幅区间。
   min_intraday_return: 0.01
   max_intraday_return: 0.06
