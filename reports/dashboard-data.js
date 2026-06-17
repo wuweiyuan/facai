@@ -1,5 +1,5 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-06-16 20:07:01",
+  "generated_at": "2026-06-17 12:47:04",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
@@ -84,7 +84,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-06-16 20:07:01",
+      "latest_run_time": "2026-06-17 12:47:04",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2197,24 +2197,24 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-06-16 20:07:01",
+      "latest_run_time": "2026-06-17 12:47:04",
       "records": [
         {
-          "run_time": "2026-06-16 20:07:01",
+          "run_time": "2026-06-17 12:47:04",
           "trade_date": "2026-06-17",
           "symbol": "002106",
           "name": "莱宝高科",
           "threshold_mode": "normal",
-          "score_total": 71.51,
-          "close": 13.54,
-          "stop_loss_price": 12.21,
-          "take_profit_price": 16.19,
+          "score_total": 71.36,
+          "close": 13.44,
+          "stop_loss_price": 12.11,
+          "take_profit_price": 16.08,
           "suggested_holding_days": 3,
           "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
           "source_strategy": "recommend"
         },
         {
-          "run_time": "2026-06-16 20:07:01",
+          "run_time": "2026-06-17 12:47:04",
           "trade_date": "2026-06-17",
           "symbol": "603976",
           "name": "正川股份",

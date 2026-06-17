@@ -24,3 +24,5 @@
 {"entry_price": 233.5, "name": "光迅科技", "rank": 2, "run_time": "2026-06-16 09:29:05", "score": 82.01, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "002281", "trade_date": "2026-06-16"}
 {"entry_price": 63.99, "name": "彤程新材", "rank": 1, "run_time": "2026-06-16 15:10:12", "score": 89.81, "selected": true, "source": "cli", "strategy": "tail-pick", "symbol": "603650", "trade_date": "2026-06-16"}
 {"entry_price": 249.06, "name": "东山精密", "rank": 2, "run_time": "2026-06-16 15:10:12", "score": 86.82, "selected": true, "source": "cli", "strategy": "tail-pick", "symbol": "002384", "trade_date": "2026-06-16"}
+{"entry_price": 10.68, "name": "TCL中环", "rank": 1, "run_time": "2026-06-17 14:47:09", "score": 91.82, "selected": true, "source": "cli", "strategy": "tail-pick", "symbol": "002129", "trade_date": "2026-06-17"}
+{"entry_price": 58.03, "name": "振华科技", "rank": 2, "run_time": "2026-06-17 14:47:09", "score": 87.43, "selected": true, "source": "cli", "strategy": "tail-pick", "symbol": "000733", "trade_date": "2026-06-17"}
