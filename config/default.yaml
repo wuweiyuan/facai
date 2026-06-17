@@ -77,6 +77,12 @@ data_source:
   # 这是典型的“运行产物”目录，通常不建议提交到 Git 仓库。
   cache_dir: .cache/akshare
 
+# 盘中独立命令的数据源覆盖。
+# 只影响 auction-pick / tail-pick，不影响 recommend-adaptive、回测或 dashboard。
+# 用项目内独立缓存目录，避免读取当前 .cache/akshare 指向的 OneDrive 缓存。
+intraday_pick:
+  cache_dir: .cache/intraday-akshare
+
 # 本地板块/行业映射文件。
 # 格式要求：CSV，至少包含两列：
 # - symbol: 6位股票代码

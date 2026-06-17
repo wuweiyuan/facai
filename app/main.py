@@ -407,6 +407,18 @@ def _build_data_source(cfg: dict) -> AkshareDataSource:
     )
 
 
+def _build_intraday_pick_data_source(cfg: dict) -> AkshareDataSource:
+    ds_cfg = cfg.get("data_source", {})
+    intraday_cfg = cfg.get("intraday_pick", {}) if isinstance(cfg.get("intraday_pick", {}), dict) else {}
+    return AkshareDataSource(
+        request_timeout_sec=float(ds_cfg.get("request_timeout_sec", 6.0)),
+        hist_retries=int(ds_cfg.get("hist_retries", 3)),
+        use_spot_name_merge=bool(ds_cfg.get("use_spot_name_merge", False)),
+        cache_enabled=bool(ds_cfg.get("cache_enabled", True)),
+        cache_dir=str(intraday_cfg.get("cache_dir", ".cache/intraday-akshare")),
+    )
+
+
 def _run_recommend_config(
     cfg: dict,
     section_title: str,
@@ -1048,7 +1060,7 @@ def main() -> None:
         from app.tail_pick.engine import TailPickEngine
 
         _configure_network(base_cfg)
-        ds = _CachedIntradayDataSource(_build_data_source(base_cfg))
+        ds = _CachedIntradayDataSource(_build_intraday_pick_data_source(base_cfg))
         trade_date = _parse_date(args.date)
         payload = TailPickEngine(ds, base_cfg).pick(trade_date)
         signal_path = None
@@ -1090,7 +1102,7 @@ def main() -> None:
         from app.auction_pick.engine import AuctionPickEngine
 
         _configure_network(base_cfg)
-        ds = _CachedIntradayDataSource(_build_data_source(base_cfg))
+        ds = _CachedIntradayDataSource(_build_intraday_pick_data_source(base_cfg))
         trade_date = _parse_date(args.date)
         payload = AuctionPickEngine(ds, base_cfg).pick(trade_date, count=args.count)
         signal_path = None
