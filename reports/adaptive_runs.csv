@@ -60,3 +60,4 @@ run_time,target_date,signal_date,market_state,market_reason,tried_strategies,cho
 2026-06-15 19:54:08,2026-06-16,2026-06-15,neutral,ok,recommend-relative,recommend-relative,true,2
 2026-06-16 20:07:01,2026-06-17,2026-06-16,neutral,ok,recommend-relative,recommend-relative,true,2
 2026-06-17 12:47:04,2026-06-17,2026-06-16,neutral,ok,recommend-relative,recommend-relative,true,2
+2026-06-17 21:23:13,2026-06-18,2026-06-17,neutral,ok,recommend-relative,recommend-relative,true,2
