@@ -26,3 +26,7 @@
 {"entry_price": 249.06, "name": "东山精密", "rank": 2, "run_time": "2026-06-16 15:10:12", "score": 86.82, "selected": true, "source": "cli", "strategy": "tail-pick", "symbol": "002384", "trade_date": "2026-06-16"}
 {"entry_price": 10.68, "name": "TCL中环", "rank": 1, "run_time": "2026-06-17 14:47:09", "score": 91.82, "selected": true, "source": "cli", "strategy": "tail-pick", "symbol": "002129", "trade_date": "2026-06-17"}
 {"entry_price": 58.03, "name": "振华科技", "rank": 2, "run_time": "2026-06-17 14:47:09", "score": 87.43, "selected": true, "source": "cli", "strategy": "tail-pick", "symbol": "000733", "trade_date": "2026-06-17"}
+{"entry_price": 58.8, "name": "科瑞技术", "rank": 1, "run_time": "2026-06-18 09:27:37", "score": 79.75, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "002957", "trade_date": "2026-06-18"}
+{"entry_price": 13.8, "name": "黄河旋风", "rank": 2, "run_time": "2026-06-18 09:27:37", "score": 71.45, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "600172", "trade_date": "2026-06-18"}
+{"entry_price": 726.0, "name": "北方华创", "rank": 1, "run_time": "2026-06-18 14:46:18", "score": 88.82, "selected": true, "source": "cli", "strategy": "tail-pick", "symbol": "002371", "trade_date": "2026-06-18"}
+{"entry_price": 52.91, "name": "能科科技", "rank": 2, "run_time": "2026-06-18 14:46:18", "score": 84.9, "selected": true, "source": "cli", "strategy": "tail-pick", "symbol": "603859", "trade_date": "2026-06-18"}
