@@ -54,6 +54,7 @@ def run_local_intraday_proxy_backtest(
         if df.empty:
             continue
         df = add_indicators(df)
+        df["mom3"] = df["close"] / df["close"].shift(3) - 1.0
         df["prev_close"] = df["close"].shift(1)
         df["next_open"] = df["open"].shift(-1)
         df = df[df["trade_date"].isin(attempted_set)]
@@ -160,6 +161,12 @@ def _filters(cfg: dict, strategy: str) -> dict[str, float]:
         "max_close_above_ma20_pct": float(raw.get("max_close_above_ma20_pct", 0.10)),
         "max_rsi14": float(raw.get("max_rsi14", 78)),
         "min_ma20_slope5": float(raw.get("min_ma20_slope5", 0.0)),
+        "min_turnover_rate": float(raw.get("min_turnover_rate", 0.0)),
+        "max_turnover_rate": float(raw.get("max_turnover_rate", 100.0)),
+        "min_intraday_volume_ratio_20": float(raw.get("min_intraday_volume_ratio_20", 0.0)),
+        "max_current_return_3d": float(raw.get("max_current_return_3d", 99.0)),
+        "max_current_return_5d": float(raw.get("max_current_return_5d", 99.0)),
+        "min_score": float(raw.get("min_score", 0.0)),
     }
 
 
@@ -181,6 +188,10 @@ def _score_proxy_candidate(
     ma60 = _to_float(row.get("ma60"))
     rsi14 = _to_float(row.get("rsi14"))
     ma20_slope5 = _to_float(row.get("ma20_slope5"))
+    turnover_rate = _to_float(row.get("turnover_rate"))
+    volume_ratio_1_20 = _to_float(row.get("volume_ratio_1_20"))
+    mom3 = _to_float(row.get("mom3"))
+    mom5 = _to_float(row.get("mom5"))
     if None in {prev_close, open_price, high, low, close, next_open, ma20, ma60}:
         return None
     if min(prev_close, open_price, high, low, close, next_open, ma20, ma60) <= 0:
@@ -217,10 +228,22 @@ def _score_proxy_candidate(
             return None
         if high > 0 and close / high - 1.0 < -filters["max_fade_from_high"]:
             return None
+        if filters["min_turnover_rate"] > 0 or filters["max_turnover_rate"] < 100:
+            if turnover_rate is None or not (filters["min_turnover_rate"] <= turnover_rate <= filters["max_turnover_rate"]):
+                return None
+        if filters["min_intraday_volume_ratio_20"] > 0:
+            if volume_ratio_1_20 is None or volume_ratio_1_20 < filters["min_intraday_volume_ratio_20"]:
+                return None
+        if mom3 is not None and mom3 > filters["max_current_return_3d"]:
+            return None
+        if mom5 is not None and mom5 > filters["max_current_return_5d"]:
+            return None
         entry_price = close
         score = _center_score(intraday_return, filters["min_intraday_return"], filters["max_intraday_return"]) * 45.0
         score += close_position * 35.0
         score += min(max(distance_above_ma20, 0.0), 0.10) / 0.10 * 20.0
+        if score < filters["min_score"]:
+            return None
 
     gross_ret = next_open / entry_price - 1.0
     return _ProxyCandidate(

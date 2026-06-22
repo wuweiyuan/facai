@@ -152,6 +152,40 @@ class TestIntradayProxyBacktest(TestCase):
             self.assertEqual(summary["records"][0]["symbol"], "000001")
             self.assertAlmostEqual(summary["avg_return_1d_net"], 0.04, places=3)
 
+    def test_tail_proxy_rejects_low_signal_day_volume(self):
+        with TemporaryDirectory() as tmp:
+            cache_dir = Path(tmp)
+            _build_cache(cache_dir)
+            alpha_path = cache_dir / "bars" / "000001.csv"
+            rows = list(csv.DictReader(alpha_path.open("r", encoding="utf-8", newline="")))
+            rows[70]["volume"] = "500000"
+            _write_csv(alpha_path, rows)
+            cfg = {
+                "data_source": {"cache_dir": str(cache_dir)},
+                "execution_cost": {"enabled": False},
+                "filters": {"exclude_st": True, "exclude_star_board": True, "exclude_bj_board": True},
+                "tail_pick": {
+                    "min_intraday_return": 0.01,
+                    "max_intraday_return": 0.06,
+                    "min_latest_vs_open": 1.0,
+                    "min_close_position": 0.5,
+                    "max_fade_from_high": 1.0,
+                    "max_close_above_ma20_pct": 1.0,
+                    "max_rsi14": 100,
+                    "min_ma20_slope5": -1.0,
+                    "min_intraday_volume_ratio_20": 1.2,
+                },
+            }
+
+            summary = run_local_intraday_proxy_backtest(
+                cfg,
+                "tail-pick",
+                date(2026, 3, 12),
+                date(2026, 3, 13),
+            )
+
+            self.assertEqual(summary["total_trades"], 0)
+
     def test_parser_accepts_intraday_proxy_backtests(self):
         auction_args = build_parser().parse_args(
             ["backtest-auction-pick-proxy", "--start", "2026-03-12", "--end", "2026-03-14", "--output", "json"]

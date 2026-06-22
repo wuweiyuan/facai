@@ -289,6 +289,8 @@ class AkshareDataSource:
                 amount = float(row.get("成交额", 0) or 0)
                 turnover = row.get("换手率", None)
                 turnover_rate = float(turnover) if turnover is not None and pd.notna(turnover) else None
+                total_market_cap = AkshareDataSource._optional_float(row.get("总市值", None))
+                float_market_cap = AkshareDataSource._optional_float(row.get("流通市值", None))
             except Exception:
                 continue
             if not symbol or symbol == "000000":
@@ -306,9 +308,20 @@ class AkshareDataSource:
                     amount=amount,
                     turnover_rate=turnover_rate,
                     snapshot_time=datetime.now(),
+                    total_market_cap=total_market_cap,
+                    float_market_cap=float_market_cap,
                 )
             )
         return quotes
+
+    @staticmethod
+    def _optional_float(value: object) -> float | None:
+        try:
+            if value is None or pd.isna(value):
+                return None
+            return float(value)
+        except Exception:
+            return None
 
     @staticmethod
     def _normalize_spot_symbol(raw_symbol: object) -> str:

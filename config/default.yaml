@@ -206,7 +206,42 @@ tail_pick:
   max_intraday_return: 0.06
 
   # 最低成交额，单位：元。
+  # 这是绝对流动性底线；实际运行还会叠加下面的分层成交额要求。
   min_amount: 20000000
+
+  # 尾盘成交额按市值优先分层；缺少市值字段时按股价分层兜底。
+  # 这样避免尾盘阶段几乎所有正常股票都能通过固定 2000 万门槛。
+  amount_tiers:
+    enabled: true
+
+    # 市值分层，单位：元。优先使用流通市值，其次使用总市值。
+    small_cap_max: 5000000000
+    mid_cap_max: 20000000000
+    small_cap_min_amount: 50000000
+    mid_cap_min_amount: 80000000
+    large_cap_min_amount: 120000000
+
+    # 市值缺失时的股价兜底分层。
+    low_price_max: 10
+    mid_price_max: 50
+    low_price_min_amount: 50000000
+    mid_price_min_amount: 80000000
+    high_price_min_amount: 120000000
+
+  # 快照换手率过滤。过低说明参与度不足，过高则可能是尾盘过度博弈。
+  min_turnover_rate: 1.5
+  max_turnover_rate: 12.0
+
+  # 当前盘中成交量 / 过去 20 个完整交易日日均成交量。
+  # 尾盘临近收盘时仍低于均量，说明当天承接不足。
+  min_intraday_volume_ratio_20: 1.2
+
+  # 当前价相对近 3/5 个交易日前收盘价的最大涨幅，避免连续高潮后尾盘追入。
+  max_current_return_3d: 0.12
+  max_current_return_5d: 0.18
+
+  # 打分低于该值时即使通过硬过滤也不输出。
+  min_score: 75
 
   # 参考止损比例。
   stop_loss_pct: 0.04

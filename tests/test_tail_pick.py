@@ -152,11 +152,15 @@ class FakeTailPickDataSource:
         bars = []
         dates = [d for d in self.trade_dates if start_date <= d <= end_date]
         profile = self.daily_profile.get(symbol, "weak" if symbol == "000003" else "normal")
+        if profile == "recent_hot":
+            close = 7.0
         for idx, trade_date in enumerate(dates):
             if profile == "weak":
                 close *= 0.995
             elif profile == "overextended":
                 close *= 1.001 if idx < max(len(dates) - 20, 0) else 1.025
+            elif profile == "recent_hot":
+                close *= 1.001 if idx < max(len(dates) - 5, 0) else 1.025
             else:
                 close *= 1.002
             bars.append(
@@ -272,6 +276,204 @@ def test_tail_pick_rejects_late_fade_from_high():
     assert payload.candidates_passed == 0
 
 
+def test_tail_pick_rejects_low_turnover_when_configured():
+    ds = FakeTailPickDataSource()
+    ds.quotes = [
+        IntradayQuote(
+            "000001",
+            "LowTurnover",
+            10.90,
+            10.50,
+            10.60,
+            11.00,
+            10.50,
+            2_000_000,
+            100_000_000,
+            0.4,
+            datetime(2026, 6, 4, 14, 45),
+        )
+    ]
+
+    payload = TailPickEngine(ds, {"tail_pick": {"min_turnover_rate": 1.5}}).pick(date(2026, 6, 4))
+
+    assert payload.selected == []
+    assert payload.candidates_passed == 0
+
+
+def test_tail_pick_uses_market_cap_amount_tiers_when_available():
+    ds = FakeTailPickDataSource()
+    ds.stocks = [
+        StockInfo(symbol="000001", name="SmallCap"),
+        StockInfo(symbol="000004", name="LargeCap"),
+    ]
+    ds.quotes = [
+        IntradayQuote(
+            "000001",
+            "SmallCap",
+            10.40,
+            10.00,
+            10.10,
+            10.50,
+            10.00,
+            6_000_000,
+            60_000_000,
+            2.5,
+            datetime(2026, 6, 4, 14, 45),
+            total_market_cap=4_000_000_000,
+        ),
+        IntradayQuote(
+            "000004",
+            "LargeCap",
+            10.40,
+            10.00,
+            10.10,
+            10.50,
+            10.00,
+            6_000_000,
+            60_000_000,
+            2.5,
+            datetime(2026, 6, 4, 14, 45),
+            total_market_cap=80_000_000_000,
+        ),
+    ]
+    cfg = {
+        "tail_pick": {
+            "amount_tiers": {
+                "enabled": True,
+                "small_cap_max": 5_000_000_000,
+                "mid_cap_max": 20_000_000_000,
+                "small_cap_min_amount": 50_000_000,
+                "mid_cap_min_amount": 80_000_000,
+                "large_cap_min_amount": 120_000_000,
+            }
+        }
+    }
+
+    payload = TailPickEngine(ds, cfg).pick(date(2026, 6, 4))
+
+    assert [item.quote.symbol for item in payload.selected] == ["000001"]
+    assert ds.daily_bar_symbols == ["000001"]
+
+
+def test_tail_pick_falls_back_to_price_amount_tiers_without_market_cap():
+    ds = FakeTailPickDataSource()
+    ds.stocks = [
+        StockInfo(symbol="000001", name="LowPrice"),
+        StockInfo(symbol="000004", name="HighPrice"),
+    ]
+    ds.quotes = [
+        IntradayQuote(
+            "000001",
+            "LowPrice",
+            8.20,
+            8.00,
+            8.05,
+            8.30,
+            8.00,
+            7_500_000,
+            60_000_000,
+            2.5,
+            datetime(2026, 6, 4, 14, 45),
+        ),
+        IntradayQuote(
+            "000004",
+            "HighPrice",
+            80.00,
+            76.00,
+            77.00,
+            81.00,
+            76.50,
+            750_000,
+            60_000_000,
+            2.5,
+            datetime(2026, 6, 4, 14, 45),
+        ),
+    ]
+    cfg = {
+        "tail_pick": {
+            "amount_tiers": {
+                "enabled": True,
+                "low_price_max": 10,
+                "mid_price_max": 50,
+                "low_price_min_amount": 50_000_000,
+                "mid_price_min_amount": 80_000_000,
+                "high_price_min_amount": 120_000_000,
+            }
+        }
+    }
+
+    payload = TailPickEngine(ds, cfg).pick(date(2026, 6, 4))
+
+    assert [item.quote.symbol for item in payload.selected] == ["000001"]
+    assert ds.daily_bar_symbols == ["000001"]
+
+
+def test_tail_pick_rejects_intraday_volume_below_recent_average():
+    ds = FakeTailPickDataSource()
+    ds.quotes = [
+        IntradayQuote(
+            "000001",
+            "ThinVolume",
+            10.90,
+            10.50,
+            10.60,
+            11.00,
+            10.50,
+            500_000,
+            100_000_000,
+            2.0,
+            datetime(2026, 6, 4, 14, 45),
+        )
+    ]
+
+    payload = TailPickEngine(ds, {"tail_pick": {"min_intraday_volume_ratio_20": 1.2}}).pick(date(2026, 6, 4))
+
+    assert payload.selected == []
+    assert payload.candidates_passed == 0
+
+
+def test_tail_pick_rejects_recently_overheated_candidate():
+    ds = FakeTailPickDataSource()
+    ds.daily_profile = {"000001": "recent_hot"}
+    ds.quotes = [
+        IntradayQuote(
+            "000001",
+            "RecentHot",
+            10.90,
+            10.50,
+            10.60,
+            11.00,
+            10.50,
+            2_000_000,
+            100_000_000,
+            2.0,
+            datetime(2026, 6, 4, 14, 45),
+        )
+    ]
+
+    payload = TailPickEngine(
+        ds,
+        {
+            "tail_pick": {
+                "max_current_return_5d": 0.08,
+                "max_close_above_ma20_pct": 0.30,
+            }
+        },
+    ).pick(date(2026, 6, 4))
+
+    assert payload.selected == []
+    assert payload.candidates_passed == 0
+
+
+def test_tail_pick_rejects_candidate_below_minimum_score():
+    ds = FakeTailPickDataSource()
+
+    payload = TailPickEngine(ds, {"tail_pick": {"min_score": 99}}).pick(date(2026, 6, 4))
+
+    assert payload.selected == []
+    assert payload.candidates_passed == 0
+
+
 def test_tail_pick_rejects_overextended_daily_candidate():
     ds = FakeTailPickDataSource()
     ds.daily_profile = {"000001": "overextended"}
@@ -371,6 +573,8 @@ def test_akshare_spot_rows_normalize_to_intraday_quotes():
                 "成交量": 1234567,
                 "成交额": 12800000,
                 "换手率": 2.3,
+                "总市值": 12300000000,
+                "流通市值": 9800000000,
             }
         ]
     )
@@ -379,6 +583,8 @@ def test_akshare_spot_rows_normalize_to_intraday_quotes():
 
     assert quotes[0].symbol == "000001"
     assert quotes[0].intraday_return == 0.05
+    assert quotes[0].total_market_cap == 12300000000
+    assert quotes[0].float_market_cap == 9800000000
 
 
 def test_akshare_spot_rows_strip_market_prefix_from_symbol():

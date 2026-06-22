@@ -18,6 +18,8 @@ class IntradayQuote:
     amount: float
     turnover_rate: float | None = None
     snapshot_time: datetime | None = None
+    total_market_cap: float | None = None
+    float_market_cap: float | None = None
 
     @property
     def intraday_return(self) -> float:
