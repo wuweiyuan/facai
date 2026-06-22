@@ -16,17 +16,35 @@ mkdir -p "${REPORT_DIR}"
 cd "${PROJECT_ROOT}"
 
 AUCTION_STATUS=0
+SKIP_RUN=0
 {
   echo "=== auction-pick auto run ${RUN_TIME} ==="
   echo "project_root=${PROJECT_ROOT}"
   echo "python=${PYTHON_BIN}"
   echo "count=${AUCTION_COUNT}"
   set +e
-  "${PYTHON_BIN}" -m app.main auction-pick --date "${RUN_DATE}" --count "${AUCTION_COUNT}" --output table
-  AUCTION_STATUS=$?
+  TRADING_DAY_REASON="$("${PYTHON_BIN}" -m app.trading_calendar --date "${RUN_DATE}")"
+  TRADING_DAY_STATUS=$?
   set -e
+  echo "trading_day_check=${TRADING_DAY_REASON}"
+  if [[ "${TRADING_DAY_STATUS}" -eq 2 ]]; then
+    echo "not an A-share trading day; skip auction-pick"
+    SKIP_RUN=1
+  elif [[ "${TRADING_DAY_STATUS}" -ne 0 ]]; then
+    echo "trading day check failed status=${TRADING_DAY_STATUS}"
+    AUCTION_STATUS="${TRADING_DAY_STATUS}"
+  fi
+
+  if [[ "${SKIP_RUN}" -eq 0 && "${AUCTION_STATUS}" -eq 0 ]]; then
+    set +e
+    "${PYTHON_BIN}" -m app.main auction-pick --date "${RUN_DATE}" --count "${AUCTION_COUNT}" --output table
+    AUCTION_STATUS=$?
+    set -e
+  fi
   if [[ "${AUCTION_STATUS}" -ne 0 ]]; then
     echo "=== auction-pick auto run failed status=${AUCTION_STATUS} $(date '+%F %T') ==="
+  elif [[ "${SKIP_RUN}" -eq 1 ]]; then
+    echo "=== auction-pick auto run skipped $(date '+%F %T') ==="
   else
     echo "=== auction-pick auto run complete $(date '+%F %T') ==="
   fi
@@ -35,6 +53,10 @@ AUCTION_STATUS=0
 cat "${TMP_LOG}" >> "${DAILY_LOG}"
 cp "${TMP_LOG}" "${LATEST_LOG}"
 rm -f "${TMP_LOG}"
+
+if [[ "${SKIP_RUN}" -eq 1 ]]; then
+  exit 0
+fi
 
 if [[ "${AUCTION_STATUS}" -eq 0 ]]; then
   osascript -e 'display notification "竞价策略已完成，请查看 latest.log" with title "竞价选股"'

@@ -432,6 +432,8 @@ def test_tail_pick_auto_runner_notifies_and_opens_latest_log():
 
     assert "TAIL_STATUS=0" in script
     assert "TAIL_STATUS=$?" in script
+    assert "app.trading_calendar" in script
+    assert "not an A-share trading day; skip tail-pick" in script
     assert "osascript -e" in script
     assert "display notification" in script
     assert 'open "${LATEST_LOG}"' in script

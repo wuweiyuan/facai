@@ -348,6 +348,8 @@ def test_auction_pick_auto_runner_notifies_and_opens_latest_log():
 
     assert "AUCTION_STATUS=0" in script
     assert "AUCTION_STATUS=$?" in script
+    assert "app.trading_calendar" in script
+    assert "not an A-share trading day; skip auction-pick" in script
     assert "auction-pick" in script
     assert 'REPORT_DIR="${PROJECT_ROOT}/reports/auction_pick"' in script
     assert "display notification" in script

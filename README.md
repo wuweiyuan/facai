@@ -255,6 +255,19 @@ python3 -m app.main tail-pick
 launchctl list com.wayne.tail-pick
 ```
 
+### 自动运行休市判断
+
+尾盘和竞价自动任务都会先检查当天是不是 A 股交易日。周末或 `data/a_share_closed_weekdays.csv` 里记录的工作日休市日期，会只写日志并跳过策略，不弹通知、不打开结果文件。
+
+休市缓存当前按年度维护。下一年交易所日历可查询后，运行下面命令更新指定年份：
+
+```bash
+cd /Users/wayne/data/myslef/发财/股票
+python3 scripts/update_a_share_calendar.py --year 2027
+```
+
+这个命令会从 `akshare` 拉 A 股交易日历，重新生成该年份所有“周一到周五但不交易”的日期；其他年份记录会保留。
+
 ### 竞价自动运行
 
 macOS 可以安装用户级 `launchd` 定时任务，工作日 `09:26` 自动运行竞价策略：
