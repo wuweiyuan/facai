@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-06-24 19:35:12",
+  "generated_at": "2026-06-25 19:36:10",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-06-26",
         "2026-06-25",
         "2026-06-24",
         "2026-06-23",
@@ -89,7 +90,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-06-24 19:35:12",
+      "latest_run_time": "2026-06-25 19:36:10",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -1998,6 +1999,18 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 2,
           "has_observation_candidates": true
         },
+        "2026-06-26": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-relative"
+          ],
+          "chosen_strategy": "recommend-relative",
+          "has_recommendations": true,
+          "chosen_count": 2,
+          "formal_action": "cash",
+          "opportunity_count": 2,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2241,6 +2254,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-06-26",
         "2026-06-25",
         "2026-06-24",
         "2026-06-23",
@@ -2267,8 +2281,36 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-06-24 19:35:12",
+      "latest_run_time": "2026-06-25 19:36:10",
       "records": [
+        {
+          "run_time": "2026-06-25 19:36:10",
+          "trade_date": "2026-06-26",
+          "symbol": "000519",
+          "name": "中兵红箭",
+          "threshold_mode": "normal",
+          "score_total": 77.31,
+          "close": 21.64,
+          "stop_loss_price": 19.93,
+          "take_profit_price": 25.05,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-06-25 19:36:10",
+          "trade_date": "2026-06-26",
+          "symbol": "600630",
+          "name": "龙头股份",
+          "threshold_mode": "normal",
+          "score_total": 74.76,
+          "close": 9.47,
+          "stop_loss_price": 8.73,
+          "take_profit_price": 10.94,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-06-24 19:35:12",
           "trade_date": "2026-06-25",
@@ -3379,6 +3421,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-06-26",
     "2026-06-25",
     "2026-06-24",
     "2026-06-23",
