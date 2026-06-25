@@ -20,3 +20,7 @@
 {"entry_price": null, "name": "", "rank": null, "run_time": "2026-06-23 14:46:47", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-06-23"}
 {"entry_price": null, "name": "", "rank": null, "run_time": "2026-06-24 09:27:02", "score": null, "selected": false, "source": "cli", "strategy": "auction-pick", "symbol": "", "trade_date": "2026-06-24"}
 {"entry_price": null, "name": "", "rank": null, "run_time": "2026-06-24 14:46:16", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-06-24"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-06-24 15:37:48", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-06-24"}
+{"entry_price": 92.6, "name": "洁美科技", "rank": 1, "run_time": "2026-06-25 09:27:39", "score": 80.25, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "002859", "trade_date": "2026-06-25"}
+{"entry_price": 7.85, "name": "旗滨集团", "rank": 2, "run_time": "2026-06-25 09:27:39", "score": 78.41, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "601636", "trade_date": "2026-06-25"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-06-25 14:45:02", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-06-25"}
