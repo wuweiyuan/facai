@@ -65,3 +65,4 @@ run_time,target_date,signal_date,market_state,market_reason,tried_strategies,cho
 2026-06-22 19:59:34,2026-06-23,2026-06-22,bull,ok,recommend-relative,recommend-relative,true,2
 2026-06-23 19:32:27,2026-06-24,2026-06-23,neutral,ok,recommend-relative,recommend-relative,true,2
 2026-06-24 19:35:12,2026-06-25,2026-06-24,neutral,ok,recommend-relative,recommend-relative,true,2
+2026-06-25 19:36:10,2026-06-26,2026-06-25,neutral,ok,recommend-relative,recommend-relative,true,2
