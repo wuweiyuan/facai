@@ -202,8 +202,8 @@ tail_pick:
   count: 2
 
   # 尾盘相对昨收的合理涨幅区间。
-  min_intraday_return: 0.01
-  max_intraday_return: 0.06
+  min_intraday_return: 0.006
+  max_intraday_return: 0.075
 
   # 最低成交额，单位：元。
   # 这是绝对流动性底线；实际运行还会叠加下面的分层成交额要求。
@@ -217,31 +217,31 @@ tail_pick:
     # 市值分层，单位：元。优先使用流通市值，其次使用总市值。
     small_cap_max: 5000000000
     mid_cap_max: 20000000000
-    small_cap_min_amount: 50000000
-    mid_cap_min_amount: 80000000
-    large_cap_min_amount: 120000000
+    small_cap_min_amount: 40000000
+    mid_cap_min_amount: 60000000
+    large_cap_min_amount: 100000000
 
     # 市值缺失时的股价兜底分层。
     low_price_max: 10
     mid_price_max: 50
-    low_price_min_amount: 50000000
-    mid_price_min_amount: 80000000
-    high_price_min_amount: 120000000
+    low_price_min_amount: 40000000
+    mid_price_min_amount: 60000000
+    high_price_min_amount: 100000000
 
   # 快照换手率过滤。过低说明参与度不足，过高则可能是尾盘过度博弈。
-  min_turnover_rate: 1.5
-  max_turnover_rate: 12.0
+  min_turnover_rate: 0.8
+  max_turnover_rate: 16.0
 
   # 当前盘中成交量 / 过去 20 个完整交易日日均成交量。
   # 尾盘临近收盘时仍低于均量，说明当天承接不足。
-  min_intraday_volume_ratio_20: 1.2
+  min_intraday_volume_ratio_20: 0.9
 
   # 当前价相对近 3/5 个交易日前收盘价的最大涨幅，避免连续高潮后尾盘追入。
-  max_current_return_3d: 0.12
-  max_current_return_5d: 0.18
+  max_current_return_3d: 0.16
+  max_current_return_5d: 0.24
 
   # 打分低于该值时即使通过硬过滤也不输出。
-  min_score: 75
+  min_score: 68
 
   # 参考止损比例。
   stop_loss_pct: 0.04
@@ -253,10 +253,10 @@ tail_pick:
   min_latest_vs_open: 1.0
 
   # 当前价在日内振幅中的位置，越高越要求收在高位。
-  min_close_position: 0.65
+  min_close_position: 0.58
 
   # 当前价相对日内高点最大允许回落幅度。
-  max_fade_from_high: 0.025
+  max_fade_from_high: 0.04
 
   # 日线不能离 20 日线太远，避免高位过热追涨。
   max_close_above_ma20_pct: 0.10
@@ -268,7 +268,7 @@ tail_pick:
   min_ma20_slope5: 0.0
 
   # 入围候选太少时说明市场宽度不足，默认空仓。
-  min_required_candidates: 8
+  min_required_candidates: 3
 
 # 盘中短线环境提示。
 # 第一版只服务独立命令 `intraday-regime`，不会影响 auction-pick / tail-pick 的选股输出。

@@ -5,8 +5,9 @@ from pathlib import Path
 
 import pandas as pd
 
+from app.config import load_config
 from app.data_source.akshare_client import AkshareDataSource
-from app.main import build_parser
+from app.main import _print_tail_pick_payload, build_parser
 from app.models import DailyBar, StockInfo
 from app.tail_pick.automation import build_launchd_plist
 from app.tail_pick.engine import TailPickEngine
@@ -197,9 +198,78 @@ def test_tail_pick_returns_no_trade_when_passed_candidates_below_minimum():
     payload = engine.pick(date(2026, 6, 4))
 
     assert payload.selected == []
+    assert [item.quote.symbol for item in payload.observation_candidates] == ["000004", "000001"]
     assert payload.candidates_scanned == 4
     assert payload.candidates_passed == 2
     assert payload.filters["min_required_candidates"] == 3
+
+
+def test_tail_pick_payload_serializes_observation_candidates_when_width_is_insufficient():
+    engine = TailPickEngine(FakeTailPickDataSource(), {"tail_pick": {"min_required_candidates": 3}})
+
+    payload = engine.pick(date(2026, 6, 4)).as_dict()
+
+    assert payload["selected"] == []
+    assert [item["symbol"] for item in payload["observation_candidates"]] == ["000004", "000001"]
+
+
+def test_tail_pick_prints_observation_candidates_when_width_is_insufficient(capsys):
+    engine = TailPickEngine(FakeTailPickDataSource(), {"tail_pick": {"min_required_candidates": 3}})
+    payload = engine.pick(date(2026, 6, 4))
+
+    _print_tail_pick_payload(payload, signal_path=None)
+
+    captured = capsys.readouterr()
+    assert "入围=2" in captured.out
+    assert "低于最小宽度 3" in captured.out
+    assert "[尾盘] 观察 1: 000004 Second" in captured.out
+
+
+def test_tail_pick_default_config_uses_loose_c_calibration():
+    cfg = load_config("config/default.yaml")
+    tail_cfg = cfg["tail_pick"]
+
+    assert tail_cfg["min_required_candidates"] == 3
+    assert tail_cfg["min_intraday_return"] == 0.006
+    assert tail_cfg["max_intraday_return"] == 0.075
+    assert tail_cfg["min_turnover_rate"] == 0.8
+    assert tail_cfg["max_turnover_rate"] == 16.0
+    assert tail_cfg["min_intraday_volume_ratio_20"] == 0.9
+    assert tail_cfg["max_current_return_3d"] == 0.16
+    assert tail_cfg["max_current_return_5d"] == 0.24
+    assert tail_cfg["min_score"] == 68
+    assert tail_cfg["min_close_position"] == 0.58
+    assert tail_cfg["max_fade_from_high"] == 0.04
+    assert tail_cfg["amount_tiers"]["small_cap_min_amount"] == 40000000
+    assert tail_cfg["amount_tiers"]["mid_cap_min_amount"] == 60000000
+    assert tail_cfg["amount_tiers"]["large_cap_min_amount"] == 100000000
+
+
+def test_tail_pick_payload_includes_filter_rejection_counts(capsys):
+    ds = FakeTailPickDataSource()
+    ds.quotes = [
+        IntradayQuote(
+            "000001",
+            "Leader",
+            9.9,
+            10.5,
+            10.6,
+            10.7,
+            9.8,
+            2_000_000,
+            20_000_000,
+            3.0,
+            datetime(2026, 6, 4, 14, 45),
+        )
+    ]
+
+    payload = TailPickEngine(ds, {}).pick(date(2026, 6, 4))
+
+    assert payload.as_dict()["filter_rejections"]["intraday_return"] == 1
+    _print_tail_pick_payload(payload, signal_path=None)
+    captured = capsys.readouterr()
+    assert "筛选诊断" in captured.out
+    assert "涨幅区间: 1" in captured.out
 
 
 def test_tail_pick_returns_no_trade_when_all_quotes_fail():

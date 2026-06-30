@@ -322,6 +322,73 @@ def _print_intraday_regime_hint(base_cfg: dict, ds, trade_date: date, session: s
         print(f"[出手提示] 原因: {'；'.join(payload.reasons[:3])}")
 
 
+def _print_tail_pick_item(label: str, rank: int, item) -> None:
+    print(f"[尾盘] {label} {rank}: {item.quote.symbol} {item.quote.name}")
+    print(f"现价: {item.quote.latest:.2f} 涨幅: {item.intraday_return:.2%} 分数: {item.score:.2f}")
+    print(f"参考买入: {item.entry_price:.2f} 止损: {item.stop_loss_price:.2f}")
+    print("理由:")
+    for idx, reason in enumerate(item.reasons, start=1):
+        print(f"  {idx}. {reason}")
+
+
+def _print_tail_pick_rejection_summary(filter_rejections: dict[str, int]) -> None:
+    if not filter_rejections:
+        return
+    labels = {
+        "invalid_quote": "无效行情",
+        "intraday_return": "涨幅区间",
+        "min_amount": "最低成交额",
+        "tier_amount": "分层成交额",
+        "turnover": "换手率",
+        "below_open": "低于开盘",
+        "close_position": "收盘位置",
+        "fade_from_high": "高点回落",
+        "snapshot_candidate_cap": "快照数量上限",
+        "daily_data": "日线数据",
+        "daily_trend": "日线趋势",
+        "ma20_distance": "偏离20日线",
+        "rsi14": "RSI过热",
+        "ma20_slope": "20日线斜率",
+        "volume_ratio": "量比",
+        "current_return_3d": "3日过热",
+        "current_return_5d": "5日过热",
+        "score": "分数",
+    }
+    parts = []
+    for key, count in sorted(filter_rejections.items(), key=lambda item: (-item[1], item[0])):
+        parts.append(f"{labels.get(key, key)}: {count}")
+    print(f"[尾盘] 筛选诊断: {'；'.join(parts)}")
+
+
+def _print_tail_pick_payload(payload, signal_path: str | None) -> None:
+    print(
+        f"[尾盘] 日期={payload.trade_date.isoformat()} "
+        f"扫描={payload.candidates_scanned} 入围={payload.candidates_passed}"
+    )
+    _print_tail_pick_rejection_summary(payload.filter_rejections)
+    if not payload.selected:
+        if payload.observation_candidates:
+            min_required = int(payload.filters.get("min_required_candidates", 1))
+            print(
+                f"[尾盘] 入围 {payload.candidates_passed} 只，低于最小宽度 {min_required}，"
+                "只列为观察候选，建议空仓或轻仓观察。"
+            )
+            for rank, item in enumerate(payload.observation_candidates, start=1):
+                _print_tail_pick_item("观察", rank, item)
+        else:
+            print("[尾盘] 当前没有符合条件的尾盘候选，建议空仓。")
+        if signal_path:
+            print(f"已写入文档: {signal_path}")
+        return
+    for rank, item in enumerate(payload.selected, start=1):
+        _print_tail_pick_item("候选", rank, item)
+        print("次日卖出规则:")
+        for idx, rule in enumerate(item.next_day_sell_rules, start=1):
+            print(f"  {idx}. {rule}")
+    if signal_path:
+        print(f"已写入文档: {signal_path}")
+
+
 def _resolve_adaptive_pick_count(base_cfg: dict, cmd_name: str, override_count: int | None) -> int | None:
     if override_count is not None:
         return override_count
@@ -1075,27 +1142,7 @@ def main() -> None:
             print(json.dumps(payload.as_dict(), ensure_ascii=False, indent=2))
             return
         _print_intraday_regime_hint(base_cfg, ds, trade_date, session="tail", strategy="tail-pick")
-        print(
-            f"[尾盘] 日期={payload.trade_date.isoformat()} "
-            f"扫描={payload.candidates_scanned} 入围={payload.candidates_passed}"
-        )
-        if not payload.selected:
-            print("[尾盘] 当前没有符合条件的尾盘候选，建议空仓。")
-            if signal_path:
-                print(f"已写入文档: {signal_path}")
-            return
-        for rank, item in enumerate(payload.selected, start=1):
-            print(f"[尾盘] 候选 {rank}: {item.quote.symbol} {item.quote.name}")
-            print(f"现价: {item.quote.latest:.2f} 涨幅: {item.intraday_return:.2%} 分数: {item.score:.2f}")
-            print(f"参考买入: {item.entry_price:.2f} 止损: {item.stop_loss_price:.2f}")
-            print("理由:")
-            for idx, reason in enumerate(item.reasons, start=1):
-                print(f"  {idx}. {reason}")
-            print("次日卖出规则:")
-            for idx, rule in enumerate(item.next_day_sell_rules, start=1):
-                print(f"  {idx}. {rule}")
-        if signal_path:
-            print(f"已写入文档: {signal_path}")
+        _print_tail_pick_payload(payload, signal_path=str(signal_path) if signal_path else None)
         return
 
     if args.cmd == "auction-pick":

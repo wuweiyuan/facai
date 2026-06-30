@@ -27,3 +27,9 @@
 {"entry_price": 8.23, "name": "天娱数科", "rank": 1, "run_time": "2026-06-26 09:27:10", "score": 81.32, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "002354", "trade_date": "2026-06-26"}
 {"entry_price": 126.06, "name": "华盛昌", "rank": 2, "run_time": "2026-06-26 09:27:10", "score": 57.18, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "002980", "trade_date": "2026-06-26"}
 {"entry_price": null, "name": "", "rank": null, "run_time": "2026-06-26 14:45:04", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-06-26"}
+{"entry_price": 16.86, "name": "领益智造", "rank": 1, "run_time": "2026-06-29 09:27:49", "score": 79.32, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "002600", "trade_date": "2026-06-29"}
+{"entry_price": 43.47, "name": "锡业股份", "rank": 2, "run_time": "2026-06-29 09:27:49", "score": 71.46, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "000960", "trade_date": "2026-06-29"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-06-29 14:45:37", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-06-29"}
+{"entry_price": 112.0, "name": "亨通光电", "rank": 1, "run_time": "2026-06-30 09:27:26", "score": 86.82, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "600487", "trade_date": "2026-06-30"}
+{"entry_price": 144.01, "name": "大族激光", "rank": 2, "run_time": "2026-06-30 09:27:26", "score": 76.51, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "002008", "trade_date": "2026-06-30"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-06-30 14:44:53", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-06-30"}

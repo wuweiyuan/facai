@@ -28,17 +28,21 @@ class TailPickDataSource(Protocol):
 class TailPickPayload:
     trade_date: date
     selected: list[TailPickResult]
+    observation_candidates: list[TailPickResult]
     candidates_scanned: int
     candidates_passed: int
     filters: dict[str, float]
+    filter_rejections: dict[str, int]
 
     def as_dict(self) -> dict[str, Any]:
         return {
             "trade_date": self.trade_date.isoformat(),
             "selected": [item.as_dict() for item in self.selected],
+            "observation_candidates": [item.as_dict() for item in self.observation_candidates],
             "candidates_scanned": self.candidates_scanned,
             "candidates_passed": self.candidates_passed,
             "filters": dict(self.filters),
+            "filter_rejections": dict(self.filter_rejections),
         }
 
 
@@ -54,23 +58,31 @@ class TailPickEngine:
         allowed_symbols = {stock.symbol for stock in universe}
         quotes = [q for q in self.data_source.get_intraday_quotes() if q.symbol in allowed_symbols]
         scanned_count = len(quotes)
-        quotes = self._prefilter_quotes(quotes, filters)
+        filter_rejections: dict[str, int] = {}
+        quotes = self._prefilter_quotes(quotes, filters, filter_rejections)
         ranked: list[TailPickResult] = []
         for quote in quotes:
-            result = self._score_quote(quote, trade_date, daily_end_date, filters)
+            result = self._score_quote(quote, trade_date, daily_end_date, filters, filter_rejections)
             if result is not None:
                 ranked.append(result)
         ranked.sort(key=lambda item: (-item.score, item.quote.symbol))
         pick_count = max(int(filters.get("count", 2)), 1)
         min_required_candidates = max(int(filters.get("min_required_candidates", 1)), 1)
         selected = ranked[:pick_count] if len(ranked) >= min_required_candidates else []
+        observation_candidates = [] if selected else ranked[:pick_count]
         return TailPickPayload(
             trade_date=trade_date,
             selected=selected,
+            observation_candidates=observation_candidates,
             candidates_scanned=scanned_count,
             candidates_passed=len(ranked),
             filters=filters,
+            filter_rejections=filter_rejections,
         )
+
+    @staticmethod
+    def _reject(filter_rejections: dict[str, int], reason: str) -> None:
+        filter_rejections[reason] = filter_rejections.get(reason, 0) + 1
 
     def _filters(self) -> dict[str, float]:
         cfg = self.cfg.get("tail_pick", {}) if isinstance(self.cfg.get("tail_pick", {}), dict) else {}
@@ -126,6 +138,7 @@ class TailPickEngine:
     def _prefilter_quotes(
         quotes: list[IntradayQuote],
         filters: dict[str, float],
+        filter_rejections: dict[str, int],
     ) -> list[IntradayQuote]:
         out: list[IntradayQuote] = []
         for quote in quotes:
@@ -138,26 +151,38 @@ class TailPickEngine:
                 or quote.volume <= 0
                 or quote.amount <= 0
             ):
+                TailPickEngine._reject(filter_rejections, "invalid_quote")
                 continue
             intraday_return = quote.intraday_return
             if intraday_return < filters["min_intraday_return"] or intraday_return > filters["max_intraday_return"]:
+                TailPickEngine._reject(filter_rejections, "intraday_return")
                 continue
             if quote.amount < filters["min_amount"]:
+                TailPickEngine._reject(filter_rejections, "min_amount")
                 continue
             if quote.amount < TailPickEngine._required_amount(quote, filters):
+                TailPickEngine._reject(filter_rejections, "tier_amount")
                 continue
             if not TailPickEngine._passes_turnover_filter(quote, filters):
+                TailPickEngine._reject(filter_rejections, "turnover")
                 continue
             if quote.latest < quote.open * filters["min_latest_vs_open"]:
+                TailPickEngine._reject(filter_rejections, "below_open")
                 continue
             if TailPickEngine._close_position(quote) < filters["min_close_position"]:
+                TailPickEngine._reject(filter_rejections, "close_position")
                 continue
             if quote.high > 0 and quote.latest / quote.high - 1.0 < -filters["max_fade_from_high"]:
+                TailPickEngine._reject(filter_rejections, "fade_from_high")
                 continue
             out.append(quote)
         out.sort(key=lambda item: (-item.amount, item.symbol))
         max_candidates = max(int(filters.get("max_snapshot_candidates", 60)), 1)
-        return out[:max_candidates]
+        capped = out[:max_candidates]
+        skipped_by_cap = len(out) - len(capped)
+        if skipped_by_cap > 0:
+            filter_rejections["snapshot_candidate_cap"] = filter_rejections.get("snapshot_candidate_cap", 0) + skipped_by_cap
+        return capped
 
     @staticmethod
     def _required_amount(quote: IntradayQuote, filters: dict[str, float]) -> float:
@@ -184,6 +209,7 @@ class TailPickEngine:
         trade_date: date,
         daily_end_date: date,
         filters: dict[str, float],
+        filter_rejections: dict[str, int],
     ) -> TailPickResult | None:
         intraday_return = quote.intraday_return
 
@@ -191,9 +217,11 @@ class TailPickEngine:
             bars = self.data_source.get_daily_bars(quote.symbol, daily_end_date - timedelta(days=160), daily_end_date)
         except Exception as exc:
             print(f"[尾盘] 跳过 {quote.symbol} {quote.name}: 日线数据获取失败: {exc}", file=sys.stderr)
+            TailPickEngine._reject(filter_rejections, "daily_data")
             return None
         df = add_indicators(bars_to_df(bars))
         if df.empty:
+            TailPickEngine._reject(filter_rejections, "daily_data")
             return None
         latest_daily = df.iloc[-1]
         close = float(latest_daily["close"])
@@ -203,25 +231,33 @@ class TailPickEngine:
         ma20_slope5 = float(latest_daily["ma20_slope5"])
         distance_above_ma20 = close / ma20 - 1.0 if ma20 > 0 else 0.0
         if close < ma20 or ma20 < ma60:
+            TailPickEngine._reject(filter_rejections, "daily_trend")
             return None
         if distance_above_ma20 > filters["max_close_above_ma20_pct"]:
+            TailPickEngine._reject(filter_rejections, "ma20_distance")
             return None
         if rsi14 == rsi14 and rsi14 > filters["max_rsi14"]:
+            TailPickEngine._reject(filter_rejections, "rsi14")
             return None
         if ma20_slope5 != ma20_slope5 or ma20_slope5 < filters["min_ma20_slope5"]:
+            TailPickEngine._reject(filter_rejections, "ma20_slope")
             return None
         vol_ma20 = float(latest_daily["vol_ma20"])
         if filters["min_intraday_volume_ratio_20"] > 0:
             if vol_ma20 != vol_ma20 or vol_ma20 <= 0:
+                TailPickEngine._reject(filter_rejections, "volume_ratio")
                 return None
             intraday_volume_ratio_20 = quote.volume / vol_ma20
             if intraday_volume_ratio_20 < filters["min_intraday_volume_ratio_20"]:
+                TailPickEngine._reject(filter_rejections, "volume_ratio")
                 return None
         current_return_3d = self._current_return_from_prior_close(df, quote.latest, 3)
         if current_return_3d is not None and current_return_3d > filters["max_current_return_3d"]:
+            TailPickEngine._reject(filter_rejections, "current_return_3d")
             return None
         current_return_5d = self._current_return_from_prior_close(df, quote.latest, 5)
         if current_return_5d is not None and current_return_5d > filters["max_current_return_5d"]:
+            TailPickEngine._reject(filter_rejections, "current_return_5d")
             return None
 
         close_position = self._close_position(quote)
@@ -234,6 +270,7 @@ class TailPickEngine:
         fade_penalty = max(1.0 - quote.latest / quote.high, 0.0) * 100.0 if quote.high > 0 else 0.0
         score = amount_score + return_score + position_score + trend_score - fade_penalty
         if score < filters["min_score"]:
+            TailPickEngine._reject(filter_rejections, "score")
             return None
         return TailPickResult(
             trade_date=trade_date,
