@@ -477,12 +477,13 @@ def _build_data_source(cfg: dict) -> AkshareDataSource:
 def _build_intraday_pick_data_source(cfg: dict) -> AkshareDataSource:
     ds_cfg = cfg.get("data_source", {})
     intraday_cfg = cfg.get("intraday_pick", {}) if isinstance(cfg.get("intraday_pick", {}), dict) else {}
+    cache_dir = intraday_cfg.get("cache_dir", ds_cfg.get("cache_dir", ".cache/akshare"))
     return AkshareDataSource(
         request_timeout_sec=float(ds_cfg.get("request_timeout_sec", 6.0)),
         hist_retries=int(ds_cfg.get("hist_retries", 3)),
         use_spot_name_merge=bool(ds_cfg.get("use_spot_name_merge", False)),
         cache_enabled=bool(ds_cfg.get("cache_enabled", True)),
-        cache_dir=str(intraday_cfg.get("cache_dir", ".cache/intraday-akshare")),
+        cache_dir=str(cache_dir),
     )
 
 

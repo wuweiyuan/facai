@@ -79,9 +79,9 @@ data_source:
 
 # 盘中独立命令的数据源覆盖。
 # 只影响 auction-pick / tail-pick，不影响 recommend-adaptive、回测或 dashboard。
-# 用项目内独立缓存目录，避免读取当前 .cache/akshare 指向的 OneDrive 缓存。
+# 默认共享主缓存目录，和 data_source.cache_dir 保持一致。
 intraday_pick:
-  cache_dir: .cache/intraday-akshare
+  cache_dir: .cache/akshare
 
 # 本地板块/行业映射文件。
 # 格式要求：CSV，至少包含两列：
