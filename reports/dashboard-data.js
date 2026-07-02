@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-07-01 19:40:56",
+  "generated_at": "2026-07-02 20:01:43",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-07-03",
         "2026-07-02",
         "2026-07-01",
         "2026-06-30",
@@ -94,7 +95,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-07-01 19:40:56",
+      "latest_run_time": "2026-07-02 20:01:43",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2064,6 +2065,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 2,
           "has_observation_candidates": true
         },
+        "2026-07-03": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2307,6 +2321,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-07-03",
         "2026-07-02",
         "2026-07-01",
         "2026-06-30",
@@ -2338,8 +2353,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-07-01 19:40:56",
+      "latest_run_time": "2026-07-02 20:01:43",
       "records": [
+        {
+          "run_time": "2026-07-02 20:01:43",
+          "trade_date": "2026-07-03",
+          "symbol": "600179",
+          "name": "安通控股",
+          "threshold_mode": "normal",
+          "score_total": 65.38,
+          "close": 4.64,
+          "stop_loss_price": 4.28,
+          "take_profit_price": 5.34,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-02 20:01:43",
+          "trade_date": "2026-07-03",
+          "symbol": "000429",
+          "name": "粤高速Ａ",
+          "threshold_mode": "normal",
+          "score_total": 64.02,
+          "close": 13.81,
+          "stop_loss_price": 13.22,
+          "take_profit_price": 14.98,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-02 20:01:43",
+          "trade_date": "2026-07-03",
+          "symbol": "002838",
+          "name": "道恩股份",
+          "threshold_mode": "normal",
+          "score_total": 62.36,
+          "close": 33.35,
+          "stop_loss_price": 30.62,
+          "take_profit_price": 38.79,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-07-01 19:40:56",
           "trade_date": "2026-07-02",
@@ -3604,6 +3661,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-07-03",
     "2026-07-02",
     "2026-07-01",
     "2026-06-30",
