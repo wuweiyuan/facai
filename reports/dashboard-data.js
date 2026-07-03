@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-07-02 20:01:43",
+  "generated_at": "2026-07-03 22:13:55",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-07-06",
         "2026-07-03",
         "2026-07-02",
         "2026-07-01",
@@ -95,7 +96,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-07-02 20:01:43",
+      "latest_run_time": "2026-07-03 22:13:54",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2078,6 +2079,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-07-06": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2321,6 +2335,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-07-06",
         "2026-07-03",
         "2026-07-02",
         "2026-07-01",
@@ -2353,8 +2368,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-07-02 20:01:43",
+      "latest_run_time": "2026-07-03 22:13:54",
       "records": [
+        {
+          "run_time": "2026-07-03 22:13:54",
+          "trade_date": "2026-07-06",
+          "symbol": "002134",
+          "name": "天津普林",
+          "threshold_mode": "normal",
+          "score_total": 66.89,
+          "close": 29.12,
+          "stop_loss_price": 25.93,
+          "take_profit_price": 35.49,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-03 22:13:54",
+          "trade_date": "2026-07-06",
+          "symbol": "000782",
+          "name": "恒申新材",
+          "threshold_mode": "normal",
+          "score_total": 63.84,
+          "close": 7.82,
+          "stop_loss_price": 7.03,
+          "take_profit_price": 9.38,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-03 22:13:54",
+          "trade_date": "2026-07-06",
+          "symbol": "603255",
+          "name": "鼎际得",
+          "threshold_mode": "normal",
+          "score_total": 60.29,
+          "close": 33.47,
+          "stop_loss_price": 30.43,
+          "take_profit_price": 39.54,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-07-02 20:01:43",
           "trade_date": "2026-07-03",
@@ -3661,6 +3718,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-07-06",
     "2026-07-03",
     "2026-07-02",
     "2026-07-01",
