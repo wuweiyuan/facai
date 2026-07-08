@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-07-07 20:03:51",
+  "generated_at": "2026-07-08 20:29:51",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-07-09",
         "2026-07-08",
         "2026-07-07",
         "2026-07-06",
@@ -98,7 +99,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-07-07 20:03:51",
+      "latest_run_time": "2026-07-08 20:29:51",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2118,6 +2119,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 2,
           "has_observation_candidates": true
         },
+        "2026-07-09": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2361,6 +2375,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-07-09",
         "2026-07-08",
         "2026-07-07",
         "2026-07-06",
@@ -2396,8 +2411,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-07-07 20:03:51",
+      "latest_run_time": "2026-07-08 20:29:51",
       "records": [
+        {
+          "run_time": "2026-07-08 20:29:51",
+          "trade_date": "2026-07-09",
+          "symbol": "002577",
+          "name": "雷柏科技",
+          "threshold_mode": "normal",
+          "score_total": 65.41,
+          "close": 18.8,
+          "stop_loss_price": 17.17,
+          "take_profit_price": 22.04,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-08 20:29:51",
+          "trade_date": "2026-07-09",
+          "symbol": "002901",
+          "name": "大博医疗",
+          "threshold_mode": "normal",
+          "score_total": 65.09,
+          "close": 43.33,
+          "stop_loss_price": 40.67,
+          "take_profit_price": 48.64,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-08 20:29:51",
+          "trade_date": "2026-07-09",
+          "symbol": "002937",
+          "name": "兴瑞科技",
+          "threshold_mode": "normal",
+          "score_total": 63.03,
+          "close": 43.08,
+          "stop_loss_price": 38.67,
+          "take_profit_price": 51.88,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-07-07 20:03:51",
           "trade_date": "2026-07-08",
@@ -3802,6 +3859,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-07-09",
     "2026-07-08",
     "2026-07-07",
     "2026-07-06",
