@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-07-08 20:29:51",
+  "generated_at": "2026-07-09 20:02:34",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-07-10",
         "2026-07-09",
         "2026-07-08",
         "2026-07-07",
@@ -99,7 +100,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-07-08 20:29:51",
+      "latest_run_time": "2026-07-09 20:02:33",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2132,6 +2133,18 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-07-10": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-relative"
+          ],
+          "chosen_strategy": "recommend-relative",
+          "has_recommendations": true,
+          "chosen_count": 2,
+          "formal_action": "cash",
+          "opportunity_count": 2,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2375,6 +2388,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-07-10",
         "2026-07-09",
         "2026-07-08",
         "2026-07-07",
@@ -2411,8 +2425,36 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-07-08 20:29:51",
+      "latest_run_time": "2026-07-09 20:02:33",
       "records": [
+        {
+          "run_time": "2026-07-09 20:02:33",
+          "trade_date": "2026-07-10",
+          "symbol": "603156",
+          "name": "养元饮品",
+          "threshold_mode": "normal",
+          "score_total": 76.01,
+          "close": 48.71,
+          "stop_loss_price": 44.87,
+          "take_profit_price": 56.37,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-09 20:02:33",
+          "trade_date": "2026-07-10",
+          "symbol": "603339",
+          "name": "四方科技",
+          "threshold_mode": "normal",
+          "score_total": 72.13,
+          "close": 15.33,
+          "stop_loss_price": 13.97,
+          "take_profit_price": 18.03,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-07-08 20:29:51",
           "trade_date": "2026-07-09",
@@ -3859,6 +3901,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-07-10",
     "2026-07-09",
     "2026-07-08",
     "2026-07-07",
