@@ -298,7 +298,7 @@ def test_auction_pick_parser_accepts_date_count_and_output():
 def test_default_config_contains_isolated_auction_pick_section():
     cfg = load_config("config/default.yaml")
 
-    assert cfg["auction_pick"]["count"] == 2
+    assert cfg["auction_pick"]["count"] == 6
     assert cfg["auction_pick"]["min_opening_gap"] == 0.012
     assert cfg["auction_pick"]["max_opening_gap"] == 0.04
     assert cfg["auction_pick"]["min_current_return"] == 0.012
