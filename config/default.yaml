@@ -164,7 +164,7 @@ filters:
 # 这是独立命令 `auction-pick` 使用的配置，不参与 recommend-adaptive / tail-pick。
 auction_pick:
   # 默认展示候选数量。
-  count: 2
+  count: 6
 
   # 开盘相对昨收高开的合理区间。
   min_opening_gap: 0.012
