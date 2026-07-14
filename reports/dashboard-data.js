@@ -1,11 +1,13 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-07-09 20:02:34",
+  "generated_at": "2026-07-13 20:00:57",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-07-14",
+        "2026-07-13",
         "2026-07-10",
         "2026-07-09",
         "2026-07-08",
@@ -100,7 +102,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-07-09 20:02:33",
+      "latest_run_time": "2026-07-13 20:00:57",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2145,6 +2147,31 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 2,
           "has_observation_candidates": true
         },
+        "2026-07-13": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-relative"
+          ],
+          "chosen_strategy": "recommend-relative",
+          "has_recommendations": true,
+          "chosen_count": 2,
+          "formal_action": "cash",
+          "opportunity_count": 2,
+          "has_observation_candidates": true
+        },
+        "2026-07-14": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2388,6 +2415,8 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-07-14",
+        "2026-07-13",
         "2026-07-10",
         "2026-07-09",
         "2026-07-08",
@@ -2425,8 +2454,78 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-07-09 20:02:33",
+      "latest_run_time": "2026-07-13 20:00:57",
       "records": [
+        {
+          "run_time": "2026-07-13 20:00:57",
+          "trade_date": "2026-07-14",
+          "symbol": "603068",
+          "name": "博通集成",
+          "threshold_mode": "normal",
+          "score_total": 67.2,
+          "close": 38.88,
+          "stop_loss_price": 35.47,
+          "take_profit_price": 45.69,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-13 20:00:57",
+          "trade_date": "2026-07-14",
+          "symbol": "600177",
+          "name": "雅戈尔",
+          "threshold_mode": "normal",
+          "score_total": 64.63,
+          "close": 7.7,
+          "stop_loss_price": 7.41,
+          "take_profit_price": 8.27,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-13 20:00:57",
+          "trade_date": "2026-07-14",
+          "symbol": "603341",
+          "name": "龙旗科技",
+          "threshold_mode": "normal",
+          "score_total": 63.91,
+          "close": 40.31,
+          "stop_loss_price": 36.49,
+          "take_profit_price": 47.93,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-10 22:33:55",
+          "trade_date": "2026-07-13",
+          "symbol": "002077",
+          "name": "大港股份",
+          "threshold_mode": "normal",
+          "score_total": 75.39,
+          "close": 19.17,
+          "stop_loss_price": 17.47,
+          "take_profit_price": 22.56,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-10 22:33:55",
+          "trade_date": "2026-07-13",
+          "symbol": "002174",
+          "name": "游族网络",
+          "threshold_mode": "normal",
+          "score_total": 70.61,
+          "close": 12.74,
+          "stop_loss_price": 11.61,
+          "take_profit_price": 14.98,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-07-09 20:02:33",
           "trade_date": "2026-07-10",
@@ -3901,6 +4000,8 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-07-14",
+    "2026-07-13",
     "2026-07-10",
     "2026-07-09",
     "2026-07-08",
