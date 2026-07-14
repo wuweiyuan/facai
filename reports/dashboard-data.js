@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-07-13 20:00:57",
+  "generated_at": "2026-07-14 20:10:41",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-07-15",
         "2026-07-14",
         "2026-07-13",
         "2026-07-10",
@@ -102,7 +103,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-07-13 20:00:57",
+      "latest_run_time": "2026-07-14 20:10:41",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2172,6 +2173,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-07-15": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2415,6 +2429,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-07-15",
         "2026-07-14",
         "2026-07-13",
         "2026-07-10",
@@ -2454,8 +2469,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-07-13 20:00:57",
+      "latest_run_time": "2026-07-14 20:10:41",
       "records": [
+        {
+          "run_time": "2026-07-14 20:10:40",
+          "trade_date": "2026-07-15",
+          "symbol": "603068",
+          "name": "博通集成",
+          "threshold_mode": "normal",
+          "score_total": 67.25,
+          "close": 39.25,
+          "stop_loss_price": 35.57,
+          "take_profit_price": 46.59,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-14 20:10:41",
+          "trade_date": "2026-07-15",
+          "symbol": "002668",
+          "name": "TCL智家",
+          "threshold_mode": "normal",
+          "score_total": 64.86,
+          "close": 10.66,
+          "stop_loss_price": 9.9,
+          "take_profit_price": 12.17,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-14 20:10:41",
+          "trade_date": "2026-07-15",
+          "symbol": "002174",
+          "name": "游族网络",
+          "threshold_mode": "normal",
+          "score_total": 62.94,
+          "close": 12.6,
+          "stop_loss_price": 11.34,
+          "take_profit_price": 15.11,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-07-13 20:00:57",
           "trade_date": "2026-07-14",
@@ -4000,6 +4057,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-07-15",
     "2026-07-14",
     "2026-07-13",
     "2026-07-10",
