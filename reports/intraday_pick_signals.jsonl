@@ -54,3 +54,10 @@
 {"entry_price": null, "name": "", "rank": null, "run_time": "2026-07-09 14:44:56", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-07-09"}
 {"entry_price": 269.37, "name": "东山精密", "rank": 1, "run_time": "2026-07-10 09:26:48", "score": 88.35, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "002384", "trade_date": "2026-07-10"}
 {"entry_price": 688.0, "name": "兆易创新", "rank": 2, "run_time": "2026-07-10 09:26:48", "score": 86.23, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "603986", "trade_date": "2026-07-10"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-07-10 14:44:51", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-07-10"}
+{"entry_price": 8.65, "name": "天娱数科", "rank": 1, "run_time": "2026-07-13 09:27:07", "score": 56.47, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "002354", "trade_date": "2026-07-13"}
+{"entry_price": 61.62, "name": "中天火箭", "rank": 2, "run_time": "2026-07-13 09:27:07", "score": 47.73, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "003009", "trade_date": "2026-07-13"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-07-13 14:45:12", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-07-13"}
+{"entry_price": 41.0, "name": "中兴通讯", "rank": 1, "run_time": "2026-07-14 09:27:22", "score": 79.37, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "000063", "trade_date": "2026-07-14"}
+{"entry_price": 192.8, "name": "雅克科技", "rank": 2, "run_time": "2026-07-14 09:27:22", "score": 71.22, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "002409", "trade_date": "2026-07-14"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-07-14 14:44:43", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-07-14"}
