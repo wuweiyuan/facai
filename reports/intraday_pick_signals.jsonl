@@ -66,3 +66,4 @@
 {"entry_price": 39.33, "name": "中国人寿", "rank": 3, "run_time": "2026-07-15 09:27:02", "score": 66.44, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "601628", "trade_date": "2026-07-15"}
 {"entry_price": 40.4, "name": "中兴通讯", "rank": 4, "run_time": "2026-07-15 09:27:02", "score": 56.99, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "000063", "trade_date": "2026-07-15"}
 {"entry_price": 12.45, "name": "木林森", "rank": 5, "run_time": "2026-07-15 09:27:02", "score": 52.15, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "002745", "trade_date": "2026-07-15"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-07-15 14:44:47", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-07-15"}
