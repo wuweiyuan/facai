@@ -17,7 +17,7 @@ from app.forecasting.features import (
 )
 from app.forecasting.engine import ForecastEngine
 from app.forecasting.models import ForecastBatch, HorizonForecast, StockForecast
-from app.forecasting.reporting import batch_to_dict, write_forecast_csv
+from app.forecasting.reporting import batch_to_dict, format_forecast_table, write_forecast_csv
 from app.main import build_parser
 
 
@@ -149,6 +149,13 @@ class TestForecastReporting(TestCase):
         payload = batch_to_dict(_forecast_batch(), limit=1)
         self.assertEqual(len(payload["items"]), 1)
         self.assertEqual(payload["summary"]["eligible_count"], 1)
+
+    def test_forecast_table_includes_direction_accuracy_and_mae_for_both_horizons(self):
+        table = format_forecast_table(_forecast_batch(), limit=1)
+        self.assertIn("5日准确率=55.00%", table)
+        self.assertIn("5日MAE=2.00%", table)
+        self.assertIn("10日准确率=52.00%", table)
+        self.assertIn("10日MAE=3.00%", table)
 
 
 class TestForecastCli(TestCase):

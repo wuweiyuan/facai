@@ -64,7 +64,9 @@ def format_forecast_table(batch: ForecastBatch, limit: int) -> str:
         lines.append(
             f"{item['rank']:>3} {item['symbol']} {item['name']} "
             f"5日={item['expected_return_5d']:.2%} 概率={item['probability_up_5d']:.2%} "
+            f"5日准确率={item['validation_direction_accuracy_5d']:.2%} 5日MAE={item['validation_mae_5d']:.2%} "
             f"10日={item['expected_return_10d']:.2%} "
+            f"10日准确率={item['validation_direction_accuracy_10d']:.2%} 10日MAE={item['validation_mae_10d']:.2%} "
             f"5日模型=Ridge(w={item['train_window_5d']}, α={item['ridge_alpha_5d']:g})"
         )
     return "\n".join(lines)
