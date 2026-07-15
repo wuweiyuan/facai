@@ -79,7 +79,7 @@ data_source:
 
 # 逐股 Ridge 预测排名。每个股票仅使用自身历史日线训练。
 forecasting:
-  count: 100
+  count: 10
   min_history_bars: 252
   min_train_samples: 120
   validation_samples: 60
