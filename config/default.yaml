@@ -86,6 +86,7 @@ forecasting:
   candidate_train_windows: [120, 180, 240]
   ridge_alphas: [0.1, 1.0, 10.0]
   report_csv: reports/forecast_rank.csv
+  report_log_dir: reports/forecast_rank
 
 # 盘中独立命令的数据源覆盖。
 # 只影响 auction-pick / tail-pick，不影响 recommend-adaptive、回测或 dashboard。

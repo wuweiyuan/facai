@@ -167,6 +167,19 @@ python3 -m app.main forecast-rank --date 2026-07-13 --count 20 --output json --n
 
 该命令对每只股票只使用其自身历史日线训练 Ridge 模型，并用时间顺序滚动验证选择训练窗口和正则强度。5 日预期收益是主排序，10 日预测为辅助信息。结果不含交易成本或实时行情，不构成收益承诺或交易建议。
 
+默认会保留全量 CSV，并将终端展示的前 N 名写入：
+
+```text
+reports/forecast_rank/YYYY-MM-DD.log
+reports/forecast_rank/latest.log
+```
+
+查看最近一次文本结果：
+
+```bash
+tail -n 80 reports/forecast_rank/latest.log
+```
+
 ### 优化前后对比
 
 ```bash

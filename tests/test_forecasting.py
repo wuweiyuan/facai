@@ -17,7 +17,7 @@ from app.forecasting.features import (
 )
 from app.forecasting.engine import ForecastEngine
 from app.forecasting.models import ForecastBatch, HorizonForecast, StockForecast
-from app.forecasting.reporting import batch_to_dict, format_forecast_table, write_forecast_csv
+from app.forecasting.reporting import batch_to_dict, format_forecast_table, write_forecast_csv, write_forecast_log
 from app.main import build_parser
 
 
@@ -156,6 +156,15 @@ class TestForecastReporting(TestCase):
         self.assertIn("5日MAE=2.00%", table)
         self.assertIn("10日准确率=52.00%", table)
         self.assertIn("10日MAE=3.00%", table)
+
+    def test_write_forecast_log_appends_daily_log_and_replaces_latest(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            first = write_forecast_log("first\n", date(2026, 7, 15), root)
+            second = write_forecast_log("second\n", date(2026, 7, 15), root)
+            self.assertEqual(first, root / "2026-07-15.log")
+            self.assertEqual(second.read_text(encoding="utf-8"), "first\n\nsecond\n")
+            self.assertEqual((root / "latest.log").read_text(encoding="utf-8"), "second\n")
 
 
 class TestForecastCli(TestCase):

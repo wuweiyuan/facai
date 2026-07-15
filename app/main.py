@@ -1122,18 +1122,26 @@ def main() -> None:
 
     if args.cmd == "forecast-rank":
         from app.forecasting.engine import ForecastEngine
-        from app.forecasting.reporting import batch_to_dict, format_forecast_table, write_forecast_csv
+        from app.forecasting.reporting import batch_to_dict, format_forecast_table, write_forecast_csv, write_forecast_log
 
         batch = ForecastEngine(base_cfg).rank(_parse_date(args.date) if args.date else None)
         forecast_cfg = base_cfg.get("forecasting", {})
         limit = max(int(args.count if args.count is not None else forecast_cfg.get("count", 100)), 1)
+        rendered = format_forecast_table(batch, limit) if args.output == "table" else None
         if not args.no_save:
             saved = write_forecast_csv(batch, str(forecast_cfg.get("report_csv", "reports/forecast_rank.csv")))
             print(f"预测排名已写入: {saved}", file=sys.stderr)
+            if rendered is not None:
+                log_path = write_forecast_log(
+                    rendered,
+                    batch.signal_date,
+                    str(forecast_cfg.get("report_log_dir", "reports/forecast_rank")),
+                )
+                print(f"预测日志已写入: {log_path}", file=sys.stderr)
         if args.output == "json":
             print(json.dumps(batch_to_dict(batch, limit), ensure_ascii=False, indent=2))
         else:
-            print(format_forecast_table(batch, limit))
+            print(rendered)
         return
 
     if args.cmd == "intraday-regime":

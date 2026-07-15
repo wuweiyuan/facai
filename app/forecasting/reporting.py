@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
@@ -40,6 +41,19 @@ def write_forecast_csv(batch: ForecastBatch, path: str | Path) -> Path:
     target.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(forecast_rows(batch)).to_csv(target, index=False)
     return target
+
+
+def write_forecast_log(rendered: str, signal_date: date, log_dir: str | Path) -> Path:
+    root = Path(log_dir)
+    root.mkdir(parents=True, exist_ok=True)
+    content = rendered if rendered.endswith("\n") else rendered + "\n"
+    daily = root / f"{signal_date.isoformat()}.log"
+    with daily.open("a", encoding="utf-8") as handle:
+        if daily.stat().st_size > 0:
+            handle.write("\n")
+        handle.write(content)
+    (root / "latest.log").write_text(content, encoding="utf-8")
+    return daily
 
 
 def batch_to_dict(batch: ForecastBatch, limit: int | None = None) -> dict:
