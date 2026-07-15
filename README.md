@@ -155,6 +155,18 @@ python3 -m app.main backtest-adaptive --start YYYY-MM-DD --end YYYY-MM-DD --outp
 python -m app.main backtest-adaptive --start YYYY-MM-DD --end YYYY-MM-DD --output table
 ```
 
+### 全股票 5/10 日预测排名
+
+```bash
+# 默认使用本地缓存最新日线，按未来 5 个交易日预期收盘收益排序
+python3 -m app.main forecast-rank --count 100 --output table
+
+# 指定信号日，输出 JSON 且不保存完整 CSV
+python3 -m app.main forecast-rank --date 2026-07-13 --count 20 --output json --no-save
+```
+
+该命令对每只股票只使用其自身历史日线训练 Ridge 模型，并用时间顺序滚动验证选择训练窗口和正则强度。5 日预期收益是主排序，10 日预测为辅助信息。结果不含交易成本或实时行情，不构成收益承诺或交易建议。
+
 ### 优化前后对比
 
 ```bash

@@ -954,6 +954,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_rec_pool.add_argument("--count", type=int, default=None, help="Total number of opportunity names to show")
     p_rec_pool.add_argument("--output", choices=["table", "json"], default="table")
 
+    p_forecast = sub.add_parser(
+        "forecast-rank",
+        help="Independently forecast and rank cached stocks by expected 5-day return",
+    )
+    p_forecast.add_argument("--date", default=None, help="Signal date YYYY-MM-DD; defaults to latest cached bar date")
+    p_forecast.add_argument("--count", type=int, default=None, help="How many ranked stocks to display")
+    p_forecast.add_argument("--output", choices=["table", "json"], default="table")
+    p_forecast.add_argument("--no-save", action="store_true", help="Do not write the full CSV report")
+
     p_tail = sub.add_parser("tail-pick", help="Pick isolated tail-session candidates")
     p_tail.add_argument("--date", default=None, help="Run date YYYY-MM-DD; defaults to today")
     p_tail.add_argument("--output", choices=["table", "json"], default="table")
@@ -1109,6 +1118,22 @@ def main() -> None:
             opportunity_csv=args.opportunity_csv,
         )
         print(f"Dashboard data exported to {saved}")
+        return
+
+    if args.cmd == "forecast-rank":
+        from app.forecasting.engine import ForecastEngine
+        from app.forecasting.reporting import batch_to_dict, format_forecast_table, write_forecast_csv
+
+        batch = ForecastEngine(base_cfg).rank(_parse_date(args.date) if args.date else None)
+        forecast_cfg = base_cfg.get("forecasting", {})
+        limit = max(int(args.count if args.count is not None else forecast_cfg.get("count", 100)), 1)
+        if not args.no_save:
+            saved = write_forecast_csv(batch, str(forecast_cfg.get("report_csv", "reports/forecast_rank.csv")))
+            print(f"预测排名已写入: {saved}", file=sys.stderr)
+        if args.output == "json":
+            print(json.dumps(batch_to_dict(batch, limit), ensure_ascii=False, indent=2))
+        else:
+            print(format_forecast_table(batch, limit))
         return
 
     if args.cmd == "intraday-regime":
