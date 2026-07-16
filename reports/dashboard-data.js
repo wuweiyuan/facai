@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-07-15 22:28:31",
+  "generated_at": "2026-07-16 20:05:15",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-07-17",
         "2026-07-16",
         "2026-07-14",
         "2026-07-13",
@@ -103,7 +104,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-07-15 22:28:31",
+      "latest_run_time": "2026-07-16 20:05:15",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2186,6 +2187,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-07-17": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2429,6 +2443,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-07-17",
         "2026-07-16",
         "2026-07-14",
         "2026-07-13",
@@ -2469,8 +2484,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-07-15 22:28:31",
+      "latest_run_time": "2026-07-16 20:05:15",
       "records": [
+        {
+          "run_time": "2026-07-16 20:05:15",
+          "trade_date": "2026-07-17",
+          "symbol": "002174",
+          "name": "游族网络",
+          "threshold_mode": "normal",
+          "score_total": 66.15,
+          "close": 12.43,
+          "stop_loss_price": 11.18,
+          "take_profit_price": 14.91,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-16 20:05:15",
+          "trade_date": "2026-07-17",
+          "symbol": "601995",
+          "name": "中金公司",
+          "threshold_mode": "normal",
+          "score_total": 65.35,
+          "close": 36.45,
+          "stop_loss_price": 34.31,
+          "take_profit_price": 40.72,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-16 20:05:15",
+          "trade_date": "2026-07-17",
+          "symbol": "600177",
+          "name": "雅戈尔",
+          "threshold_mode": "normal",
+          "score_total": 65.08,
+          "close": 7.75,
+          "stop_loss_price": 7.45,
+          "take_profit_price": 8.33,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-07-15 22:28:31",
           "trade_date": "2026-07-16",
@@ -4057,6 +4114,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-07-17",
     "2026-07-16",
     "2026-07-14",
     "2026-07-13",
