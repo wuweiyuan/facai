@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-07-16 20:05:15",
+  "generated_at": "2026-07-17 19:48:36",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-07-20",
         "2026-07-17",
         "2026-07-16",
         "2026-07-14",
@@ -104,7 +105,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-07-16 20:05:15",
+      "latest_run_time": "2026-07-17 19:48:36",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2200,6 +2201,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-07-20": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2443,6 +2457,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-07-20",
         "2026-07-17",
         "2026-07-16",
         "2026-07-14",
@@ -2484,8 +2499,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-07-16 20:05:15",
+      "latest_run_time": "2026-07-17 19:48:36",
       "records": [
+        {
+          "run_time": "2026-07-17 19:48:36",
+          "trade_date": "2026-07-20",
+          "symbol": "002901",
+          "name": "大博医疗",
+          "threshold_mode": "normal",
+          "score_total": 70.72,
+          "close": 44.7,
+          "stop_loss_price": 41.46,
+          "take_profit_price": 51.17,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-17 19:48:36",
+          "trade_date": "2026-07-20",
+          "symbol": "603456",
+          "name": "九洲药业",
+          "threshold_mode": "normal",
+          "score_total": 61.6,
+          "close": 14.46,
+          "stop_loss_price": 13.14,
+          "take_profit_price": 17.09,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-17 19:48:36",
+          "trade_date": "2026-07-20",
+          "symbol": "002926",
+          "name": "华西证券",
+          "threshold_mode": "normal",
+          "score_total": 61.41,
+          "close": 8.44,
+          "stop_loss_price": 8.13,
+          "take_profit_price": 9.04,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-07-16 20:05:15",
           "trade_date": "2026-07-17",
@@ -4114,6 +4171,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-07-20",
     "2026-07-17",
     "2026-07-16",
     "2026-07-14",
