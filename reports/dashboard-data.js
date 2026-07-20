@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-07-17 19:48:36",
+  "generated_at": "2026-07-20 19:36:21",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-07-21",
         "2026-07-20",
         "2026-07-17",
         "2026-07-16",
@@ -105,7 +106,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-07-17 19:48:36",
+      "latest_run_time": "2026-07-20 19:36:21",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2214,6 +2215,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-07-21": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2457,6 +2471,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-07-21",
         "2026-07-20",
         "2026-07-17",
         "2026-07-16",
@@ -2499,8 +2514,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-07-17 19:48:36",
+      "latest_run_time": "2026-07-20 19:36:21",
       "records": [
+        {
+          "run_time": "2026-07-20 19:36:21",
+          "trade_date": "2026-07-21",
+          "symbol": "002901",
+          "name": "大博医疗",
+          "threshold_mode": "normal",
+          "score_total": 64.21,
+          "close": 45.14,
+          "stop_loss_price": 41.92,
+          "take_profit_price": 51.57,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-20 19:36:21",
+          "trade_date": "2026-07-21",
+          "symbol": "603501",
+          "name": "豪威集团",
+          "threshold_mode": "normal",
+          "score_total": 58.44,
+          "close": 101.16,
+          "stop_loss_price": 89.83,
+          "take_profit_price": 123.81,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-20 19:36:21",
+          "trade_date": "2026-07-21",
+          "symbol": "605008",
+          "name": "长鸿高科",
+          "threshold_mode": "normal",
+          "score_total": 57.67,
+          "close": 11.9,
+          "stop_loss_price": 11.15,
+          "take_profit_price": 13.38,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-07-17 19:48:36",
           "trade_date": "2026-07-20",
@@ -4171,6 +4228,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-07-21",
     "2026-07-20",
     "2026-07-17",
     "2026-07-16",
