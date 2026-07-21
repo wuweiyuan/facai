@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-07-20 19:36:21",
+  "generated_at": "2026-07-21 19:44:26",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-07-22",
         "2026-07-21",
         "2026-07-20",
         "2026-07-17",
@@ -106,7 +107,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-07-20 19:36:21",
+      "latest_run_time": "2026-07-21 19:44:26",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2228,6 +2229,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-07-22": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2471,6 +2485,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-07-22",
         "2026-07-21",
         "2026-07-20",
         "2026-07-17",
@@ -2514,8 +2529,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-07-20 19:36:21",
+      "latest_run_time": "2026-07-21 19:44:26",
       "records": [
+        {
+          "run_time": "2026-07-21 19:44:26",
+          "trade_date": "2026-07-22",
+          "symbol": "600276",
+          "name": "恒瑞医药",
+          "threshold_mode": "normal",
+          "score_total": 64.95,
+          "close": 54.93,
+          "stop_loss_price": 51.08,
+          "take_profit_price": 62.61,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-21 19:44:26",
+          "trade_date": "2026-07-22",
+          "symbol": "601198",
+          "name": "东兴证券",
+          "threshold_mode": "normal",
+          "score_total": 62.96,
+          "close": 13.79,
+          "stop_loss_price": 13.23,
+          "take_profit_price": 14.89,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-21 19:44:26",
+          "trade_date": "2026-07-22",
+          "symbol": "601211",
+          "name": "国泰海通",
+          "threshold_mode": "normal",
+          "score_total": 59.14,
+          "close": 18.82,
+          "stop_loss_price": 17.85,
+          "take_profit_price": 20.75,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-07-20 19:36:21",
           "trade_date": "2026-07-21",
@@ -4228,6 +4285,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-07-22",
     "2026-07-21",
     "2026-07-20",
     "2026-07-17",
