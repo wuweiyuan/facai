@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-07-22 20:24:54",
+  "generated_at": "2026-07-23 22:45:46",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-07-24",
         "2026-07-23",
         "2026-07-22",
         "2026-07-21",
@@ -108,7 +109,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-07-22 20:24:54",
+      "latest_run_time": "2026-07-23 22:45:46",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2256,6 +2257,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-07-24": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2499,6 +2513,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-07-24",
         "2026-07-23",
         "2026-07-22",
         "2026-07-21",
@@ -2544,8 +2559,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-07-22 20:24:54",
+      "latest_run_time": "2026-07-23 22:45:46",
       "records": [
+        {
+          "run_time": "2026-07-23 22:45:46",
+          "trade_date": "2026-07-24",
+          "symbol": "601059",
+          "name": "信达证券",
+          "threshold_mode": "normal",
+          "score_total": 64.42,
+          "close": 16.81,
+          "stop_loss_price": 16.24,
+          "take_profit_price": 17.95,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-23 22:45:46",
+          "trade_date": "2026-07-24",
+          "symbol": "002500",
+          "name": "山西证券",
+          "threshold_mode": "normal",
+          "score_total": 64.29,
+          "close": 5.38,
+          "stop_loss_price": 5.2,
+          "take_profit_price": 5.72,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-23 22:45:46",
+          "trade_date": "2026-07-24",
+          "symbol": "601995",
+          "name": "中金公司",
+          "threshold_mode": "normal",
+          "score_total": 63.13,
+          "close": 36.65,
+          "stop_loss_price": 34.61,
+          "take_profit_price": 40.72,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-07-22 20:24:54",
           "trade_date": "2026-07-23",
@@ -4342,6 +4399,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-07-24",
     "2026-07-23",
     "2026-07-22",
     "2026-07-21",
