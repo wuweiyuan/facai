@@ -72,3 +72,14 @@
 {"entry_price": null, "name": "", "rank": null, "run_time": "2026-07-16 14:45:10", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-07-16"}
 {"entry_price": null, "name": "", "rank": null, "run_time": "2026-07-17 09:26:55", "score": null, "selected": false, "source": "cli", "strategy": "auction-pick", "symbol": "", "trade_date": "2026-07-17"}
 {"entry_price": null, "name": "", "rank": null, "run_time": "2026-07-17 14:45:29", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-07-17"}
+{"entry_price": 205.23, "name": "瑞芯微", "rank": 1, "run_time": "2026-07-20 09:27:18", "score": 70.7, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "603893", "trade_date": "2026-07-20"}
+{"entry_price": 106.0, "name": "豪威集团", "rank": 2, "run_time": "2026-07-20 09:27:18", "score": 60.18, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "603501", "trade_date": "2026-07-20"}
+{"entry_price": 14.85, "name": "恒逸石化", "rank": 3, "run_time": "2026-07-20 09:27:18", "score": 49.79, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "000703", "trade_date": "2026-07-20"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-07-20 14:45:14", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-07-20"}
+{"entry_price": 104.0, "name": "豪威集团", "rank": 1, "run_time": "2026-07-21 09:27:34", "score": 83.81, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "603501", "trade_date": "2026-07-21"}
+{"entry_price": 126.0, "name": "药明康德", "rank": 2, "run_time": "2026-07-21 09:27:34", "score": 67.29, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "603259", "trade_date": "2026-07-21"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-07-21 14:45:00", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-07-21"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-07-22 09:26:54", "score": null, "selected": false, "source": "cli", "strategy": "auction-pick", "symbol": "", "trade_date": "2026-07-22"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-07-22 14:45:09", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-07-22"}
+{"entry_price": 75.99, "name": "通富微电", "rank": 1, "run_time": "2026-07-23 09:27:24", "score": 58.15, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "002156", "trade_date": "2026-07-23"}
+{"entry_price": 103.6, "name": "中科曙光", "rank": 2, "run_time": "2026-07-23 09:27:24", "score": 56.57, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "603019", "trade_date": "2026-07-23"}
