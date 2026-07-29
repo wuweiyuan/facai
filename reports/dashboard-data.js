@@ -1,11 +1,13 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-07-27 21:25:46",
+  "generated_at": "2026-07-29 19:47:50",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-07-30",
+        "2026-07-29",
         "2026-07-28",
         "2026-07-27",
         "2026-07-24",
@@ -111,7 +113,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-07-27 21:25:46",
+      "latest_run_time": "2026-07-29 19:47:50",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2298,6 +2300,32 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-07-29": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
+        "2026-07-30": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2541,6 +2569,8 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-07-30",
+        "2026-07-29",
         "2026-07-28",
         "2026-07-27",
         "2026-07-24",
@@ -2589,8 +2619,92 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-07-27 21:25:46",
+      "latest_run_time": "2026-07-29 19:47:50",
       "records": [
+        {
+          "run_time": "2026-07-29 19:47:50",
+          "trade_date": "2026-07-30",
+          "symbol": "601658",
+          "name": "邮储银行",
+          "threshold_mode": "normal",
+          "score_total": 68.96,
+          "close": 5.12,
+          "stop_loss_price": 4.96,
+          "take_profit_price": 5.42,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-29 19:47:50",
+          "trade_date": "2026-07-30",
+          "symbol": "600177",
+          "name": "雅戈尔",
+          "threshold_mode": "normal",
+          "score_total": 66.73,
+          "close": 7.88,
+          "stop_loss_price": 7.62,
+          "take_profit_price": 8.39,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-29 19:47:50",
+          "trade_date": "2026-07-30",
+          "symbol": "600332",
+          "name": "白云山",
+          "threshold_mode": "normal",
+          "score_total": 66.58,
+          "close": 21.98,
+          "stop_loss_price": 21.14,
+          "take_profit_price": 23.64,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-28 19:57:10",
+          "trade_date": "2026-07-29",
+          "symbol": "600285",
+          "name": "羚锐制药",
+          "threshold_mode": "normal",
+          "score_total": 64.97,
+          "close": 22.47,
+          "stop_loss_price": 21.45,
+          "take_profit_price": 24.5,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-28 19:57:10",
+          "trade_date": "2026-07-29",
+          "symbol": "600812",
+          "name": "华北制药",
+          "threshold_mode": "normal",
+          "score_total": 64.59,
+          "close": 4.76,
+          "stop_loss_price": 4.48,
+          "take_profit_price": 5.31,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-28 19:57:10",
+          "trade_date": "2026-07-29",
+          "symbol": "600018",
+          "name": "上港集团",
+          "threshold_mode": "normal",
+          "score_total": 64.21,
+          "close": 5.16,
+          "stop_loss_price": 5.0,
+          "take_profit_price": 5.46,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-07-27 21:25:46",
           "trade_date": "2026-07-28",
@@ -4513,6 +4627,8 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-07-30",
+    "2026-07-29",
     "2026-07-28",
     "2026-07-27",
     "2026-07-24",
