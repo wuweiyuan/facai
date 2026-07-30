@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-07-29 19:47:50",
+  "generated_at": "2026-07-30 20:11:41",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-07-31",
         "2026-07-30",
         "2026-07-29",
         "2026-07-28",
@@ -113,7 +114,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-07-29 19:47:50",
+      "latest_run_time": "2026-07-30 20:11:41",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2326,6 +2327,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-07-31": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2569,6 +2583,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-07-31",
         "2026-07-30",
         "2026-07-29",
         "2026-07-28",
@@ -2619,8 +2634,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-07-29 19:47:50",
+      "latest_run_time": "2026-07-30 20:11:41",
       "records": [
+        {
+          "run_time": "2026-07-30 20:11:41",
+          "trade_date": "2026-07-31",
+          "symbol": "002500",
+          "name": "山西证券",
+          "threshold_mode": "normal",
+          "score_total": 68.41,
+          "close": 5.4,
+          "stop_loss_price": 5.22,
+          "take_profit_price": 5.75,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-30 20:11:41",
+          "trade_date": "2026-07-31",
+          "symbol": "000750",
+          "name": "国海证券",
+          "threshold_mode": "normal",
+          "score_total": 66.43,
+          "close": 3.83,
+          "stop_loss_price": 3.7,
+          "take_profit_price": 4.08,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-07-30 20:11:41",
+          "trade_date": "2026-07-31",
+          "symbol": "600369",
+          "name": "西南证券",
+          "threshold_mode": "normal",
+          "score_total": 65.72,
+          "close": 4.17,
+          "stop_loss_price": 4.03,
+          "take_profit_price": 4.44,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-07-29 19:47:50",
           "trade_date": "2026-07-30",
@@ -4627,6 +4684,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-07-31",
     "2026-07-30",
     "2026-07-29",
     "2026-07-28",
