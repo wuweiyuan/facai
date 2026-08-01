@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-07-30 20:11:41",
+  "generated_at": "2026-08-01 14:40:54",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-08-03",
         "2026-07-31",
         "2026-07-30",
         "2026-07-29",
@@ -114,7 +115,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-07-30 20:11:41",
+      "latest_run_time": "2026-08-01 14:40:54",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2340,6 +2341,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-08-03": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2583,6 +2597,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-08-03",
         "2026-07-31",
         "2026-07-30",
         "2026-07-29",
@@ -2634,8 +2649,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-07-30 20:11:41",
+      "latest_run_time": "2026-08-01 14:40:54",
       "records": [
+        {
+          "run_time": "2026-08-01 14:40:54",
+          "trade_date": "2026-08-03",
+          "symbol": "600015",
+          "name": "华夏银行",
+          "threshold_mode": "normal",
+          "score_total": 72.33,
+          "close": 6.97,
+          "stop_loss_price": 6.73,
+          "take_profit_price": 7.45,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-08-01 14:40:54",
+          "trade_date": "2026-08-03",
+          "symbol": "600177",
+          "name": "雅戈尔",
+          "threshold_mode": "normal",
+          "score_total": 70.63,
+          "close": 7.85,
+          "stop_loss_price": 7.58,
+          "take_profit_price": 8.37,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-08-01 14:40:54",
+          "trade_date": "2026-08-03",
+          "symbol": "601818",
+          "name": "光大银行",
+          "threshold_mode": "normal",
+          "score_total": 67.87,
+          "close": 3.17,
+          "stop_loss_price": 3.07,
+          "take_profit_price": 3.35,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-07-30 20:11:41",
           "trade_date": "2026-07-31",
@@ -4684,6 +4741,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-08-03",
     "2026-07-31",
     "2026-07-30",
     "2026-07-29",

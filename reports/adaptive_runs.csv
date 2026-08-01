@@ -90,3 +90,4 @@ run_time,target_date,signal_date,market_state,market_reason,tried_strategies,cho
 2026-07-28 19:57:10,2026-07-29,2026-07-28,bear,ok,"recommend-oversold,recommend-pullback",recommend-pullback,true,3
 2026-07-29 19:47:50,2026-07-30,2026-07-29,bear,ok,"recommend-oversold,recommend-pullback",recommend-pullback,true,3
 2026-07-30 20:11:41,2026-07-31,2026-07-30,bear,ok,"recommend-oversold,recommend-pullback",recommend-pullback,true,3
+2026-08-01 14:40:54,2026-08-03,2026-07-31,bear,ok,"recommend-oversold,recommend-pullback",recommend-pullback,true,3
