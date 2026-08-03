@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-08-01 14:40:54",
+  "generated_at": "2026-08-03 19:51:44",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-08-04",
         "2026-08-03",
         "2026-07-31",
         "2026-07-30",
@@ -115,7 +116,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-08-01 14:40:54",
+      "latest_run_time": "2026-08-03 19:51:44",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2354,6 +2355,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-08-04": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2597,6 +2611,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-08-04",
         "2026-08-03",
         "2026-07-31",
         "2026-07-30",
@@ -2649,8 +2664,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-08-01 14:40:54",
+      "latest_run_time": "2026-08-03 19:51:44",
       "records": [
+        {
+          "run_time": "2026-08-03 19:51:44",
+          "trade_date": "2026-08-04",
+          "symbol": "601658",
+          "name": "邮储银行",
+          "threshold_mode": "normal",
+          "score_total": 69.06,
+          "close": 5.14,
+          "stop_loss_price": 4.98,
+          "take_profit_price": 5.44,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-08-03 19:51:44",
+          "trade_date": "2026-08-04",
+          "symbol": "600015",
+          "name": "华夏银行",
+          "threshold_mode": "normal",
+          "score_total": 68.75,
+          "close": 7.02,
+          "stop_loss_price": 6.77,
+          "take_profit_price": 7.5,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-08-03 19:51:44",
+          "trade_date": "2026-08-04",
+          "symbol": "601988",
+          "name": "中国银行",
+          "threshold_mode": "normal",
+          "score_total": 65.97,
+          "close": 6.03,
+          "stop_loss_price": 5.8,
+          "take_profit_price": 6.48,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-08-01 14:40:54",
           "trade_date": "2026-08-03",
@@ -4741,6 +4798,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-08-04",
     "2026-08-03",
     "2026-07-31",
     "2026-07-30",
