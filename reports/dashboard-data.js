@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-08-03 19:51:44",
+  "generated_at": "2026-08-04 20:15:30",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-08-05",
         "2026-08-04",
         "2026-08-03",
         "2026-07-31",
@@ -116,7 +117,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-08-03 19:51:44",
+      "latest_run_time": "2026-08-04 20:15:30",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2368,6 +2369,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-08-05": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2611,6 +2625,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-08-05",
         "2026-08-04",
         "2026-08-03",
         "2026-07-31",
@@ -2664,8 +2679,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-08-03 19:51:44",
+      "latest_run_time": "2026-08-04 20:15:30",
       "records": [
+        {
+          "run_time": "2026-08-04 20:15:30",
+          "trade_date": "2026-08-05",
+          "symbol": "000651",
+          "name": "格力电器",
+          "threshold_mode": "normal",
+          "score_total": 71.58,
+          "close": 40.52,
+          "stop_loss_price": 39.31,
+          "take_profit_price": 42.92,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-08-04 20:15:30",
+          "trade_date": "2026-08-05",
+          "symbol": "601009",
+          "name": "南京银行",
+          "threshold_mode": "normal",
+          "score_total": 69.8,
+          "close": 11.37,
+          "stop_loss_price": 10.95,
+          "take_profit_price": 12.19,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-08-04 20:15:30",
+          "trade_date": "2026-08-05",
+          "symbol": "000538",
+          "name": "云南白药",
+          "threshold_mode": "normal",
+          "score_total": 69.09,
+          "close": 51.7,
+          "stop_loss_price": 49.98,
+          "take_profit_price": 55.13,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-08-03 19:51:44",
           "trade_date": "2026-08-04",
@@ -4798,6 +4855,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-08-05",
     "2026-08-04",
     "2026-08-03",
     "2026-07-31",
