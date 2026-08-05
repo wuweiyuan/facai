@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-08-04 20:15:30",
+  "generated_at": "2026-08-05 20:12:10",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-08-06",
         "2026-08-05",
         "2026-08-04",
         "2026-08-03",
@@ -117,7 +118,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-08-04 20:15:30",
+      "latest_run_time": "2026-08-05 20:12:10",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2382,6 +2383,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-08-06": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2625,6 +2639,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-08-06",
         "2026-08-05",
         "2026-08-04",
         "2026-08-03",
@@ -2679,8 +2694,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-08-04 20:15:30",
+      "latest_run_time": "2026-08-05 20:12:10",
       "records": [
+        {
+          "run_time": "2026-08-05 20:12:09",
+          "trade_date": "2026-08-06",
+          "symbol": "000800",
+          "name": "一汽解放",
+          "threshold_mode": "normal",
+          "score_total": 69.78,
+          "close": 6.37,
+          "stop_loss_price": 6.17,
+          "take_profit_price": 6.76,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-08-05 20:12:09",
+          "trade_date": "2026-08-06",
+          "symbol": "601228",
+          "name": "广州港",
+          "threshold_mode": "normal",
+          "score_total": 68.35,
+          "close": 3.08,
+          "stop_loss_price": 2.98,
+          "take_profit_price": 3.27,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-08-05 20:12:10",
+          "trade_date": "2026-08-06",
+          "symbol": "600908",
+          "name": "无锡银行",
+          "threshold_mode": "normal",
+          "score_total": 67.86,
+          "close": 5.52,
+          "stop_loss_price": 5.31,
+          "take_profit_price": 5.93,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-08-04 20:15:30",
           "trade_date": "2026-08-05",
@@ -4855,6 +4912,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-08-06",
     "2026-08-05",
     "2026-08-04",
     "2026-08-03",
