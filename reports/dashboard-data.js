@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-08-05 20:12:10",
+  "generated_at": "2026-08-06 20:05:44",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-08-07",
         "2026-08-06",
         "2026-08-05",
         "2026-08-04",
@@ -118,7 +119,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-08-05 20:12:10",
+      "latest_run_time": "2026-08-06 20:05:44",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2396,6 +2397,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-08-07": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2639,6 +2653,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-08-07",
         "2026-08-06",
         "2026-08-05",
         "2026-08-04",
@@ -2694,8 +2709,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-08-05 20:12:10",
+      "latest_run_time": "2026-08-06 20:05:44",
       "records": [
+        {
+          "run_time": "2026-08-06 20:05:44",
+          "trade_date": "2026-08-07",
+          "symbol": "002014",
+          "name": "永新股份",
+          "threshold_mode": "normal",
+          "score_total": 70.34,
+          "close": 10.97,
+          "stop_loss_price": 10.59,
+          "take_profit_price": 11.72,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-08-06 20:05:44",
+          "trade_date": "2026-08-07",
+          "symbol": "600987",
+          "name": "航民股份",
+          "threshold_mode": "normal",
+          "score_total": 68.2,
+          "close": 6.67,
+          "stop_loss_price": 6.46,
+          "take_profit_price": 7.08,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-08-06 20:05:44",
+          "trade_date": "2026-08-07",
+          "symbol": "600054",
+          "name": "黄山旅游",
+          "threshold_mode": "normal",
+          "score_total": 67.92,
+          "close": 11.15,
+          "stop_loss_price": 10.85,
+          "take_profit_price": 11.75,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-08-05 20:12:09",
           "trade_date": "2026-08-06",
@@ -4912,6 +4969,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-08-07",
     "2026-08-06",
     "2026-08-05",
     "2026-08-04",
