@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-08-10 20:09:43",
+  "generated_at": "2026-08-11 20:26:38",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-08-12",
         "2026-08-11",
         "2026-08-10",
         "2026-08-07",
@@ -121,7 +122,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-08-10 20:09:43",
+      "latest_run_time": "2026-08-11 20:26:37",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2436,6 +2437,18 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 2,
           "has_observation_candidates": true
         },
+        "2026-08-12": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-relative"
+          ],
+          "chosen_strategy": "recommend-relative",
+          "has_recommendations": true,
+          "chosen_count": 2,
+          "formal_action": "cash",
+          "opportunity_count": 2,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2679,6 +2692,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-08-12",
         "2026-08-11",
         "2026-08-10",
         "2026-08-07",
@@ -2737,8 +2751,36 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-08-10 20:09:43",
+      "latest_run_time": "2026-08-11 20:26:37",
       "records": [
+        {
+          "run_time": "2026-08-11 20:26:37",
+          "trade_date": "2026-08-12",
+          "symbol": "002250",
+          "name": "联化科技",
+          "threshold_mode": "normal",
+          "score_total": 72.5,
+          "close": 17.44,
+          "stop_loss_price": 16.26,
+          "take_profit_price": 19.79,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-08-11 20:26:37",
+          "trade_date": "2026-08-12",
+          "symbol": "600988",
+          "name": "赤峰黄金",
+          "threshold_mode": "normal",
+          "score_total": 71.22,
+          "close": 40.3,
+          "stop_loss_price": 35.76,
+          "take_profit_price": 49.37,
+          "suggested_holding_days": 2,
+          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-08-10 20:09:43",
           "trade_date": "2026-08-11",
@@ -5053,6 +5095,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-08-12",
     "2026-08-11",
     "2026-08-10",
     "2026-08-07",
