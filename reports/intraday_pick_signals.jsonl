@@ -107,3 +107,14 @@
 {"entry_price": null, "name": "", "rank": null, "run_time": "2026-08-05 14:45:12", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-08-05"}
 {"entry_price": null, "name": "", "rank": null, "run_time": "2026-08-06 09:26:59", "score": null, "selected": false, "source": "cli", "strategy": "auction-pick", "symbol": "", "trade_date": "2026-08-06"}
 {"entry_price": null, "name": "", "rank": null, "run_time": "2026-08-06 14:44:46", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-08-06"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-08-07 09:26:44", "score": null, "selected": false, "source": "cli", "strategy": "auction-pick", "symbol": "", "trade_date": "2026-08-07"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-08-07 14:45:13", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-08-07"}
+{"entry_price": 28.34, "name": "恒尚节能", "rank": 1, "run_time": "2026-08-10 09:27:30", "score": 81.07, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "603137", "trade_date": "2026-08-10"}
+{"entry_price": 1325.0, "name": "贵州茅台", "rank": 2, "run_time": "2026-08-10 09:27:30", "score": 60.89, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "600519", "trade_date": "2026-08-10"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-08-10 14:45:23", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-08-10"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-08-11 09:27:04", "score": null, "selected": false, "source": "cli", "strategy": "auction-pick", "symbol": "", "trade_date": "2026-08-11"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-08-11 14:45:39", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-08-11"}
+{"entry_price": 27.98, "name": "云铝股份", "rank": 1, "run_time": "2026-08-12 09:27:10", "score": 81.38, "selected": true, "source": "cli", "strategy": "auction-pick", "symbol": "000807", "trade_date": "2026-08-12"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-08-12 14:44:54", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-08-12"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-08-13 09:27:26", "score": null, "selected": false, "source": "cli", "strategy": "auction-pick", "symbol": "", "trade_date": "2026-08-13"}
+{"entry_price": null, "name": "", "rank": null, "run_time": "2026-08-13 14:45:05", "score": null, "selected": false, "source": "cli", "strategy": "tail-pick", "symbol": "", "trade_date": "2026-08-13"}
