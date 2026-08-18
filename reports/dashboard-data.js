@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-08-17 22:13:48",
+  "generated_at": "2026-08-18 22:07:55",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-08-19",
         "2026-08-18",
         "2026-08-17",
         "2026-08-14",
@@ -126,7 +127,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-08-17 22:13:48",
+      "latest_run_time": "2026-08-18 22:07:55",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2501,6 +2502,18 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 2,
           "has_observation_candidates": true
         },
+        "2026-08-19": {
+          "market_state": "neutral",
+          "tried_strategies": [
+            "recommend-relative"
+          ],
+          "chosen_strategy": "recommend-relative",
+          "has_recommendations": true,
+          "chosen_count": 2,
+          "formal_action": "cash",
+          "opportunity_count": 2,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2744,6 +2757,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-08-19",
         "2026-08-18",
         "2026-08-17",
         "2026-08-14",
@@ -2807,8 +2821,36 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-08-17 22:13:48",
+      "latest_run_time": "2026-08-18 22:07:55",
       "records": [
+        {
+          "run_time": "2026-08-18 22:07:55",
+          "trade_date": "2026-08-19",
+          "symbol": "600881",
+          "name": "亚泰集团",
+          "threshold_mode": "normal",
+          "score_total": 77.4,
+          "close": 2.03,
+          "stop_loss_price": 1.81,
+          "take_profit_price": 2.45,
+          "suggested_holding_days": 2,
+          "exit_plan": "默认持有2天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-08-18 22:07:55",
+          "trade_date": "2026-08-19",
+          "symbol": "603369",
+          "name": "今世缘",
+          "threshold_mode": "normal",
+          "score_total": 75.06,
+          "close": 30.08,
+          "stop_loss_price": 28.28,
+          "take_profit_price": 33.66,
+          "suggested_holding_days": 3,
+          "exit_plan": "默认持有3天；买后1到2天不强或跌回MA20附近转弱就退出；放量冲高回落可分批止盈。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-08-17 22:13:48",
           "trade_date": "2026-08-18",
@@ -5263,6 +5305,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-08-19",
     "2026-08-18",
     "2026-08-17",
     "2026-08-14",
