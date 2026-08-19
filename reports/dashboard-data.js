@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-08-18 22:07:55",
+  "generated_at": "2026-08-19 20:06:03",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-08-20",
         "2026-08-19",
         "2026-08-18",
         "2026-08-17",
@@ -127,7 +128,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-08-18 22:07:55",
+      "latest_run_time": "2026-08-19 20:06:03",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2514,6 +2515,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 2,
           "has_observation_candidates": true
         },
+        "2026-08-20": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2757,6 +2771,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-08-20",
         "2026-08-19",
         "2026-08-18",
         "2026-08-17",
@@ -2821,8 +2836,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-08-18 22:07:55",
+      "latest_run_time": "2026-08-19 20:06:03",
       "records": [
+        {
+          "run_time": "2026-08-19 20:06:03",
+          "trade_date": "2026-08-20",
+          "symbol": "002550",
+          "name": "千红制药",
+          "threshold_mode": "normal",
+          "score_total": 70.81,
+          "close": 6.94,
+          "stop_loss_price": 6.47,
+          "take_profit_price": 7.87,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-08-19 20:06:03",
+          "trade_date": "2026-08-20",
+          "symbol": "600073",
+          "name": "光明肉业",
+          "threshold_mode": "normal",
+          "score_total": 70.2,
+          "close": 5.26,
+          "stop_loss_price": 5.03,
+          "take_profit_price": 5.71,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-08-19 20:06:03",
+          "trade_date": "2026-08-20",
+          "symbol": "600300",
+          "name": "维维股份",
+          "threshold_mode": "normal",
+          "score_total": 69.97,
+          "close": 3.22,
+          "stop_loss_price": 3.09,
+          "take_profit_price": 3.46,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-08-18 22:07:55",
           "trade_date": "2026-08-19",
@@ -5305,6 +5362,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-08-20",
     "2026-08-19",
     "2026-08-18",
     "2026-08-17",
