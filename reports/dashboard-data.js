@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-08-24 19:57:51",
+  "generated_at": "2026-08-25 21:44:03",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-08-26",
         "2026-08-25",
         "2026-08-21",
         "2026-08-20",
@@ -130,7 +131,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-08-24 19:57:51",
+      "latest_run_time": "2026-08-25 21:44:03",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2556,6 +2557,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-08-26": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2799,6 +2813,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-08-26",
         "2026-08-25",
         "2026-08-21",
         "2026-08-20",
@@ -2866,8 +2881,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-08-24 19:57:51",
+      "latest_run_time": "2026-08-25 21:44:03",
       "records": [
+        {
+          "run_time": "2026-08-25 21:44:02",
+          "trade_date": "2026-08-26",
+          "symbol": "603291",
+          "name": "联合水务",
+          "threshold_mode": "normal",
+          "score_total": 70.97,
+          "close": 8.99,
+          "stop_loss_price": 8.48,
+          "take_profit_price": 10.0,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-08-25 21:44:02",
+          "trade_date": "2026-08-26",
+          "symbol": "000407",
+          "name": "胜利股份",
+          "threshold_mode": "normal",
+          "score_total": 70.67,
+          "close": 4.14,
+          "stop_loss_price": 3.96,
+          "take_profit_price": 4.49,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-08-25 21:44:03",
+          "trade_date": "2026-08-26",
+          "symbol": "603518",
+          "name": "锦泓集团",
+          "threshold_mode": "normal",
+          "score_total": 70.22,
+          "close": 8.12,
+          "stop_loss_price": 7.78,
+          "take_profit_price": 8.79,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-08-24 19:57:50",
           "trade_date": "2026-08-25",
@@ -5476,6 +5533,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-08-26",
     "2026-08-25",
     "2026-08-21",
     "2026-08-20",
