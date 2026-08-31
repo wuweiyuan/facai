@@ -110,3 +110,4 @@ run_time,target_date,signal_date,market_state,market_reason,tried_strategies,cho
 2026-08-26 20:07:50,2026-08-27,2026-08-26,bear,ok,recommend-oversold,recommend-oversold,true,2
 2026-08-27 21:40:03,2026-08-28,2026-08-27,neutral,ok,recommend-relative,recommend-relative,true,2
 2026-08-28 20:36:09,2026-08-31,2026-08-28,neutral,ok,recommend-relative,recommend-relative,true,2
+2026-08-31 21:42:03,2026-09-01,2026-08-31,neutral,ok,recommend-relative,recommend-relative,true,2
