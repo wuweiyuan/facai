@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-09-02 21:24:47",
+  "generated_at": "2026-09-03 21:29:10",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-09-04",
         "2026-09-03",
         "2026-09-02",
         "2026-09-01",
@@ -137,7 +138,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-09-02 21:24:47",
+      "latest_run_time": "2026-09-03 21:29:10",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2649,6 +2650,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-09-04": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2892,6 +2906,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-09-04",
         "2026-09-03",
         "2026-09-02",
         "2026-09-01",
@@ -2966,8 +2981,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-09-02 21:24:47",
+      "latest_run_time": "2026-09-03 21:29:10",
       "records": [
+        {
+          "run_time": "2026-09-03 21:29:09",
+          "trade_date": "2026-09-04",
+          "symbol": "002133",
+          "name": "广宇集团",
+          "threshold_mode": "normal",
+          "score_total": 74.99,
+          "close": 2.79,
+          "stop_loss_price": 2.6,
+          "take_profit_price": 3.16,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-09-03 21:29:09",
+          "trade_date": "2026-09-04",
+          "symbol": "002760",
+          "name": "凤形股份",
+          "threshold_mode": "normal",
+          "score_total": 74.4,
+          "close": 18.1,
+          "stop_loss_price": 17.06,
+          "take_profit_price": 20.17,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-09-03 21:29:10",
+          "trade_date": "2026-09-04",
+          "symbol": "600807",
+          "name": "济高发展",
+          "threshold_mode": "normal",
+          "score_total": 72.62,
+          "close": 2.67,
+          "stop_loss_price": 2.54,
+          "take_profit_price": 2.92,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-09-02 21:24:47",
           "trade_date": "2026-09-03",
@@ -5786,6 +5843,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-09-04",
     "2026-09-03",
     "2026-09-02",
     "2026-09-01",
