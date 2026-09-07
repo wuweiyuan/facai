@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-09-03 21:29:10",
+  "generated_at": "2026-09-07 20:02:25",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-09-08",
         "2026-09-04",
         "2026-09-03",
         "2026-09-02",
@@ -138,7 +139,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-09-03 21:29:10",
+      "latest_run_time": "2026-09-07 20:02:25",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2663,6 +2664,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-09-08": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2906,6 +2920,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-09-08",
         "2026-09-04",
         "2026-09-03",
         "2026-09-02",
@@ -2981,8 +2996,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-09-03 21:29:10",
+      "latest_run_time": "2026-09-07 20:02:25",
       "records": [
+        {
+          "run_time": "2026-09-07 20:02:25",
+          "trade_date": "2026-09-08",
+          "symbol": "003003",
+          "name": "天元股份",
+          "threshold_mode": "normal",
+          "score_total": 71.76,
+          "close": 11.26,
+          "stop_loss_price": 10.82,
+          "take_profit_price": 12.13,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-09-07 20:02:25",
+          "trade_date": "2026-09-08",
+          "symbol": "002495",
+          "name": "佳隆股份",
+          "threshold_mode": "normal",
+          "score_total": 71.25,
+          "close": 2.45,
+          "stop_loss_price": 2.34,
+          "take_profit_price": 2.66,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-09-07 20:02:25",
+          "trade_date": "2026-09-08",
+          "symbol": "603909",
+          "name": "建发合诚",
+          "threshold_mode": "normal",
+          "score_total": 70.97,
+          "close": 9.85,
+          "stop_loss_price": 9.37,
+          "take_profit_price": 10.81,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-09-03 21:29:09",
           "trade_date": "2026-09-04",
@@ -5843,6 +5900,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-09-08",
     "2026-09-04",
     "2026-09-03",
     "2026-09-02",
