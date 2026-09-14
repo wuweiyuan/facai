@@ -1,11 +1,12 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-09-08 19:58:56",
+  "generated_at": "2026-09-14 20:03:26",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-09-15",
         "2026-09-09",
         "2026-09-08",
         "2026-09-04",
@@ -140,7 +141,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-09-08 19:58:56",
+      "latest_run_time": "2026-09-14 20:03:25",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2691,6 +2692,19 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-09-15": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2934,6 +2948,7 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-09-15",
         "2026-09-09",
         "2026-09-08",
         "2026-09-04",
@@ -3011,8 +3026,50 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-09-08 19:58:56",
+      "latest_run_time": "2026-09-14 20:03:25",
       "records": [
+        {
+          "run_time": "2026-09-14 20:03:25",
+          "trade_date": "2026-09-15",
+          "symbol": "601568",
+          "name": "北元集团",
+          "threshold_mode": "normal",
+          "score_total": 73.6,
+          "close": 3.83,
+          "stop_loss_price": 3.68,
+          "take_profit_price": 4.11,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-09-14 20:03:25",
+          "trade_date": "2026-09-15",
+          "symbol": "600249",
+          "name": "两面针",
+          "threshold_mode": "normal",
+          "score_total": 73.08,
+          "close": 5.43,
+          "stop_loss_price": 5.17,
+          "take_profit_price": 5.94,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-09-14 20:03:25",
+          "trade_date": "2026-09-15",
+          "symbol": "002095",
+          "name": "生 意 宝",
+          "threshold_mode": "normal",
+          "score_total": 72.66,
+          "close": 14.83,
+          "stop_loss_price": 14.02,
+          "take_profit_price": 16.44,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-09-08 19:58:56",
           "trade_date": "2026-09-09",
@@ -5957,6 +6014,7 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-09-15",
     "2026-09-09",
     "2026-09-08",
     "2026-09-04",
