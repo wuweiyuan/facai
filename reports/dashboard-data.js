@@ -1,11 +1,13 @@
 window.STOCK_DASHBOARD_DATA = {
-  "generated_at": "2026-09-15 20:08:54",
+  "generated_at": "2026-09-17 20:55:18",
   "strategies": {
     "adaptive": {
       "key": "adaptive",
       "label": "自适应策略",
       "source_file": "adaptive://derived",
       "available_dates": [
+        "2026-09-18",
+        "2026-09-17",
         "2026-09-16",
         "2026-09-15",
         "2026-09-09",
@@ -142,7 +144,7 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-02-26",
         "2026-02-25"
       ],
-      "latest_run_time": "2026-09-15 20:08:54",
+      "latest_run_time": "2026-09-17 20:55:18",
       "records": [
         {
           "run_time": "2026-05-26 20:03:05",
@@ -2719,6 +2721,32 @@ window.STOCK_DASHBOARD_DATA = {
           "opportunity_count": 3,
           "has_observation_candidates": true
         },
+        "2026-09-17": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
+        "2026-09-18": {
+          "market_state": "bear",
+          "tried_strategies": [
+            "recommend-oversold",
+            "recommend-pullback"
+          ],
+          "chosen_strategy": "recommend-pullback",
+          "has_recommendations": true,
+          "chosen_count": 3,
+          "formal_action": "cash",
+          "opportunity_count": 3,
+          "has_observation_candidates": true
+        },
         "2026-03-23": {
           "market_state": "bear",
           "tried_strategies": [
@@ -2962,6 +2990,8 @@ window.STOCK_DASHBOARD_DATA = {
       "label": "机会池",
       "source_file": "reports/opportunity_recommendations.csv",
       "available_dates": [
+        "2026-09-18",
+        "2026-09-17",
         "2026-09-16",
         "2026-09-15",
         "2026-09-09",
@@ -3041,8 +3071,92 @@ window.STOCK_DASHBOARD_DATA = {
         "2026-03-04",
         "2026-03-03"
       ],
-      "latest_run_time": "2026-09-15 20:08:54",
+      "latest_run_time": "2026-09-17 20:55:18",
       "records": [
+        {
+          "run_time": "2026-09-17 20:55:18",
+          "trade_date": "2026-09-18",
+          "symbol": "000561",
+          "name": "烽火电子",
+          "threshold_mode": "normal",
+          "score_total": 72.21,
+          "close": 7.84,
+          "stop_loss_price": 7.5,
+          "take_profit_price": 8.51,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-09-17 20:55:18",
+          "trade_date": "2026-09-18",
+          "symbol": "601998",
+          "name": "中信银行",
+          "threshold_mode": "normal",
+          "score_total": 70.3,
+          "close": 8.94,
+          "stop_loss_price": 8.63,
+          "take_profit_price": 9.54,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-09-17 20:55:18",
+          "trade_date": "2026-09-18",
+          "symbol": "601018",
+          "name": "宁波港",
+          "threshold_mode": "normal",
+          "score_total": 69.57,
+          "close": 3.51,
+          "stop_loss_price": 3.4,
+          "take_profit_price": 3.72,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-09-16 20:08:19",
+          "trade_date": "2026-09-17",
+          "symbol": "003029",
+          "name": "吉大正元",
+          "threshold_mode": "normal",
+          "score_total": 73.7,
+          "close": 17.43,
+          "stop_loss_price": 16.29,
+          "take_profit_price": 19.69,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-09-16 20:08:20",
+          "trade_date": "2026-09-17",
+          "symbol": "002966",
+          "name": "苏州银行",
+          "threshold_mode": "normal",
+          "score_total": 72.86,
+          "close": 9.05,
+          "stop_loss_price": 8.7,
+          "take_profit_price": 9.73,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
+        {
+          "run_time": "2026-09-16 20:08:20",
+          "trade_date": "2026-09-17",
+          "symbol": "002339",
+          "name": "积成电子",
+          "threshold_mode": "normal",
+          "score_total": 71.76,
+          "close": 7.48,
+          "stop_loss_price": 7.15,
+          "take_profit_price": 8.12,
+          "suggested_holding_days": 1,
+          "exit_plan": "默认持有1天；买后不强就退出；跌回MA20下方或单笔亏损4%到5%止损。",
+          "source_strategy": "recommend"
+        },
         {
           "run_time": "2026-09-15 20:08:54",
           "trade_date": "2026-09-16",
@@ -6071,6 +6185,8 @@ window.STOCK_DASHBOARD_DATA = {
     }
   },
   "all_dates": [
+    "2026-09-18",
+    "2026-09-17",
     "2026-09-16",
     "2026-09-15",
     "2026-09-09",
