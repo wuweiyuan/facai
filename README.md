@@ -230,7 +230,7 @@ python -m app.main auction-pick --date YYYY-MM-DD --count 5
 
 ### 尾盘自动运行
 
-macOS 可以安装用户级 `launchd` 定时任务，工作日 `14:44` 自动运行尾盘策略：
+macOS 可以安装用户级 `launchd` 定时任务，在休市缓存覆盖的交易日 `14:44` 自动运行尾盘策略：
 
 ```bash
 cd /Users/wayne/data/myslef/发财/股票
@@ -282,7 +282,9 @@ launchctl list com.wayne.tail-pick
 
 ### 自动运行休市判断
 
-尾盘和竞价自动任务都会先检查当天是不是 A 股交易日。周末或 `data/a_share_closed_weekdays.csv` 里记录的工作日休市日期，会只写日志并跳过策略，不弹通知、不打开结果文件。
+安装脚本根据 `data/a_share_closed_weekdays.csv` 生成当年的交易日触发日期。已记录的休市日没有 `launchd` 触发事件，连交易日分发器也不会启动；不会写当日选股日志、弹通知或打开结果文件。选股脚本自身仍保留交易日检查，以防手动运行时误执行。
+
+`launchd` 的日期规则不含年份，所以每年都必须用新一年的交易日历重新安装两项任务。否则旧日期规则会在下一年重复触发；分发器会在缺少当年日历时阻止选股，并把错误写入对应的 `launchd.err.log`。例如进入 2027 年之前，先更新 2027 年休市缓存，再重新运行两项安装脚本。
 
 休市缓存当前按年度维护。下一年交易所日历可查询后，运行下面命令更新指定年份：
 
@@ -295,7 +297,7 @@ python3 scripts/update_a_share_calendar.py --year 2027
 
 ### 竞价自动运行
 
-macOS 可以安装用户级 `launchd` 定时任务，工作日 `09:26` 自动运行竞价策略：
+macOS 可以安装用户级 `launchd` 定时任务，在休市缓存覆盖的交易日 `09:26` 自动运行竞价策略：
 
 ```bash
 cd /Users/wayne/data/myslef/发财/股票

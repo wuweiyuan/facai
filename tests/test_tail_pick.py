@@ -687,19 +687,14 @@ def test_tail_pick_parser_accepts_output_and_date():
     assert args.output == "json"
 
 
-def test_tail_pick_launchd_plist_runs_weekdays_at_1444():
-    plist = build_launchd_plist("/tmp/project", python_bin="/usr/bin/python3")
+def test_tail_pick_launchd_plist_runs_trading_days_at_1444():
+    plist = build_launchd_plist("/tmp/project", python_bin="/usr/bin/python3", schedule_year=2026)
 
     assert plist["Label"] == "com.wayne.tail-pick"
     assert plist["WorkingDirectory"] == "/tmp/project"
-    assert plist["ProgramArguments"] == ["/bin/bash", "/tmp/project/scripts/run_tail_pick_auto.sh"]
-    assert plist["StartCalendarInterval"] == [
-        {"Weekday": 1, "Hour": 14, "Minute": 44},
-        {"Weekday": 2, "Hour": 14, "Minute": 44},
-        {"Weekday": 3, "Hour": 14, "Minute": 44},
-        {"Weekday": 4, "Hour": 14, "Minute": 44},
-        {"Weekday": 5, "Hour": 14, "Minute": 44},
-    ]
+    assert plist["ProgramArguments"] == ["/usr/bin/env", "/usr/bin/python3", "-m", "app.auto_dispatch", "tail"]
+    assert {"Month": 10, "Day": 1, "Hour": 14, "Minute": 44} not in plist["StartCalendarInterval"]
+    assert {"Month": 10, "Day": 8, "Hour": 14, "Minute": 44} in plist["StartCalendarInterval"]
     assert plist["EnvironmentVariables"]["PYTHON_BIN"] == "/usr/bin/python3"
 
 

@@ -322,21 +322,16 @@ def test_auction_pick_does_not_change_existing_parser_commands():
     assert adaptive_args.count == 1
 
 
-def test_auction_pick_launchd_plist_runs_weekdays_at_0926():
+def test_auction_pick_launchd_plist_runs_trading_days_at_0926():
     from app.auction_pick.automation import build_launchd_plist
 
-    plist = build_launchd_plist("/tmp/project", python_bin="/usr/bin/python3")
+    plist = build_launchd_plist("/tmp/project", python_bin="/usr/bin/python3", schedule_year=2026)
 
     assert plist["Label"] == "com.wayne.auction-pick"
     assert plist["WorkingDirectory"] == "/tmp/project"
-    assert plist["ProgramArguments"] == ["/bin/bash", "/tmp/project/scripts/run_auction_pick_auto.sh"]
-    assert plist["StartCalendarInterval"] == [
-        {"Weekday": 1, "Hour": 9, "Minute": 26},
-        {"Weekday": 2, "Hour": 9, "Minute": 26},
-        {"Weekday": 3, "Hour": 9, "Minute": 26},
-        {"Weekday": 4, "Hour": 9, "Minute": 26},
-        {"Weekday": 5, "Hour": 9, "Minute": 26},
-    ]
+    assert plist["ProgramArguments"] == ["/usr/bin/env", "/usr/bin/python3", "-m", "app.auto_dispatch", "auction"]
+    assert {"Month": 10, "Day": 1, "Hour": 9, "Minute": 26} not in plist["StartCalendarInterval"]
+    assert {"Month": 10, "Day": 8, "Hour": 9, "Minute": 26} in plist["StartCalendarInterval"]
     assert plist["EnvironmentVariables"]["PYTHON_BIN"] == "/usr/bin/python3"
     assert plist["EnvironmentVariables"]["AUCTION_COUNT"] == "2"
     assert plist["StandardOutPath"] == "/tmp/project/reports/auction_pick/launchd.out.log"

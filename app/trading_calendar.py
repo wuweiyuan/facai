@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 
@@ -28,6 +28,7 @@ def is_a_share_trading_day(
     run_date: str | date,
     *,
     closed_weekdays_path: str | Path = DEFAULT_CLOSED_WEEKDAYS_PATH,
+    require_calendar_year: bool = False,
 ) -> TradingDayCheck:
     if isinstance(run_date, date):
         checked_date = run_date
@@ -38,11 +39,34 @@ def is_a_share_trading_day(
         return TradingDayCheck(False, "weekend")
 
     closed_weekdays = _load_closed_weekdays(Path(closed_weekdays_path))
+    if require_calendar_year and not any(day.startswith(f"{checked_date.year}-") for day in closed_weekdays):
+        raise ValueError(f"A-share closed-weekday calendar is missing year {checked_date.year}")
     reason = closed_weekdays.get(checked_date.isoformat())
     if reason:
         return TradingDayCheck(False, f"A-share market closed: {reason}")
 
     return TradingDayCheck(True, "A-share trading day")
+
+
+def trading_day_launchd_intervals(
+    year: int,
+    *,
+    hour: int,
+    minute: int,
+    closed_weekdays_path: str | Path = DEFAULT_CLOSED_WEEKDAYS_PATH,
+) -> list[dict[str, int]]:
+    closed_weekdays = _load_closed_weekdays(Path(closed_weekdays_path))
+    if not any(day.startswith(f"{year}-") for day in closed_weekdays):
+        raise ValueError(f"A-share closed-weekday calendar is missing year {year}")
+
+    intervals = []
+    current = date(year, 1, 1)
+    last_day = date(year, 12, 31)
+    while current <= last_day:
+        if current.weekday() < 5 and current.isoformat() not in closed_weekdays:
+            intervals.append({"Month": current.month, "Day": current.day, "Hour": hour, "Minute": minute})
+        current += timedelta(days=1)
+    return intervals
 
 
 def main() -> int:

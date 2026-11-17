@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import argparse
 import plistlib
+from datetime import date
 from pathlib import Path
 from typing import Any
+
+from app.trading_calendar import trading_day_launchd_intervals
 
 
 LAUNCHD_LABEL = "com.wayne.auction-pick"
@@ -16,13 +19,15 @@ def build_launchd_plist(
     hour: int = 9,
     minute: int = 26,
     count: int = 2,
+    schedule_year: int | None = None,
 ) -> dict[str, Any]:
     root = Path(project_root).expanduser()
+    year = schedule_year if schedule_year is not None else date.today().year
     return {
         "Label": LAUNCHD_LABEL,
-        "ProgramArguments": ["/bin/bash", str(root / "scripts" / "run_auction_pick_auto.sh")],
+        "ProgramArguments": ["/usr/bin/env", python_bin, "-m", "app.auto_dispatch", "auction"],
         "WorkingDirectory": str(root),
-        "StartCalendarInterval": [{"Weekday": day, "Hour": hour, "Minute": minute} for day in range(1, 6)],
+        "StartCalendarInterval": trading_day_launchd_intervals(year, hour=hour, minute=minute),
         "EnvironmentVariables": {
             "PYTHON_BIN": python_bin,
             "AUCTION_COUNT": str(count),
@@ -41,8 +46,9 @@ def write_launchd_plist(
     hour: int = 9,
     minute: int = 26,
     count: int = 2,
+    schedule_year: int | None = None,
 ) -> Path:
-    plist = build_launchd_plist(project_root, python_bin=python_bin, hour=hour, minute=minute, count=count)
+    plist = build_launchd_plist(project_root, python_bin=python_bin, hour=hour, minute=minute, count=count, schedule_year=schedule_year)
     path = Path(output_path).expanduser()
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("wb") as f:
@@ -58,6 +64,7 @@ def main() -> None:
     parser.add_argument("--hour", type=int, default=9)
     parser.add_argument("--minute", type=int, default=26)
     parser.add_argument("--count", type=int, default=2)
+    parser.add_argument("--schedule-year", type=int)
     args = parser.parse_args()
     path = write_launchd_plist(
         args.output,
@@ -66,6 +73,7 @@ def main() -> None:
         hour=args.hour,
         minute=args.minute,
         count=args.count,
+        schedule_year=args.schedule_year,
     )
     print(path)
 

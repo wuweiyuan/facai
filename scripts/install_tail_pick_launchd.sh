@@ -20,6 +20,6 @@ launchctl unload "${PLIST_PATH}" >/dev/null 2>&1 || true
 launchctl load "${PLIST_PATH}"
 
 echo "Installed ${LABEL}"
-echo "Schedule: Monday-Friday 14:44"
+echo "Schedule: cached A-share trading days for $(date +%Y) at 14:44"
 echo "Plist: ${PLIST_PATH}"
 echo "Latest log: ${PROJECT_ROOT}/reports/tail_pick/latest.log"

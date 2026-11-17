@@ -2,7 +2,7 @@ from pathlib import Path
 import importlib.util
 from datetime import date, timedelta
 
-from app.trading_calendar import TradingDayCheck, is_a_share_trading_day
+from app.trading_calendar import TradingDayCheck, is_a_share_trading_day, trading_day_launchd_intervals
 
 
 def _load_update_script():
@@ -43,6 +43,22 @@ def test_a_share_closed_weekday_cache_includes_2026_holidays():
         is_trading_day=False,
         reason="A-share market closed: National Day/Mid-Autumn Festival",
     )
+
+
+def test_launchd_intervals_omit_closed_days_entirely():
+    intervals = trading_day_launchd_intervals(2026, hour=9, minute=26)
+
+    assert {"Month": 10, "Day": 1, "Hour": 9, "Minute": 26} not in intervals
+    assert {"Month": 10, "Day": 2, "Hour": 9, "Minute": 26} not in intervals
+    assert {"Month": 10, "Day": 8, "Hour": 9, "Minute": 26} in intervals
+    assert {"Month": 10, "Day": 10, "Hour": 9, "Minute": 26} not in intervals
+
+
+def test_launchd_intervals_require_calendar_for_requested_year():
+    import pytest
+
+    with pytest.raises(ValueError, match="2027"):
+        trading_day_launchd_intervals(2027, hour=9, minute=26)
 
 
 def test_update_a_share_calendar_replaces_target_year_and_preserves_other_years(tmp_path):
